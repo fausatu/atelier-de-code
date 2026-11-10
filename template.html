@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atelier de code</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Un seul thème clair, teinté bleu-gris (choix : pas de mode sombre). Layout : barre latérale (parcours + modules) | zone de travail. Un module = 4 étapes courtes en onglets. */
+:root {
+  --bg: #eef3f8;
+  --surface: #fbfcfe;
+  --surface-2: #e5ecf4;
+  --ink: #1f2633;
+  --muted: #5d6779;
+  --line: #d6dfea;
+  --accent: #3a5bd6;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3e9fc;
+  --good: #1d8a4f; --good-soft: #e1f3e8;
+  --warn: #a96d00; --warn-soft: #fbf0d9;
+  --bad: #c83c3c;  --bad-soft: #fbe5e5;
+  --t-violet: #6b55cc; --t-orange: #cf6a1d; --t-green: #18865f; --t-cyan: #13809f; --t-graphite: #4a5263;
+  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f;
+  --code-bg: #f4f7fb; --code-ink: #24292f; --code-line: #d6dfea;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 10px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.2; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: 1.85rem; } h2 { font-size: 1.3rem; } h3 { font-size: 1.05rem; }
+p { margin: 0; }
+a { color: var(--accent); }
+code { font-family: var(--font-mono); font-size: 0.86em; background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 4px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+.app { display: grid; grid-template-columns: 284px minmax(0, 1fr); min-height: 100%; }
+.side { align-self: start; background: var(--surface); border-right: 1px solid var(--line); padding: 18px 14px 14px; display: flex; flex-direction: column; gap: 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; text-decoration: none; color: var(--ink); }
+.brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: #fff; display: grid; place-items: center; font: 600 13px var(--font-mono); }
+.brand b { font-family: var(--font-display); font-size: 1.1rem; }
+.nav-main { display: flex; flex-direction: column; gap: 2px; }
+.nav-link { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 8px; color: var(--ink); text-decoration: none; font-weight: 500; }
+.nav-link:hover { background: var(--surface-2); }
+.nav-link.on { background: var(--accent-soft); color: var(--accent); }
+.count { min-width: 22px; padding: 0 7px; border-radius: 999px; background: var(--warn); color: #fff; font: 600 12px/20px var(--font-body); text-align: center; font-variant-numeric: tabular-nums; }
+.count.zero { background: var(--surface-2); color: var(--muted); }
+.track-group { display: flex; flex-direction: column; gap: 1px; }
+.track-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; text-decoration: none; color: var(--ink); font-weight: 600; font-size: 0.86rem; }
+.track-head:hover { background: var(--surface-2); }
+.track-head .dot { width: 9px; height: 9px; border-radius: 3px; background: var(--tc); flex: none; }
+.track-head .frac { margin-left: auto; color: var(--muted); font-weight: 500; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.mod-link { display: flex; align-items: center; gap: 9px; padding: 4px 10px 4px 14px; border-radius: 7px; color: var(--muted); text-decoration: none; font-size: 0.86rem; line-height: 1.35; }
+.mod-link:hover { background: var(--surface-2); color: var(--ink); }
+.mod-link.on { background: var(--surface-2); color: var(--ink); font-weight: 500; }
+.st { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--line); flex: none; position: relative; }
+.st.started { border-color: var(--tc, var(--accent)); background: linear-gradient(90deg, var(--tc, var(--accent)) 50%, transparent 50%); }
+.st.done { border-color: var(--good); background: var(--good); }
+.st.due { border-color: var(--warn); background: var(--warn); }
+.side-foot { margin-top: auto; font-size: 0.78rem; color: var(--muted); padding: 8px 10px 0; border-top: 1px solid var(--line); display: flex; gap: 7px; align-items: flex-start; }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); margin-top: 7px; flex: none; }
+.sync-dot.ok { background: var(--good); } .sync-dot.err { background: var(--bad); } .sync-dot.local { background: var(--warn); }
+
+.topbar { display: none; }
+main { padding: 32px clamp(16px, 4vw, 48px) 64px; min-width: 0; }
+.wrap { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+.eyebrow { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.lead { color: var(--muted); max-width: 65ch; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.spacer { flex: 1; }
+.muted { color: var(--muted); }
+.small { font-size: 0.86rem; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 500; cursor: pointer; text-decoration: none; line-height: 1.3; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+.btn.ghost:hover { color: var(--ink); background: var(--surface-2); }
+.btn.sm { padding: 5px 10px; font-size: 0.84rem; }
+.btn.danger { color: var(--bad); }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.ai-only { display: none !important; }
+body.has-ai .ai-only { display: inline-flex !important; }
+body.has-ai .ai-block.ai-only { display: block !important; }
+body.has-ai .no-ai { display: none !important; }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; background: color-mix(in srgb, var(--tc, var(--accent)) 14%, transparent); color: var(--tc, var(--accent)); }
+.pill { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 999px; font-size: 0.76rem; font-weight: 600; }
+.pill.new { background: var(--surface-2); color: var(--muted); }
+.pill.started { background: var(--accent-soft); color: var(--accent); }
+.pill.done { background: var(--good-soft); color: var(--good); }
+.pill.due { background: var(--warn-soft); color: var(--warn); }
+.pill.custom { background: var(--surface-2); color: var(--muted); }
+
+.bar { height: 7px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--tc, var(--accent)); border-radius: 99px; }
+.big { font-family: var(--font-display); font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+
+.home-top .card { display: flex; flex-direction: column; gap: 10px; }
+.track-card { border-top: 3px solid var(--tc); display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: var(--ink); }
+.track-card:hover { border-color: var(--tc); box-shadow: 0 1px 0 var(--line); }
+.track-card .row .muted { font-variant-numeric: tabular-nums; }
+.path { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.86rem; }
+.path .arrow { color: var(--muted); }
+.method { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; counter-reset: m; }
+.method div { border-left: 2px solid var(--line); padding: 2px 0 2px 12px; }
+.method b { display: block; font-size: 0.9rem; }
+.method span { font-size: 0.84rem; color: var(--muted); }
+.due-list { display: flex; flex-direction: column; gap: 4px; font-size: 0.88rem; }
+.due-list a { color: var(--ink); text-decoration: none; display: flex; gap: 8px; align-items: center; }
+.due-list a:hover { color: var(--accent); }
+
+/* Module */
+.mod-head { display: flex; flex-direction: column; gap: 8px; }
+.steps { display: flex; gap: 6px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.step-tab { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border: 0; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.step-tab .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 600 12px var(--font-mono); background: var(--surface-2); color: var(--muted); }
+.step-tab.ok .n { background: var(--good); color: #fff; }
+.step-tab.on { color: var(--ink); border-bottom-color: var(--tc); }
+.step-tab.on .n { background: var(--tc); color: #fff; }
+.step-tab.ok.on .n { background: var(--good); }
+.panel { display: flex; flex-direction: column; gap: 18px; }
+.why { border-left: 3px solid var(--tc); padding: 4px 0 4px 14px; max-width: 70ch; }
+.flow { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 0; align-items: stretch; }
+.flow-step { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 12px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; line-height: 1.45; margin-right: 22px; }
+.flow-step:last-child { margin-right: 0; }
+.flow-step:not(:last-child)::after { content: ""; position: absolute; right: -17px; top: 50%; width: 12px; height: 12px; border-top: 2px solid var(--tc); border-right: 2px solid var(--tc); transform: translateY(-50%) rotate(45deg); }
+.flow-step .k { font: 600 12px var(--font-mono); color: var(--tc); }
+.points { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; max-width: 75ch; }
+.points li { padding-left: 18px; position: relative; }
+.points li::before { content: ""; position: absolute; left: 2px; top: 0.62em; width: 7px; height: 7px; border-radius: 2px; background: var(--tc); }
+.pitfalls { background: var(--bad-soft); border-radius: var(--r); padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+.pitfalls h3 { color: var(--bad); font-size: 0.9rem; }
+.pitfalls li { margin-left: 16px; }
+.pitfalls ul { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.ai-box { border: 1px dashed var(--line); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.ai-out { font-size: 0.93rem; display: flex; flex-direction: column; gap: 8px; max-width: 75ch; }
+.ai-out:empty { display: none; }
+.ai-out pre { margin: 0; }
+.ask { display: flex; gap: 8px; }
+.ask input { flex: 1; min-width: 0; }
+.field { padding: 8px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); }
+textarea.field { width: 100%; resize: vertical; }
+
+pre.code { margin: 0; border: 1px solid var(--code-line); background: var(--code-bg); color: var(--code-ink); border-radius: var(--r); padding: 14px 16px; overflow-x: auto; font: 13px/1.6 var(--font-mono); tab-size: 4; }
+pre.code code { background: none; padding: 0; font-size: inherit; color: inherit; }
+.ex { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.notes { display: flex; flex-direction: column; gap: 10px; counter-reset: n; margin: 0; padding: 0; list-style: none; }
+.notes li { counter-increment: n; display: grid; grid-template-columns: 24px 1fr; gap: 8px; font-size: 0.9rem; }
+.notes li::before { content: counter(n); width: 22px; height: 22px; border-radius: 6px; background: var(--surface-2); display: grid; place-items: center; font: 600 12px var(--font-mono); color: var(--tc); }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in.hljs-keyword { color: #cf222e; }
+.hljs-string, .hljs-regexp { color: #0a3069; }
+.hljs-number, .hljs-literal { color: #0550ae; }
+.hljs-comment { color: #6e7781; font-style: italic; }
+.hljs-title, .hljs-title.function_ { color: #8250df; }
+.hljs-variable, .hljs-template-variable { color: #953800; }
+.hljs-attr, .hljs-attribute, .hljs-type, .hljs-title.class_, .hljs-built_in { color: #0550ae; }
+.hljs-meta, .hljs-tag, .hljs-name, .hljs-symbol { color: #116329; }
+.hljs-subst { color: var(--code-ink); }
+
+.q { display: flex; flex-direction: column; gap: 10px; }
+.q-title { font-weight: 600; display: flex; gap: 10px; }
+.q-title .k { font: 600 13px var(--font-mono); color: var(--tc); padding-top: 1px; }
+.opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.opt { text-align: left; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; line-height: 1.4; }
+.opt:hover:not([disabled]) { border-color: var(--tc); }
+.opt[disabled] { cursor: default; }
+.opt.right { border-color: var(--good); background: var(--good-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.feedback { font-size: 0.9rem; padding: 8px 12px; border-radius: 8px; }
+.feedback.right { background: var(--good-soft); }
+.feedback.wrong { background: var(--bad-soft); }
+.feedback b { margin-right: 4px; }
+.score { display: flex; align-items: center; gap: 14px; }
+
+.td-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.consignes { margin: 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 5px; }
+.editor { width: 100%; min-height: 280px; background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--code-line); border-radius: var(--r); padding: 14px 16px; font: 13px/1.6 var(--font-mono); tab-size: 4; resize: vertical; white-space: pre; overflow: auto; }
+.editor:focus { outline: 2px solid var(--tc); outline-offset: 1px; }
+.hint { background: var(--warn-soft); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; }
+.checks { display: flex; flex-direction: column; gap: 6px; }
+.checks label { display: flex; gap: 9px; align-items: flex-start; cursor: pointer; font-size: 0.92rem; }
+.checks input { margin-top: 4px; accent-color: var(--good); }
+.solution-warn { font-size: 0.86rem; color: var(--muted); }
+.done-banner { display: flex; align-items: center; gap: 12px; background: var(--good-soft); border-radius: var(--r); padding: 12px 16px; }
+.done-banner b { color: var(--good); }
+.nav-steps { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
+
+.list-mod { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); text-decoration: none; color: var(--ink); }
+.list-mod:last-child { border-bottom: 0; }
+.list-mod:hover { background: var(--surface-2); }
+.list-mod .num { font: 600 13px var(--font-mono); color: var(--tc); }
+.list-mod .t { font-weight: 600; }
+.list-mod .g { font-size: 0.86rem; color: var(--muted); }
+.list { padding: 0; overflow: hidden; }
+
+.rev-card { display: flex; flex-direction: column; gap: 14px; border-top: 3px solid var(--tc); }
+.recall-flow { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 0.92rem; }
+.progress-dots { display: flex; gap: 5px; }
+.progress-dots i { width: 22px; height: 5px; border-radius: 99px; background: var(--surface-2); }
+.progress-dots i.on { background: var(--accent); }
+.progress-dots i.ok { background: var(--good); }
+.progress-dots i.ko { background: var(--warn); }
+.sched { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.sched td, .sched th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.sched th { font-weight: 600; color: var(--muted); font-size: 0.8rem; }
+.sched td.num { font-variant-numeric: tabular-nums; }
+
+.form-grid { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 10px 14px; align-items: center; }
+.form-grid label { font-weight: 500; font-size: 0.9rem; }
+.swatches { display: flex; gap: 6px; }
+.swatch { width: 26px; height: 26px; border-radius: 7px; border: 2px solid transparent; background: var(--tc); cursor: pointer; }
+.swatch.on { border-color: var(--ink); }
+.spin { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: s 0.8s linear infinite; display: inline-block; }
+@keyframes s { to { transform: rotate(360deg); } }
+.err { color: var(--bad); font-size: 0.9rem; }
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 0.92rem; box-shadow: 0 6px 20px rgb(0 0 0 / 0.2); z-index: 50; max-width: calc(100% - 32px); }
+.toast[hidden] { display: none; }
+
+@media (max-width: 1000px) {
+  .method { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ex { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .side { position: fixed; inset: 0 auto 0 0; width: min(300px, 86vw); z-index: 40; transform: translateX(-102%); transition: transform 0.2s; box-shadow: 0 0 40px rgb(0 0 0 / 0.25); }
+  body.menu-open .side { transform: none; }
+  .topbar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30; }
+  main { padding-top: 20px; }
+  .grid3, .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .flow-step { margin-right: 0; margin-bottom: 18px; }
+  .flow-step:last-child { margin-bottom: 0; }
+  .flow-step:not(:last-child)::after { right: auto; left: 50%; top: auto; bottom: -15px; transform: translateX(-50%) rotate(135deg); }
+  .opts { grid-template-columns: minmax(0, 1fr); }
+  .form-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 480px) {
+  .method { grid-template-columns: minmax(0, 1fr); }
+  h1 { font-size: 1.5rem; }
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <button class="btn sm" data-act="menu" aria-label="Ouvrir le menu">Menu</button>
+  <b style="font-family: var(--font-display)">Atelier de code</b>
+</div>
+<div class="app">
+  <aside class="side" id="side" aria-label="Navigation"></aside>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+"use strict";
+const DATA = /*__CONTENT__*/null;
+const INTERVALS = [1, 3, 7, 16, 35];
+const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick"];
+const LANGS = { php: "php", tsx: "typescript", ts: "typescript", typescript: "typescript", js: "javascript", jsx: "javascript", javascript: "javascript", sql: "sql", bash: "bash", shell: "bash", yaml: "yaml", json: "json", python: "python", css: "css", html: "xml", xml: "xml", twig: "xml", plaintext: null };
+const STEPS = ["Comprendre", "Exemple", "Quiz", "TD"];
+const LS_KEY = "atelier-code-v1";
+
+/* ---------- état ---------- */
+const state = {
+  progress: { modules: {} },
+  drafts: {},
+  custom: { tracks: [], modules: [] },
+  ui: { step: {}, hints: {}, showSol: {}, review: null, gen: null, confirmDel: null, newTrackColor: "rose" },
+};
+let sample = null, uid = null, refs = null;
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (d.progress && d.progress.modules) state.progress = d.progress;
+    if (d.drafts) state.drafts = d.drafts;
+    if (d.custom) state.custom = { tracks: d.custom.tracks || [], modules: d.custom.modules || [] };
+    return true;
+  } catch (e) { return false; }
+}
+function saveLocal() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ progress: state.progress, drafts: state.drafts, custom: state.custom })); } catch (e) {}
+}
+
+/* ---------- helpers ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function inl(s) {
+  return String(s ?? "").split("`").map((part, i) => i % 2 ? `<code>${esc(part)}</code>` : esc(part).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")).join("");
+}
+function md(text) {
+  const out = []; const lines = String(text || "").split("\n"); let i = 0; let list = null; let para = [];
+  const flushPara = () => { if (para.length) { out.push(`<p>${inl(para.join(" "))}</p>`); para = []; } };
+  const flushList = () => { if (list) { out.push(`<ul class="points">${list.map((l) => `<li>${inl(l)}</li>`).join("")}</ul>`); list = null; } };
+  while (i < lines.length) {
+    const line = lines[i];
+    const fence = line.match(/^```\s*(\w+)?/);
+    if (fence) {
+      flushPara(); flushList();
+      const buf = []; i++;
+      while (i < lines.length && !/^```/.test(lines[i])) { buf.push(lines[i]); i++; }
+      i++;
+      out.push(codeBlock(buf.join("\n"), fence[1] || "plaintext"));
+      continue;
+    }
+    const li = line.match(/^\s*(?:[-*]|\d+\.)\s+(.*)$/);
+    if (li) { flushPara(); (list = list || []).push(li[1]); i++; continue; }
+    const h = line.match(/^#{1,4}\s+(.*)$/);
+    if (h) { flushPara(); flushList(); out.push(`<p><strong>${inl(h[1])}</strong></p>`); i++; continue; }
+    if (!line.trim()) { flushPara(); flushList(); i++; continue; }
+    flushList(); para.push(line.trim()); i++;
+  }
+  flushPara(); flushList();
+  return out.join("");
+}
+function codeBlock(src, lang) {
+  const l = LANGS[lang] === undefined ? null : LANGS[lang];
+  return `<pre class="code"><code data-lang="${esc(l || "")}">${esc(src)}</code></pre>`;
+}
+function highlight(root) {
+  if (!window.hljs) return;
+  root.querySelectorAll("pre.code code[data-lang]").forEach((el) => {
+    const lang = el.dataset.lang;
+    if (!lang || !hljs.getLanguage(lang) || el.dataset.done) return;
+    try { el.innerHTML = hljs.highlight(el.textContent, { language: lang, ignoreIllegals: true }).value; el.dataset.done = "1"; } catch (e) {}
+  });
+}
+function today() { const d = new Date(); return ymd(d); }
+function ymd(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+function addDays(n) { const d = new Date(); d.setDate(d.getDate() + n); return ymd(d); }
+function frDate(s) { if (!s) return ""; const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }); }
+function daysFromToday(s) { const [y, m, d] = s.split("-").map(Number); const a = new Date(y, m - 1, d); const t = new Date(); t.setHours(0, 0, 0, 0); return Math.round((a - t) / 86400000); }
+function rid() { return Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4); }
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+let toastTimer;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 3200); }
+
+/* ---------- contenu ---------- */
+function tracks() { return DATA.tracks.concat(state.custom.tracks || []); }
+function track(id) { return tracks().find((t) => t.id === id) || { id, name: "Parcours", short: "Parcours", color: "graphite", desc: "" }; }
+function modulesOf(tid) { return DATA.modules.filter((m) => m.track === tid).concat((state.custom.modules || []).filter((m) => m.track === tid)); }
+function allModules() { return tracks().flatMap((t) => modulesOf(t.id)); }
+function mod(id) { return DATA.modules.find((m) => m.id === id) || (state.custom.modules || []).find((m) => m.id === id); }
+function isCustom(id) { return !DATA.modules.some((m) => m.id === id); }
+function tc(t) { return `--tc: var(--t-${COLORS.includes(t.color) ? t.color : "graphite"})`; }
+function prog(id) { return state.progress.modules[id]; }
+function ensure(id) { return (state.progress.modules[id] = state.progress.modules[id] || { seen: [], answers: {}, checks: [] }); }
+function status(id) {
+  const p = prog(id);
+  if (!p) return "new";
+  if (p.done) return p.due && p.due <= today() ? "due" : "done";
+  return (p.seen && p.seen.length) || p.quizDone || p.tdDone ? "started" : "new";
+}
+const STATUS_LABEL = { new: "À faire", started: "En cours", done: "Acquis", due: "À réviser" };
+function dueModules() { return allModules().filter((m) => status(m.id) === "due"); }
+function trackStats(tid) { const ms = modulesOf(tid); const done = ms.filter((m) => prog(m.id)?.done).length; return { total: ms.length, done }; }
+
+/* ---------- persistance ---------- */
+function makeWriter(getRef, getData, delay) {
+  let timer = null, busy = false, again = false;
+  async function flush() {
+    timer = null;
+    const ref = getRef();
+    if (!ref) return;
+    if (busy) { again = true; return; }
+    busy = true;
+    try { await ref.set(getData()); setSync("ok"); }
+    catch (e) {
+      if (e && e.code === "quota_exceeded") toast("Espace de stockage plein : supprime des modules ajoutés.");
+      setSync("err");
+    }
+    busy = false;
+    if (again) { again = false; flush(); }
+  }
+  return {
+    schedule() { saveLocal(); clearTimeout(timer); timer = setTimeout(flush, delay); },
+    pending() { return !!timer || busy; },
+  };
+}
+const progWriter = makeWriter(() => refs && refs.prog, () => JSON.parse(JSON.stringify(state.progress)), 700);
+const draftWriter = makeWriter(() => refs && refs.drafts, () => ({ codes: state.drafts }), 1500);
+const libWriter = makeWriter(() => refs && refs.lib, () => JSON.parse(JSON.stringify(state.custom)), 300);
+function saveProgress() { progWriter.schedule(); }
+
+let syncState = "local";
+function setSync(s) {
+  syncState = s;
+  const el = $("#sync");
+  if (!el) return;
+  const txt = { ok: "Progression enregistrée sur ton compte", local: "Progression gardée dans ce navigateur", err: "Enregistrement en échec, nouvel essai à la prochaine action", wait: "Connexion à ton compte…" }[s];
+  el.innerHTML = `<span class="sync-dot ${s === "wait" ? "" : s}"></span><span>${txt}</span>`;
+}
+
+async function initCaps() {
+  if (!window.claude || typeof window.claude.use !== "function") { setSync("local"); return; }
+  claude.use("sample").then((s) => { sample = s; if (s) document.body.classList.add("has-ai"); }).catch(() => {});
+  setSync("wait");
+  let db, user;
+  try { [db, user] = await Promise.all([claude.use("db"), claude.use("user")]); } catch (e) {}
+  if (!db || !user) { setSync("local"); return; }
+  try { uid = await user.id(); } catch (e) { uid = null; }
+  if (!uid) { setSync("local"); return; }
+  const base = "data/users/" + uid;
+  refs = { prog: db.doc(base + "/progress"), drafts: db.doc(base + "/drafts"), lib: db.doc(base + "/library") };
+  const hadLocal = Object.keys(state.progress.modules).length > 0;
+  let timer = setTimeout(() => setSync("local"), 10000);
+  const done = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  refs.prog.onSnapshot((snap) => {
+    if (snap.metadata && !snap.metadata.fromCache) { done(); if (syncState !== "err") setSync("ok"); }
+    if (!snap.exists) { if (hadLocal && snap.metadata && !snap.metadata.fromCache) saveProgress(); return; }
+    if (progWriter.pending()) return;
+    const d = snap.data();
+    if (d && d.modules) { state.progress = JSON.parse(JSON.stringify(d)); saveLocal(); refresh(); }
+  }, () => { done(); setSync("local"); });
+  refs.drafts.onSnapshot((snap) => {
+    if (!snap.exists || draftWriter.pending()) return;
+    const d = snap.data();
+    if (d && d.codes) { state.drafts = { ...d.codes }; saveLocal(); }
+  }, () => {});
+  refs.lib.onSnapshot((snap) => {
+    if (!snap.exists) { if ((state.custom.modules.length || state.custom.tracks.length) && snap.metadata && !snap.metadata.fromCache) libWriter.schedule(); return; }
+    if (libWriter.pending()) return;
+    const d = snap.data();
+    if (d) { state.custom = { tracks: (d.tracks || []).slice(), modules: (d.modules || []).slice() }; saveLocal(); refresh(); }
+  }, () => {});
+}
+
+/* ---------- rendu : barre latérale ---------- */
+function currentRoute() { return (location.hash || "#accueil").slice(1); }
+function renderSide() {
+  const r = currentRoute();
+  const due = dueModules().length;
+  const groups = tracks().map((t) => {
+    const s = trackStats(t.id);
+    const mods = modulesOf(t.id).map((m) => `<a class="mod-link ${r === "m-" + m.id ? "on" : ""}" href="#m-${esc(m.id)}"><span class="st ${status(m.id)}" title="${STATUS_LABEL[status(m.id)]}"></span>${esc(m.title)}</a>`).join("");
+    return `<div class="track-group" style="${tc(t)}"><a class="track-head" href="#t-${esc(t.id)}"><span class="dot"></span>${esc(t.short || t.name)}<span class="frac">${s.done}/${s.total}</span></a>${mods}</div>`;
+  }).join("");
+  $("#side").innerHTML = `
+    <a class="brand" href="#accueil"><span class="brand-mark">&lt;/&gt;</span><b>Atelier de code</b></a>
+    <nav class="nav-main">
+      <a class="nav-link ${r === "accueil" ? "on" : ""}" href="#accueil">Tableau de bord</a>
+      <a class="nav-link ${r === "revision" ? "on" : ""}" href="#revision">Révisions <span class="count ${due ? "" : "zero"}">${due}</span></a>
+      <a class="nav-link ${r === "ajouter" ? "on" : ""}" href="#ajouter">Ajouter un module</a>
+    </nav>
+    ${groups}
+    <div class="side-foot" id="sync"></div>`;
+  setSync(syncState);
+}
+
+/* ---------- rendu : accueil ---------- */
+function nextModule() {
+  const all = allModules();
+  const started = all.find((m) => status(m.id) === "started");
+  if (started) return started;
+  for (const t of tracks()) {
+    const ms = modulesOf(t.id);
+    const anyDone = ms.some((m) => prog(m.id)?.done);
+    const nxt = ms.find((m) => status(m.id) === "new");
+    if (anyDone && nxt) return nxt;
+  }
+  return all.find((m) => status(m.id) === "new") || null;
+}
+function viewHome() {
+  const all = allModules();
+  const doneCount = all.filter((m) => prog(m.id)?.done).length;
+  const due = dueModules();
+  const nxt = nextModule();
+  const upcoming = all.filter((m) => prog(m.id)?.done && status(m.id) === "done").map((m) => ({ m, due: prog(m.id).due })).sort((a, b) => (a.due < b.due ? -1 : 1));
+  const nt = nxt ? track(nxt.track) : null;
+  const resume = nxt ? `
+      <div class="eyebrow">${status(nxt.id) === "started" ? "Reprendre" : "Prochain module"}</div>
+      <div class="row"><span class="chip" style="${tc(nt)}">${esc(nt.short || nt.name)}</span><span class="muted small">${nxt.minutes || 15} min</span></div>
+      <h2>${esc(nxt.title)}</h2>
+      <p class="muted small">${inl(nxt.goal)}</p>
+      <div><a class="btn primary" href="#m-${esc(nxt.id)}">${status(nxt.id) === "started" ? "Continuer" : "Commencer"}</a></div>`
+    : `<div class="eyebrow">Parcours</div><h2>Tout est acquis</h2><p class="muted small">Ajoute un module pour continuer à apprendre.</p><div><a class="btn primary" href="#ajouter">Ajouter un module</a></div>`;
+  const dueCard = due.length ? `
+      <div class="eyebrow">À réviser aujourd'hui</div>
+      <div class="big" style="color: var(--warn)">${due.length}</div>
+      <div class="due-list">${due.slice(0, 4).map((m) => `<a href="#m-${esc(m.id)}" style="${tc(track(m.track))}"><span class="st due"></span>${esc(m.title)}</a>`).join("")}${due.length > 4 ? `<span class="muted">et ${due.length - 4} autre(s)</span>` : ""}</div>
+      <div><a class="btn" href="#revision">Lancer la révision</a></div>`
+    : `
+      <div class="eyebrow">Révisions</div>
+      <div class="big muted">0</div>
+      <p class="muted small">${upcoming.length ? `Prochaine révision : <b>${esc(upcoming[0].m.title)}</b>, ${frDate(upcoming[0].due)}` : "Termine un module (quiz + TD) : il reviendra ici pour une révision le lendemain, puis à 3, 7, 16 et 35 jours."}</p>`;
+  const segs = tracks().map((t) => { const s = trackStats(t.id); return `<div class="stack" style="gap:4px;${tc(t)}"><div class="row small"><span>${esc(t.short || t.name)}</span><span class="spacer"></span><span class="muted" style="font-variant-numeric: tabular-nums">${s.done}/${s.total}</span></div><div class="bar"><i style="width:${s.total ? (100 * s.done / s.total) : 0}%"></i></div></div>`; }).join("");
+  const cards = tracks().map((t) => {
+    const s = trackStats(t.id);
+    const first = modulesOf(t.id).find((m) => !prog(m.id)?.done);
+    return `<a class="card track-card" style="${tc(t)}" href="#t-${esc(t.id)}">
+      <div class="row"><h3>${esc(t.name)}</h3><span class="spacer"></span><span class="muted small">${s.done}/${s.total}</span></div>
+      <p class="muted small">${esc(t.desc || "")}</p>
+      <div class="bar"><i style="width:${s.total ? (100 * s.done / s.total) : 0}%"></i></div>
+      <span class="small">${first ? `Suivant : ${esc(first.title)}` : "Parcours terminé"}</span>
+    </a>`;
+  }).join("");
+  return `<div class="wrap">
+    <div class="stack" style="gap:6px">
+      <div class="eyebrow">${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div>
+      <h1>Ton atelier de code</h1>
+      <p class="lead">Chaque module t'explique d'abord comment ça marche, puis te fait pratiquer. Compte 15 minutes par module.</p>
+    </div>
+    <div class="grid3 home-top">
+      <div class="card" style="${nt ? tc(nt) : ""}">${resume}</div>
+      <div class="card">${dueCard}</div>
+      <div class="card"><div class="eyebrow">Progression</div><div class="row" style="align-items:baseline"><span class="big">${doneCount}</span><span class="muted">/ ${all.length} modules acquis</span></div><div class="stack" style="gap:8px">${segs}</div></div>
+    </div>
+    <div class="card stack">
+      <h3>Ordre conseillé</h3>
+      <div class="path"><span class="muted" style="width:56px">Back</span><span class="chip" style="${tc(track("php"))}">PHP POO</span><span class="arrow">→</span><span class="chip" style="${tc(track("doctrine"))}">Doctrine</span><span class="arrow">→</span><span class="chip" style="${tc(track("dto"))}">DTO</span><span class="arrow">→</span><span class="chip" style="${tc(track("arch"))}">Architecture</span><span class="arrow">→</span><span class="chip" style="${tc(track("ddd"))}">DDD (bonus)</span></div>
+      <div class="path"><span class="muted" style="width:56px">Front</span><span class="chip" style="${tc(track("react"))}">React</span><span class="arrow">→</span><span class="chip" style="${tc(track("data"))}">Données & API</span><span class="arrow">→</span><span class="chip" style="${tc(track("next"))}">Next.js</span></div>
+      <div class="path"><span class="muted" style="width:56px">Outils</span><span class="chip" style="${tc(track("git"))}">Git & GitHub</span><span class="muted small">à faire en parallèle, un module de temps en temps</span></div>
+      <p class="muted small">Les deux lignes se rejoignent : le JSON que React envoie avec axios (parcours Données & API) arrive dans les DTO Symfony (parcours DTO). Le parcours Architecture assemble les deux : fais-le après Données & API.</p>
+    </div>
+    <div class="grid3">${cards}</div>
+    <div class="card stack">
+      <h3>Comment chaque module t'apprend</h3>
+      <div class="method">
+        <div><b>1. Le mécanisme</b><span>Un schéma en 4 étapes : comment ça marche avant les détails.</span></div>
+        <div><b>2. L'exemple commenté</b><span>Un code réel, avec ce qu'il faut remarquer.</span></div>
+        <div><b>3. Le quiz</b><span>Te tester fixe mieux en mémoire que relire.</span></div>
+        <div><b>4. Le TD</b><span>Tu écris le code toi-même, avec indices et correction.</span></div>
+        <div><b>5. Les révisions</b><span>Le module revient à 1, 3, 7, 16 puis 35 jours.</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- rendu : parcours ---------- */
+function viewTrack(tid) {
+  const t = track(tid);
+  const ms = modulesOf(tid);
+  const s = trackStats(tid);
+  return `<div class="wrap" style="${tc(t)}">
+    <div class="stack" style="gap:8px">
+      <a class="small" href="#accueil">← Tableau de bord</a>
+      <h1>${esc(t.name)}</h1>
+      <p class="lead">${esc(t.desc || "")}</p>
+      <div class="row" style="max-width:420px"><div class="bar" style="flex:1"><i style="width:${s.total ? 100 * s.done / s.total : 0}%"></i></div><span class="small muted">${s.done}/${s.total} acquis</span></div>
+    </div>
+    <div class="card list">${ms.map((m, i) => `<a class="list-mod" href="#m-${esc(m.id)}"><span class="num">${String(i + 1).padStart(2, "0")}</span><span><span class="t">${esc(m.title)}</span>${isCustom(m.id) ? ' <span class="pill custom">ajouté</span>' : ""}<br><span class="g">${inl(m.goal)}</span></span><span class="pill ${status(m.id)}">${STATUS_LABEL[status(m.id)]}</span></a>`).join("") || `<p class="muted" style="padding:16px">Aucun module pour l'instant. <a href="#ajouter">Ajoute le premier.</a></p>`}</div>
+  </div>`;
+}
+
+/* ---------- rendu : module ---------- */
+function stepDone(m, i) {
+  const p = prog(m.id) || {};
+  if (i === 2) return !!p.quizDone;
+  if (i === 3) return !!p.tdDone;
+  return (p.seen || []).includes(i);
+}
+function viewModule(id) {
+  const m = mod(id);
+  if (!m) return `<div class="wrap"><h1>Module introuvable</h1><p><a href="#accueil">Retour au tableau de bord</a></p></div>`;
+  const t = track(m.track);
+  const ms = modulesOf(m.track);
+  const idx = ms.findIndex((x) => x.id === id);
+  const p = prog(id) || {};
+  const step = state.ui.step[id] ?? (p.done ? 0 : p.tdDone ? 2 : p.quizDone ? 3 : 0);
+  state.ui.step[id] = step;
+  const st = status(id);
+  const banner = p.done ? `<div class="done-banner"><b>Module acquis</b><span class="small">${st === "due" ? "Une révision est prévue aujourd'hui." : `Prochaine révision : ${frDate(p.due)}`}</span><span class="spacer"></span>${st === "due" ? `<a class="btn sm" href="#revision">Réviser</a>` : ""}</div>` : "";
+  const body = [panelLearn, panelExample, panelQuiz, panelTD][step](m);
+  const prev = step > 0 ? `<button class="btn" data-act="step" data-id="${esc(id)}" data-step="${step - 1}">← ${STEPS[step - 1]}</button>` : (idx > 0 ? `<a class="btn ghost" href="#m-${esc(ms[idx - 1].id)}">← Module précédent</a>` : "<span></span>");
+  const next = step < 3 ? `<button class="btn primary" data-act="step" data-id="${esc(id)}" data-step="${step + 1}">${STEPS[step + 1]} →</button>` : (idx < ms.length - 1 ? `<a class="btn" href="#m-${esc(ms[idx + 1].id)}">Module suivant →</a>` : `<a class="btn" href="#t-${esc(t.id)}">Voir le parcours</a>`);
+  return `<div class="wrap" style="${tc(t)}">
+    <div class="mod-head">
+      <div class="row small"><a href="#t-${esc(t.id)}">${esc(t.name)}</a><span class="muted">· module ${idx + 1}/${ms.length} · ${m.minutes || 15} min</span><span class="spacer"></span><span class="pill ${st}">${STATUS_LABEL[st]}</span></div>
+      <h1>${esc(m.title)}</h1>
+      <p class="lead"><b>Objectif :</b> ${inl(m.goal)}</p>
+    </div>
+    ${banner}
+    <div class="steps" role="tablist">${STEPS.map((s, i) => `<button class="step-tab ${i === step ? "on" : ""} ${stepDone(m, i) ? "ok" : ""}" role="tab" aria-selected="${i === step}" data-act="step" data-id="${esc(id)}" data-step="${i}"><span class="n">${stepDone(m, i) ? "✓" : i + 1}</span>${s}</button>`).join("")}</div>
+    <div class="panel" id="panel">${body}</div>
+    <div class="nav-steps">${prev}${next}</div>
+  </div>`;
+}
+function panelLearn(m) {
+  const n = m.flow.length;
+  return `
+    <div class="why"><div class="eyebrow">Le problème</div><p>${inl(m.why)}</p></div>
+    <div class="stack"><h2>Comment ça marche</h2>
+      <div class="flow" style="--n:${n}">${m.flow.map((f, i) => `<div class="flow-step"><span class="k">${String(i + 1).padStart(2, "0")}</span><span>${inl(f)}</span></div>`).join("")}</div>
+    </div>
+    <div class="stack"><h2>L'essentiel</h2><ul class="points">${m.points.map((x) => `<li>${inl(x)}</li>`).join("")}</ul></div>
+    ${m.pitfalls && m.pitfalls.length ? `<div class="pitfalls"><h3>Pièges fréquents</h3><ul>${m.pitfalls.map((x) => `<li>${inl(x)}</li>`).join("")}</ul></div>` : ""}
+    <div class="ai-box ai-block ai-only">
+      <div class="row"><b>Pas encore clair ?</b><span class="spacer"></span><button class="btn sm" data-act="explain" data-id="${esc(m.id)}">Explique-moi autrement</button></div>
+      <form class="ask" data-form="ask" data-id="${esc(m.id)}"><input class="field" id="ask-${esc(m.id)}" name="q" placeholder="Pose ta question sur ce module…" autocomplete="off"><button class="btn sm">Demander</button></form>
+      <div class="ai-out" id="ai-learn"></div>
+    </div>`;
+}
+function panelExample(m) {
+  const ex = m.example;
+  return `
+    <div class="ex">
+      ${codeBlock(ex.code, ex.lang)}
+      <div class="stack"><h3>À remarquer</h3><ol class="notes">${(ex.notes || []).map((x) => `<li><span>${inl(x)}</span></li>`).join("")}</ol>
+      <p class="muted small">Relis le code en cherchant chaque étape du schéma « Comment ça marche ».</p></div>
+    </div>`;
+}
+function panelQuiz(m) {
+  const p = prog(m.id) || {};
+  const ans = p.answers || {};
+  const qs = m.quiz.map((q, qi) => {
+    const a = ans[qi];
+    const answered = a !== undefined;
+    const opts = q.options.map((o, oi) => {
+      let cls = "";
+      if (answered && oi === q.answer) cls = "right";
+      else if (answered && oi === a) cls = "wrong";
+      return `<button class="opt ${cls}" ${answered ? "disabled" : ""} data-act="answer" data-id="${esc(m.id)}" data-q="${qi}" data-o="${oi}">${inl(o)}</button>`;
+    }).join("");
+    const fb = answered ? `<div class="feedback ${a === q.answer ? "right" : "wrong"}"><b>${a === q.answer ? "Juste." : "Pas tout à fait."}</b>${inl(q.why)}</div>` : "";
+    return `<div class="card q"><div class="q-title"><span class="k">Q${qi + 1}</span><span>${inl(q.q)}</span></div><div class="opts">${opts}</div>${fb}</div>`;
+  }).join("");
+  const nAns = Object.keys(ans).length;
+  const correct = m.quiz.filter((q, qi) => ans[qi] === q.answer).length;
+  const end = nAns === m.quiz.length ? `<div class="card score"><span class="big">${correct}/${m.quiz.length}</span><span class="small">${correct === m.quiz.length ? "Tout juste. Passe au TD." : "Relis l'étape Comprendre pour les questions ratées, puis recommence."}</span><span class="spacer"></span><button class="btn sm" data-act="resetQuiz" data-id="${esc(m.id)}">Recommencer</button></div>` : "";
+  return `<p class="muted small">Réponds sans revenir en arrière : chercher la réponse dans ta mémoire est ce qui la fixe.</p>${qs}${end}`;
+}
+function panelTD(m) {
+  const td = m.td;
+  const p = prog(m.id) || {};
+  const draft = state.drafts[m.id] ?? td.starter.code;
+  const hintsShown = state.ui.hints[m.id] || 0;
+  const showSol = !!state.ui.showSol[m.id];
+  const checks = p.checks || [];
+  return `
+    <div class="stack"><div class="eyebrow">TD</div><h2>${esc(td.title)}</h2><p>${inl(td.enonce)}</p></div>
+    <div class="card stack"><h3>Consignes</h3><ol class="consignes">${td.consignes.map((c) => `<li>${inl(c)}</li>`).join("")}</ol></div>
+    <div class="stack">
+      <div class="row"><h3>Ton code</h3><span class="muted small">Écris ici ou dans ton éditeur, puis colle ton code pour la correction.</span><span class="spacer"></span><button class="btn sm ghost" data-act="copyCode" data-id="${esc(m.id)}">Copier</button><button class="btn sm ghost" data-act="resetCode" data-id="${esc(m.id)}">Repartir du code de départ</button></div>
+      <textarea class="editor" id="ed-${esc(m.id)}" data-id="${esc(m.id)}" spellcheck="false" aria-label="Éditeur du TD">${esc(draft)}</textarea>
+    </div>
+    <div class="row">
+      <button class="btn primary ai-only" data-act="review" data-id="${esc(m.id)}">Faire corriger par Claude</button>
+      <button class="btn" data-act="hint" data-id="${esc(m.id)}" ${hintsShown >= td.hints.length ? "disabled" : ""}>Indice ${Math.min(hintsShown + 1, td.hints.length)}/${td.hints.length}</button>
+      <button class="btn ghost" data-act="solution" data-id="${esc(m.id)}">${showSol ? "Masquer la solution" : "Voir la solution"}</button>
+    </div>
+    ${hintsShown ? `<div class="stack">${td.hints.slice(0, hintsShown).map((h, i) => `<div class="hint"><b>Indice ${i + 1}.</b> ${inl(h)}</div>`).join("")}</div>` : ""}
+    <div class="ai-out card" id="ai-td" style="display:none"></div>
+    ${showSol ? `<div class="stack"><p class="solution-warn">Compare avec ta version : il y a souvent plusieurs bonnes solutions.</p>${codeBlock(td.solution.code, td.solution.lang)}</div>` : ""}
+    <div class="card stack"><h3>Vérifie toi-même</h3><div class="checks">${td.checks.map((c, i) => `<label><input type="checkbox" data-act="check" data-id="${esc(m.id)}" data-i="${i}" ${checks.includes(i) ? "checked" : ""}><span>${inl(c)}</span></label>`).join("")}</div></div>
+    <div class="row">${p.tdDone ? `<span class="pill done">TD terminé</span><button class="btn sm ghost" data-act="tdUndo" data-id="${esc(m.id)}">Annuler</button>` : `<button class="btn primary" data-act="tdDone" data-id="${esc(m.id)}">J'ai terminé le TD</button><span class="muted small">${p.quizDone ? "Le module sera acquis." : "Il restera le quiz pour valider le module."}</span>`}</div>`;
+}
+
+/* ---------- rendu : révision ---------- */
+function startReview(ids, practice) {
+  const queue = ids.map((id) => {
+    const m = mod(id);
+    return { id, qs: shuffle(m.quiz.map((q, qi) => qi)).map((qi) => ({ qi, perm: shuffle(m.quiz[qi].options.map((_, i) => i)), a: undefined })), revealed: false, result: null };
+  });
+  state.ui.review = { queue, idx: 0, practice: !!practice, finished: false };
+  render();
+}
+function viewReview() {
+  const r = state.ui.review;
+  if (!r) {
+    const due = dueModules();
+    const doneMods = allModules().filter((m) => prog(m.id)?.done);
+    const upcoming = doneMods.filter((m) => status(m.id) === "done").sort((a, b) => (prog(a.id).due < prog(b.id).due ? -1 : 1));
+    return `<div class="wrap">
+      <div class="stack" style="gap:6px"><h1>Révisions</h1><p class="lead">Un module acquis revient ici à intervalles croissants : 1, 3, 7, 16 puis 35 jours. Une erreur le fait revenir dès le lendemain.</p></div>
+      <div class="card stack">
+        ${due.length ? `<div class="row"><span class="big" style="color:var(--warn)">${due.length}</span><span>module(s) à réviser aujourd'hui</span><span class="spacer"></span><button class="btn primary" data-act="startReview">Commencer</button></div>
+          <div class="due-list">${due.map((m) => `<a href="#m-${esc(m.id)}" style="${tc(track(m.track))}"><span class="st due"></span>${esc(m.title)} <span class="muted small">· ${esc(track(m.track).short)}</span></a>`).join("")}</div>`
+        : `<h3>Rien à réviser aujourd'hui</h3><p class="muted">${doneMods.length ? "Tu peux t'entraîner librement sur tes modules acquis, sans changer le planning." : "Termine un premier module (quiz + TD) pour lancer les révisions."}</p>${doneMods.length ? `<div><button class="btn" data-act="practice">S'entraîner sur 3 modules au hasard</button></div>` : ""}`}
+      </div>
+      ${upcoming.length ? `<div class="card" style="padding:6px 8px"><table class="sched"><thead><tr><th>Module</th><th>Parcours</th><th>Prochaine révision</th><th>Palier</th></tr></thead><tbody>${upcoming.map((m) => `<tr><td><a href="#m-${esc(m.id)}">${esc(m.title)}</a></td><td>${esc(track(m.track).short)}</td><td class="num">${frDate(prog(m.id).due)} <span class="muted">(J+${daysFromToday(prog(m.id).due)})</span></td><td class="num">${prog(m.id).box || 1}/${INTERVALS.length}</td></tr>`).join("")}</tbody></table></div>` : ""}
+    </div>`;
+  }
+  if (r.finished) {
+    return `<div class="wrap"><div class="stack" style="gap:6px"><h1>Révision terminée</h1><p class="lead">${r.practice ? "Entraînement libre : le planning n'a pas changé." : "Le planning a été mis à jour."}</p></div>
+      <div class="card" style="padding:6px 8px"><table class="sched"><thead><tr><th>Module</th><th>Résultat</th><th>${r.practice ? "" : "Prochaine révision"}</th></tr></thead><tbody>${r.queue.map((it) => { const m = mod(it.id); return `<tr><td>${esc(m.title)}</td><td>${it.result ? '<span class="pill done">Sans faute</span>' : '<span class="pill due">À retravailler</span>'}</td><td class="num">${r.practice ? "" : frDate(prog(it.id).due)}</td></tr>`; }).join("")}</tbody></table></div>
+      <div class="row"><button class="btn primary" data-act="closeReview">Retour aux révisions</button>${r.queue.some((it) => !it.result) ? `<span class="muted small">Pour les modules à retravailler, relis l'étape Comprendre.</span>` : ""}</div></div>`;
+  }
+  const it = r.queue[r.idx];
+  const m = mod(it.id);
+  const t = track(m.track);
+  const dots = r.queue.map((x, i) => `<i class="${i < r.idx ? (x.result ? "ok" : "ko") : i === r.idx ? "on" : ""}"></i>`).join("");
+  const allAnswered = it.qs.every((q) => q.a !== undefined);
+  const qs = it.revealed ? it.qs.map((q, k) => {
+    const Q = m.quiz[q.qi];
+    const opts = q.perm.map((oi) => {
+      let cls = "";
+      if (q.a !== undefined && oi === Q.answer) cls = "right"; else if (q.a === oi) cls = "wrong";
+      return `<button class="opt ${cls}" ${q.a !== undefined ? "disabled" : ""} data-act="rAnswer" data-k="${k}" data-o="${oi}">${inl(Q.options[oi])}</button>`;
+    }).join("");
+    const fb = q.a !== undefined ? `<div class="feedback ${q.a === Q.answer ? "right" : "wrong"}"><b>${q.a === Q.answer ? "Juste." : "Pas tout à fait."}</b>${inl(Q.why)}</div>` : "";
+    return `<div class="q"><div class="q-title"><span class="k">Q${k + 1}</span><span>${inl(Q.q)}</span></div><div class="opts">${opts}</div>${fb}</div>`;
+  }).join("") : "";
+  return `<div class="wrap" style="${tc(t)}">
+    <div class="row"><h1 style="font-size:1.4rem">${r.practice ? "Entraînement" : "Révision"}</h1><span class="spacer"></span><div class="progress-dots">${dots}</div><button class="btn sm ghost" data-act="closeReview">Quitter</button></div>
+    <div class="card rev-card">
+      <div class="row"><span class="chip" style="${tc(t)}">${esc(t.short || t.name)}</span><span class="muted small">${r.idx + 1}/${r.queue.length}</span></div>
+      <h2>${esc(m.title)}</h2>
+      <div class="stack"><b>1. Sans regarder : explique en 2 ou 3 phrases comment ça marche.</b>
+        <textarea class="field" rows="3" placeholder="Écris de mémoire, même approximativement…" aria-label="Rappel libre"></textarea>
+        ${it.revealed ? `<div class="stack small"><span class="muted">Compare avec le mécanisme :</span><ol class="recall-flow">${m.flow.map((f) => `<li>${inl(f)}</li>`).join("")}</ol></div>` : `<div><button class="btn" data-act="reveal">Comparer avec le mécanisme</button></div>`}
+      </div>
+      ${it.revealed ? `<div class="stack" style="gap:18px"><b>2. Quiz</b>${qs}</div>` : ""}
+      ${allAnswered ? `<div class="row"><button class="btn primary" data-act="rNext">${r.idx < r.queue.length - 1 ? "Module suivant" : "Terminer"}</button></div>` : ""}
+    </div>
+  </div>`;
+}
+
+/* ---------- rendu : ajouter ---------- */
+function moduleTemplate() {
+  return JSON.stringify({
+    trackName: "Symfony", title: "Titre du module", minutes: 15,
+    goal: "Ce que tu sauras faire.", why: "Le problème que ça résout.",
+    flow: ["Étape 1", "Étape 2", "Étape 3", "Étape 4"],
+    points: ["Point essentiel avec du `code`"], pitfalls: ["Erreur fréquente"],
+    example: { lang: "php", code: "<?php\n// exemple", notes: ["Ce qu'il faut remarquer"] },
+    quiz: [{ q: "Question ?", options: ["A", "B", "C", "D"], answer: 1, why: "Explication" }],
+    td: { title: "Titre du TD", enonce: "Énoncé", consignes: ["Consigne"], starter: { lang: "php", code: "// à toi" }, hints: ["Indice"], solution: { lang: "php", code: "// solution" }, checks: ["Vérification"] },
+  }, null, 2);
+}
+function viewAdd() {
+  const g = state.ui.gen || {};
+  const trackOpts = tracks().map((t) => `<option value="${esc(t.id)}" ${g.track === t.id ? "selected" : ""}>${esc(t.name)}</option>`).join("");
+  const isNew = g.track === "__new";
+  const sw = COLORS.map((c) => `<button type="button" class="swatch ${state.ui.newTrackColor === c ? "on" : ""}" style="--tc: var(--t-${c})" data-act="color" data-c="${c}" aria-label="Couleur ${c}"></button>`).join("");
+  const customMods = state.custom.modules || [];
+  const customTracks = state.custom.tracks || [];
+  const preview = g.result ? (() => {
+    const m = g.result;
+    return `<div class="card stack" style="${tc(isNew ? { color: state.ui.newTrackColor } : track(g.track))}">
+      <div class="eyebrow">Aperçu</div><h3>${esc(m.title)}</h3><p class="small">${inl(m.goal)}</p>
+      <ol class="recall-flow">${m.flow.map((f) => `<li>${inl(f)}</li>`).join("")}</ol>
+      <p class="muted small">${m.points.length} points clés · ${m.quiz.length} questions · TD « ${esc(m.td.title)} »</p>
+      <div class="row"><button class="btn primary" data-act="genSave">Ajouter au parcours</button><button class="btn" data-act="genRun">Régénérer</button></div>
+    </div>`;
+  })() : "";
+  return `<div class="wrap">
+    <div class="stack" style="gap:6px"><h1>Ajouter un module</h1><p class="lead">Ajoute un sujet à un parcours existant ou crée un nouveau parcours. Le module aura la même forme que les autres : mécanisme, exemple, quiz, TD.</p></div>
+    <form class="card stack" data-form="gen">
+      <h2>Générer avec Claude</h2>
+      <p class="muted small no-ai">La génération n'est pas disponible dans cette vue. Tu peux importer un module en JSON plus bas.</p>
+      <div class="form-grid">
+        <label for="g-track">Parcours</label>
+        <select class="field" id="g-track" name="track">${trackOpts}<option value="__new" ${isNew ? "selected" : ""}>Nouveau parcours…</option></select>
+        ${isNew ? `<label for="g-tname">Nom du parcours</label><input class="field" id="g-tname" name="tname" value="${esc(g.tname || "")}" placeholder="Ex. Symfony, TypeScript, Tests PHPUnit">
+        <span class="small" style="font-weight:500">Couleur</span><div class="swatches">${sw}</div>` : ""}
+        <label for="g-topic">Sujet du module</label>
+        <input class="field" id="g-topic" name="topic" value="${esc(g.topic || "")}" placeholder="Ex. Symfony Messenger, useReducer, Specification pattern" required>
+        <label for="g-notes">Précisions</label>
+        <input class="field" id="g-notes" name="notes" value="${esc(g.notes || "")}" placeholder="Optionnel : ce que tu bloques, un cas de ton projet…">
+      </div>
+      <div class="row"><button class="btn primary ai-only" ${g.loading ? "disabled" : ""}>${g.loading ? '<span class="spin"></span> Claude écrit le module…' : "Générer le module"}</button>${g.error ? `<span class="err">${esc(g.error)}</span>` : ""}</div>
+    </form>
+    ${preview}
+    <div class="card stack">
+      <h2>Importer du JSON</h2>
+      <p class="muted small">Colle un module (ou un tableau de modules) au format ci-dessous. <code>trackName</code> crée le parcours s'il n'existe pas ; sinon utilise <code>track</code> avec l'identifiant d'un parcours (${tracks().map((t) => `<code>${esc(t.id)}</code>`).join(", ")}).</p>
+      <textarea class="field" id="import-json" rows="8" spellcheck="false" style="font-family:var(--font-mono);font-size:13px" placeholder="{ ... }"></textarea>
+      <div class="row"><button class="btn primary" data-act="import">Importer</button><button class="btn" data-act="copyTpl">Copier le modèle</button><span class="err" id="import-err"></span></div>
+    </div>
+    ${customMods.length || customTracks.length ? `<div class="card stack"><h2>Tes ajouts</h2>
+      ${customMods.map((m) => `<div class="row" style="${tc(track(m.track))}"><span class="chip">${esc(track(m.track).short || track(m.track).name)}</span><a href="#m-${esc(m.id)}">${esc(m.title)}</a><span class="spacer"></span>${state.ui.confirmDel === m.id ? `<button class="btn sm danger" data-act="delMod" data-id="${esc(m.id)}">Confirmer la suppression</button><button class="btn sm ghost" data-act="cancelDel">Annuler</button>` : `<button class="btn sm ghost" data-act="askDel" data-id="${esc(m.id)}">Supprimer</button>`}</div>`).join("")}
+      ${customTracks.filter((t) => !modulesOf(t.id).length).map((t) => `<div class="row" style="${tc(t)}"><span class="chip">${esc(t.name)}</span><span class="muted small">parcours vide</span><span class="spacer"></span><button class="btn sm ghost" data-act="delTrack" data-id="${esc(t.id)}">Supprimer le parcours</button></div>`).join("")}
+    </div>` : ""}
+  </div>`;
+}
+
+/* ---------- rendu principal ---------- */
+let lastRoute = null;
+function render() {
+  const r = currentRoute();
+  let html;
+  if (r === "revision") html = viewReview();
+  else if (r === "ajouter") html = viewAdd();
+  else if (r.startsWith("t-")) html = viewTrack(r.slice(2));
+  else if (r.startsWith("m-")) html = viewModule(r.slice(2));
+  else html = viewHome();
+  const main = $("#main");
+  main.innerHTML = html;
+  highlight(main);
+  renderSide();
+  if (lastRoute !== r) { window.scrollTo(0, 0); lastRoute = r; }
+}
+function refresh() {
+  renderSide();
+  const a = document.activeElement;
+  if (a && $("#main").contains(a) && (a.tagName === "TEXTAREA" || a.tagName === "INPUT")) return;
+  if (currentRoute() === "revision" && state.ui.review) return;
+  render();
+}
+
+/* ---------- actions ---------- */
+function markSeen(id, step) { const p = ensure(id); p.seen = p.seen || []; if (!p.seen.includes(step)) p.seen.push(step); }
+function checkComplete(id) {
+  const p = ensure(id);
+  if (p.quizDone && p.tdDone && !p.done) {
+    p.done = true; p.box = 1; p.due = addDays(INTERVALS[0]); p.doneAt = today();
+    toast("Module acquis. Première révision demain.");
+  }
+}
+function saveDraftFrom(el) { const id = el.dataset.id; state.drafts[id] = el.value; draftWriter.schedule(); }
+
+const ACTIONS = {
+  menu() { document.body.classList.toggle("menu-open"); },
+  step(el) {
+    keepDraft(); const id = el.dataset.id; const s = Number(el.dataset.step);
+    const cur = state.ui.step[id] ?? 0;
+    if (cur === 0 || cur === 1) markSeen(id, cur);
+    state.ui.step[id] = s;
+    saveProgress(); render();
+    const tabs = $(".steps"); if (tabs) tabs.scrollIntoView({ block: "nearest" });
+  },
+  answer(el) {
+    const id = el.dataset.id; const m = mod(id); const p = ensure(id);
+    p.answers = p.answers || {};
+    p.answers[el.dataset.q] = Number(el.dataset.o);
+    if (Object.keys(p.answers).length === m.quiz.length) { p.quizDone = true; checkComplete(id); }
+    saveProgress(); render();
+  },
+  resetQuiz(el) { const p = ensure(el.dataset.id); p.answers = {}; saveProgress(); render(); },
+  hint(el) { const id = el.dataset.id; state.ui.hints[id] = (state.ui.hints[id] || 0) + 1; keepDraft(); render(); },
+  solution(el) { const id = el.dataset.id; state.ui.showSol[id] = !state.ui.showSol[id]; keepDraft(); render(); },
+  check(el) {
+    const p = ensure(el.dataset.id); const i = Number(el.dataset.i);
+    p.checks = (p.checks || []).filter((x) => x !== i); if (el.checked) p.checks.push(i);
+    saveProgress();
+  },
+  tdDone(el) { const id = el.dataset.id; keepDraft(); const p = ensure(id); p.tdDone = true; checkComplete(id); saveProgress(); render(); },
+  tdUndo(el) { const p = ensure(el.dataset.id); p.tdDone = false; saveProgress(); render(); },
+  resetCode(el) { const id = el.dataset.id; delete state.drafts[id]; draftWriter.schedule(); const ed = $("#ed-" + CSS.escape(id)); if (ed) ed.value = mod(id).td.starter.code; },
+  async copyCode(el) { const ed = $("#ed-" + CSS.escape(el.dataset.id)); try { await navigator.clipboard.writeText(ed.value); toast("Code copié."); } catch (e) { ed.select(); toast("Sélectionné : copie avec Ctrl+C."); } },
+  explain(el) { aiExplain(mod(el.dataset.id)); },
+  review(el) { aiReview(mod(el.dataset.id)); },
+  startReview() { startReview(dueModules().map((m) => m.id), false); },
+  practice() { const ids = shuffle(allModules().filter((m) => prog(m.id)?.done).map((m) => m.id)).slice(0, 3); startReview(ids, true); },
+  reveal() { state.ui.review.queue[state.ui.review.idx].revealed = true; render(); },
+  rAnswer(el) { const r = state.ui.review; r.queue[r.idx].qs[Number(el.dataset.k)].a = Number(el.dataset.o); render(); },
+  rNext() {
+    const r = state.ui.review; const it = r.queue[r.idx]; const m = mod(it.id);
+    it.result = it.qs.every((q) => q.a === m.quiz[q.qi].answer);
+    if (!r.practice) {
+      const p = ensure(it.id);
+      if (it.result) { p.box = Math.min((p.box || 1) + 1, INTERVALS.length); p.due = addDays(INTERVALS[p.box - 1]); }
+      else { p.box = 1; p.due = addDays(1); }
+      p.lastReview = today(); p.reviews = (p.reviews || 0) + 1;
+      saveProgress();
+    }
+    if (r.idx < r.queue.length - 1) r.idx++; else r.finished = true;
+    render();
+  },
+  closeReview() { state.ui.review = null; render(); },
+  color(el) { state.ui.newTrackColor = el.dataset.c; readGenForm(); render(); },
+  genRun() { readGenForm(); aiGenerate(); },
+  genSave() { saveGenerated(); },
+  import() { importJSON(); },
+  async copyTpl() { try { await navigator.clipboard.writeText(moduleTemplate()); toast("Modèle copié."); } catch (e) { $("#import-json").value = moduleTemplate(); toast("Modèle collé dans le champ."); } },
+  askDel(el) { state.ui.confirmDel = el.dataset.id; render(); },
+  cancelDel() { state.ui.confirmDel = null; render(); },
+  delMod(el) {
+    const id = el.dataset.id;
+    state.custom.modules = state.custom.modules.filter((m) => m.id !== id);
+    delete state.progress.modules[id]; delete state.drafts[id];
+    state.ui.confirmDel = null;
+    libWriter.schedule(); saveProgress(); draftWriter.schedule(); render(); toast("Module supprimé.");
+  },
+  delTrack(el) { state.custom.tracks = state.custom.tracks.filter((t) => t.id !== el.dataset.id); libWriter.schedule(); render(); },
+};
+function keepDraft() { const ed = document.querySelector("textarea.editor"); if (ed) saveDraftFrom(ed); }
+
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("[data-act]");
+  if (e.target.closest(".side a")) document.body.classList.remove("menu-open");
+  if (!a) return;
+  if (a.tagName === "INPUT" && a.type === "checkbox") { ACTIONS[a.dataset.act]?.(a, e); return; }
+  e.preventDefault();
+  ACTIONS[a.dataset.act]?.(a, e);
+});
+document.addEventListener("submit", (e) => {
+  const f = e.target.closest("form[data-form]");
+  if (!f) return;
+  e.preventDefault();
+  if (f.dataset.form === "ask") { const q = f.q.value.trim(); if (q) aiAsk(mod(f.dataset.id), q); }
+  if (f.dataset.form === "gen") { readGenForm(); aiGenerate(); }
+});
+document.addEventListener("change", (e) => {
+  if (e.target.id === "g-track") { readGenForm(); render(); }
+});
+let draftTimer;
+document.addEventListener("input", (e) => {
+  if (e.target.classList.contains("editor")) { clearTimeout(draftTimer); const el = e.target; draftTimer = setTimeout(() => saveDraftFrom(el), 500); }
+});
+document.addEventListener("keydown", (e) => {
+  const el = e.target;
+  if (el.classList && el.classList.contains("editor") && e.key === "Tab" && !e.shiftKey) {
+    e.preventDefault();
+    const s = el.selectionStart, en = el.selectionEnd;
+    el.setRangeText("    ", s, en, "end");
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+});
+window.addEventListener("hashchange", () => { document.body.classList.remove("menu-open"); render(); });
+
+/* ---------- Claude ---------- */
+function levelContext() { return "L'élève a un niveau intermédiaire en programmation. Il a besoin de comprendre COMMENT une chose fonctionne pour pouvoir la faire. Réponds en français, de façon simple, concise et concrète."; }
+function moduleContext(m) {
+  return `Module « ${m.title} » (parcours ${track(m.track).name}).\nObjectif : ${m.goal}\nMécanisme : ${m.flow.map((f, i) => `${i + 1}) ${f}`).join(" ")}\nPoints clés : ${m.points.join(" | ")}`;
+}
+async function runAI(outSel, prompt, intro) {
+  const out = $(outSel);
+  if (!out || !sample) return;
+  out.style.display = "";
+  out.innerHTML = `<p class="muted small"><span class="spin"></span> ${esc(intro)}</p>`;
+  try {
+    const res = await sample(prompt, {
+      cache: false,
+      onText: ({ text }) => { const o = $(outSel); if (o) { o.innerHTML = md(text); } },
+    });
+    const o = $(outSel);
+    if (o) { o.innerHTML = md(res.text); highlight(o); }
+  } catch (e) {
+    const o = $(outSel);
+    if (!o) return;
+    if (e && e.code === "not_granted") { o.innerHTML = `<p class="err">Claude n'est pas autorisé dans cette vue.</p>`; }
+    else if (e && e.code === "rate_limited") { o.innerHTML = `<p class="err">Trop de demandes d'un coup. Réessaie dans une minute.</p>`; }
+    else { o.innerHTML = `<p class="err">La réponse n'a pas pu être générée. Réessaie.</p>`; }
+  }
+}
+function aiExplain(m) {
+  runAI("#ai-learn", `${levelContext()}\n\n${moduleContext(m)}\n\nL'élève n'a pas compris l'explication. Ré-explique autrement : commence par une analogie du quotidien (3 phrases max), puis relie chaque élément de l'analogie au mécanisme, puis donne un mini exemple de code de 5 à 10 lignes dans un bloc \`\`\`. 180 mots maximum hors code. Pas de titre.`, "Claude reformule…");
+}
+function aiAsk(m, q) {
+  runAI("#ai-learn", `${levelContext()}\n\n${moduleContext(m)}\n\nQuestion de l'élève : ${q}\n\nRéponds directement à la question, en 150 mots maximum (hors code). Si un exemple aide, un bloc \`\`\` court. Pas de titre.`, "Claude réfléchit…");
+}
+function aiReview(m) {
+  const ed = $("#ed-" + CSS.escape(m.id));
+  const codeTxt = ed ? ed.value : "";
+  keepDraft();
+  if (!codeTxt.trim() || codeTxt.trim() === m.td.starter.code.trim()) { toast("Écris d'abord ton code dans l'éditeur."); return; }
+  runAI("#ai-td", `${levelContext()}\n\nTu corriges un TD.\nTD : ${m.td.title}\nÉnoncé : ${m.td.enonce}\nConsignes :\n${m.td.consignes.map((c, i) => `${i + 1}. ${c}`).join("\n")}\n\nSolution de référence (NE LA RECOPIE PAS) :\n${m.td.solution.code}\n\nCode de l'élève :\n${codeTxt}\n\nRéponds ainsi :\n- Une ligne par consigne : « OK » ou ce qui manque/est faux, en une phrase.\n- Le point le plus important à corriger et POURQUOI (lié au mécanisme du module).\n- Un indice pour corriger, sans donner le code complet.\nSi tout est bon, dis-le et propose une amélioration. 200 mots maximum.`, "Claude relit ton code…");
+}
+function readGenForm() {
+  const f = document.querySelector('form[data-form="gen"]');
+  if (!f) return;
+  const g = state.ui.gen || (state.ui.gen = {});
+  g.track = f.track.value; g.topic = f.topic.value; g.notes = f.notes.value;
+  if (f.tname) g.tname = f.tname.value;
+}
+async function aiGenerate() {
+  const g = state.ui.gen || {};
+  if (!sample) return;
+  if (!g.topic || !g.topic.trim()) { g.error = "Indique un sujet."; render(); return; }
+  if (g.track === "__new" && !(g.tname || "").trim()) { g.error = "Donne un nom au nouveau parcours."; render(); return; }
+  const trackName = g.track === "__new" ? g.tname.trim() : track(g.track).name;
+  const exemple = JSON.stringify(stripModule(DATA.modules[0]));
+  g.loading = true; g.error = null; g.result = null; render();
+  const prompt = `${levelContext()}\n\nÉcris UN module d'apprentissage sur le sujet « ${g.topic.trim()} » pour le parcours « ${trackName} ».${g.notes ? `\nPrécisions de l'élève : ${g.notes}` : ""}\n\nMéthode : d'abord le problème que ça résout (why), puis le mécanisme en 4 étapes courtes (flow), 4 ou 5 points essentiels, 2 pièges, un exemple de code réaliste et commenté (15 à 40 lignes) avec 3 notes, 3 questions de quiz (4 options, answer = index de la bonne réponse, why = explication courte), et un TD pratique (énoncé, 3 à 5 consignes, code de départ, 2 ou 3 indices progressifs, solution complète, 2 ou 3 vérifications).\nContraintes : sections courtes et simples ; markdown inline seulement (\`code\`, **gras**) dans les textes ; lang parmi php, tsx, javascript, sql, bash, yaml, json, python, plaintext ; contenu exact et à jour.\n\nRéponds UNIQUEMENT avec un objet JSON valide ayant exactement cette structure (exemple d'un autre module) :\n${exemple}`;
+  try {
+    const val = await sample.json(prompt, { modelTier: "complex" });
+    const m = normalizeModule(val);
+    if (!m) throw new Error("format");
+    g.result = m;
+  } catch (e) {
+    g.error = e && e.code === "rate_limited" ? "Trop de demandes. Réessaie dans une minute." : e && e.code === "not_granted" ? "Claude n'est pas autorisé dans cette vue." : "Le module généré était incomplet. Réessaie.";
+  }
+  g.loading = false;
+  if (currentRoute() === "ajouter") render();
+}
+function stripModule(m) { const { id, track, ...rest } = m; return rest; }
+function asStrArr(a) { return Array.isArray(a) ? a.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim()) : []; }
+function normCode(c) { if (!c || typeof c.code !== "string") return null; return { lang: LANGS[c.lang] !== undefined ? c.lang : "plaintext", code: c.code.replace(/\s+$/, "") }; }
+function normalizeModule(v) {
+  if (!v || typeof v !== "object") return null;
+  const str = (x) => (typeof x === "string" ? x.trim() : "");
+  const quiz = (Array.isArray(v.quiz) ? v.quiz : []).map((q) => ({ q: str(q && q.q), options: asStrArr(q && q.options), answer: Number(q && q.answer), why: str(q && q.why) }))
+    .filter((q) => q.q && q.options.length >= 2 && Number.isInteger(q.answer) && q.answer >= 0 && q.answer < q.options.length);
+  const td = v.td || {};
+  const ex = v.example || {};
+  const m = {
+    title: str(v.title), minutes: Number(v.minutes) || 15, goal: str(v.goal), why: str(v.why),
+    flow: asStrArr(v.flow).slice(0, 6), points: asStrArr(v.points), pitfalls: asStrArr(v.pitfalls),
+    example: { ...(normCode(ex) || { lang: "plaintext", code: "" }), notes: asStrArr(ex.notes) },
+    quiz,
+    td: { title: str(td.title) || "TD", enonce: str(td.enonce), consignes: asStrArr(td.consignes), starter: normCode(td.starter) || { lang: "plaintext", code: "" }, hints: asStrArr(td.hints), solution: normCode(td.solution), checks: asStrArr(td.checks) },
+  };
+  if (!m.title || !m.goal || m.flow.length < 2 || !m.points.length || !m.example.code || !quiz.length || !m.td.enonce || !m.td.consignes.length || !m.td.solution) return null;
+  if (!m.td.hints.length) m.td.hints = ["Relis le mécanisme du module."];
+  if (!m.td.checks.length) m.td.checks = ["Ton code respecte toutes les consignes"];
+  if (!m.why) m.why = m.goal;
+  return m;
+}
+function ensureTrack(name, color) {
+  const n = name.trim();
+  const existing = tracks().find((t) => t.name.toLowerCase() === n.toLowerCase() || (t.short || "").toLowerCase() === n.toLowerCase());
+  if (existing) return existing.id;
+  const t = { id: "t" + rid(), name: n, short: n.length > 14 ? n.slice(0, 13) + "…" : n, color: color || "rose", desc: "Parcours ajouté." };
+  state.custom.tracks.push(t);
+  return t.id;
+}
+function saveGenerated() {
+  const g = state.ui.gen; if (!g || !g.result) return;
+  const tid = g.track === "__new" ? ensureTrack(g.tname, state.ui.newTrackColor) : g.track;
+  const m = { ...g.result, id: "c" + rid(), track: tid };
+  state.custom.modules.push(m);
+  libWriter.schedule();
+  state.ui.gen = { track: tid };
+  location.hash = "#m-" + m.id;
+  toast("Module ajouté.");
+}
+function importJSON() {
+  const err = $("#import-err");
+  let v;
+  try { v = JSON.parse($("#import-json").value); } catch (e) { err.textContent = "JSON invalide : vérifie les virgules et les guillemets."; return; }
+  const list = Array.isArray(v) ? v : [v];
+  let added = 0, firstId = null;
+  for (const raw of list) {
+    const m = normalizeModule(raw);
+    if (!m) continue;
+    let tid = raw.track && tracks().some((t) => t.id === raw.track) ? raw.track : null;
+    if (!tid) tid = ensureTrack(raw.trackName || raw.track || "Mes modules", "rose");
+    const id = "c" + rid();
+    state.custom.modules.push({ ...m, id, track: tid });
+    added++; firstId = firstId || id;
+  }
+  if (!added) { err.textContent = "Aucun module valide : il faut au moins title, goal, flow, points, example, quiz et td."; return; }
+  libWriter.schedule();
+  toast(`${added} module(s) importé(s).`);
+  location.hash = "#m-" + firstId;
+}
+
+/* ---------- démarrage ---------- */
+loadLocal();
+render();
+initCaps();
+</script>
+</body>
+</html>
