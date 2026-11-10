@@ -233,7 +233,9 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 
 
 /* Accueil graphique */
-.home-hero { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.25fr) minmax(0, 0.75fr) minmax(0, 0.75fr); gap: 14px; }
+.home-hero { display: grid; grid-template-columns: minmax(330px, 1.15fr) minmax(0, 1.2fr) minmax(190px, 0.8fr); gap: 14px; align-items: stretch; }
+.home-hero > .card, .stat-col > .card { min-width: 0; }
+.stat-col { display: grid; grid-template-rows: 1fr 1fr; gap: 14px; }
 .ring { position: relative; flex: none; }
 .ring svg { display: block; }
 .ring circle { transition: stroke-dasharray 0.6s ease; }
@@ -241,7 +243,7 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .ring-in b { font-family: var(--font-display); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
 .ring-in b small { font-size: 0.7em; color: var(--muted); font-weight: 600; }
 .ring-in span { font-size: 0.78rem; color: var(--muted); }
-.hero-ring { display: flex; align-items: center; gap: 18px; }
+.hero-ring { display: flex; align-items: center; justify-content: center; gap: 22px; flex-wrap: wrap; }
 .hero-ring .ring-in b { font-size: 2rem; }
 .kpis { display: flex; flex-direction: column; gap: 10px; }
 .kpis div { display: flex; align-items: baseline; gap: 8px; }
@@ -252,9 +254,13 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .next-card { display: flex; flex-direction: column; gap: 8px; justify-content: center; border-left: 4px solid var(--tc, var(--accent)); }
 .next-card h2 { font-size: 1.25rem; }
 .next-card .btn { align-self: flex-start; }
-.stat-card { display: flex; flex-direction: column; justify-content: center; gap: 4px; text-decoration: none; color: var(--ink); }
-.stat-card .btn { align-self: flex-start; margin-top: 6px; }
-.stat-num { font-family: var(--font-display); font-size: 2.6rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat-card { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center; padding: 14px 16px; text-decoration: none; color: var(--ink); }
+.stat-card .stat-num { grid-row: 1 / 3; }
+.stat-link { font-size: 0.84rem; color: var(--accent); font-weight: 500; }
+a.stat-card:hover { border-color: var(--accent); }
+.stat-link.muted { color: var(--muted); font-weight: 400; }
+
+.stat-num { font-family: var(--font-display); font-size: 2.3rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .stat-num small { font-size: 0.45em; color: var(--muted); }
 .stat-lbl { color: var(--muted); font-size: 0.88rem; }
 .stat-card.warn .stat-num { color: var(--warn); }
@@ -284,16 +290,17 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .side-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 0 10px; }
 .groups { display: flex; flex-direction: column; gap: 2px; margin-top: -8px; }
 .track-head { width: 100%; border: 0; background: none; cursor: pointer; text-align: left; }
-.track-head .tname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track-head .tname { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chev { width: 7px; height: 7px; border-right: 1.6px solid var(--muted); border-bottom: 1.6px solid var(--muted); transform: rotate(-45deg); flex: none; margin-right: 2px; transition: transform 0.15s; }
 .track-group.open .chev { transform: rotate(45deg); }
-.minibar { margin-left: auto; width: 36px; height: 4px; border-radius: 9px; background: var(--surface-2); overflow: hidden; flex: none; }
+.minibar { margin-left: 8px; width: 32px; height: 4px; border-radius: 9px; background: var(--surface-2); overflow: hidden; flex: none; }
 .minibar i { display: block; height: 100%; background: var(--tc); }
 .track-head .frac { margin-left: 6px; min-width: 30px; text-align: right; }
 .mods { display: flex; flex-direction: column; gap: 1px; padding: 2px 0 8px; }
 .mod-link.all { color: var(--accent); font-size: 0.8rem; padding-left: 35px; }
-@media (max-width: 1100px) { .home-hero { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 520px) { .home-hero { grid-template-columns: minmax(0, 1fr); } .hero-ring { flex-direction: column; } .kpis { flex-direction: row; gap: 18px; } .kpis div { flex-direction: column; align-items: center; gap: 0; } .act-stats { flex-direction: row; gap: 18px; } .act-stats div { flex-direction: column; gap: 0; } .hm-months { font-size: 0.62rem; } }
+@media (max-width: 1280px) { .home-hero { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stat-col { grid-column: 1 / -1; grid-template-rows: none; grid-template-columns: 1fr 1fr; } }
+@media (max-width: 1000px) { .home-hero { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 520px) { .stat-col { grid-template-columns: minmax(0, 1fr); } .hero-ring { flex-direction: column; } .kpis { flex-direction: row; gap: 18px; } .kpis div { flex-direction: column; align-items: center; gap: 0; } .act-stats { flex-direction: row; gap: 18px; } .act-stats div { flex-direction: column; gap: 0; } .hm-months { font-size: 0.62rem; } }
 
 @media (max-width: 1000px) {
   .method { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -576,7 +583,7 @@ function renderSide() {
     </div>`;
   }).join("");
   $("#side").innerHTML = `
-    <a class="brand" href="#accueil"><span class="brand-mark">&lt;/&gt;</span><b>Atelier de code</b></a>
+    <a class="brand" href="#accueil"><b>Atelier de code</b></a>
     <nav class="nav-main">
       <a class="nav-link ${r === "accueil" ? "on" : ""}" href="#accueil">Tableau de bord</a>
       <a class="nav-link ${r === "revision" ? "on" : ""}" href="#revision">Révisions <span class="count ${due ? "" : "zero"}">${due}</span></a>
@@ -663,7 +670,7 @@ function viewHome() {
   }).join("");
   return `<div class="wrap">
     <div class="row" style="align-items:flex-end">
-      <div class="stack" style="gap:4px"><div class="eyebrow">${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div><h1>Ton atelier de code</h1></div>
+      <div class="stack" style="gap:4px"><div class="eyebrow">${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div><h1>Mon atelier de code</h1></div>
     </div>
     <div class="home-hero">
       <div class="card hero-ring">
@@ -681,13 +688,15 @@ function viewHome() {
           <a class="btn primary" href="#m-${esc(nxt.id)}">${status(nxt.id) === "started" ? "Continuer" : "Commencer"} →</a>`
         : `<div class="eyebrow">Parcours</div><h2>Tout est acquis</h2><a class="btn primary" href="#ajouter">Ajouter un module</a>`}
       </div>
+      <div class="stat-col">
       <a class="card stat-card ${due.length ? "warn" : ""}" href="#revision">
         <span class="stat-num">${due.length}</span><span class="stat-lbl">${due.length > 1 ? "révisions" : "révision"} aujourd'hui</span>
-        <span class="btn sm ${due.length ? "" : "ghost"}">${due.length ? "Réviser" : "Voir le planning"}</span>
+        <span class="stat-link">${due.length ? "Réviser →" : "Voir le planning →"}</span>
       </a>
       <div class="card stat-card">
         <span class="stat-num">${act.streak}<small> j</small></span><span class="stat-lbl">jours d'affilée</span>
-        <span class="muted small">${act.week} action${act.week > 1 ? "s" : ""} cette semaine</span>
+        <span class="stat-link muted">${act.week} action${act.week > 1 ? "s" : ""} cette semaine</span>
+      </div>
       </div>
     </div>
     <div class="card stack"><div class="row"><h3>Parcours</h3><span class="spacer"></span><span class="muted small">Back : PHP → Doctrine → DTO → Architecture · Front : React → Données → Next.js · Git en parallèle</span></div>
@@ -807,7 +816,7 @@ function panelTD(m) {
     <div class="stack"><div class="eyebrow">TD</div><h2>${esc(td.title)}</h2><p>${inl(td.enonce)}</p></div>
     <div class="card stack"><h3>Consignes</h3><ol class="consignes">${td.consignes.map((c) => `<li>${inl(c)}</li>`).join("")}</ol></div>
     <div class="stack">
-      <div class="row"><h3>Ton code</h3><span class="muted small">Écris ici ou dans ton éditeur, puis colle ton code pour la correction.</span><span class="spacer"></span><button class="btn sm ghost" data-act="copyCode" data-id="${esc(m.id)}">Copier</button><button class="btn sm ghost" data-act="resetCode" data-id="${esc(m.id)}">Repartir du code de départ</button></div>
+      <div class="row"><h3>Mon code</h3><span class="muted small">Écris ici ou dans ton éditeur, puis colle ton code pour la correction.</span><span class="spacer"></span><button class="btn sm ghost" data-act="copyCode" data-id="${esc(m.id)}">Copier</button><button class="btn sm ghost" data-act="resetCode" data-id="${esc(m.id)}">Repartir du code de départ</button></div>
       <textarea class="editor" id="ed-${esc(m.id)}" data-id="${esc(m.id)}" spellcheck="false" aria-label="Éditeur du TD">${esc(draft)}</textarea>
     </div>
     <div class="row">
