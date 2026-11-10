@@ -286,6 +286,62 @@ a.stat-card:hover { border-color: var(--accent); }
 .act-stats div { display: flex; align-items: baseline; gap: 8px; }
 .act-stats b { font-family: var(--font-display); font-size: 1.5rem; font-variant-numeric: tabular-nums; min-width: 2.5ch; }
 .act-stats span { color: var(--muted); font-size: 0.86rem; }
+
+/* Roadmap d'un parcours */
+.rm-head { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.rm-kpis { display: flex; gap: 22px; }
+.rm-kpis div { display: flex; flex-direction: column; }
+.rm-kpis b { font-family: var(--font-display); font-size: 1.4rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rm-kpis span { font-size: 0.8rem; color: var(--muted); }
+.roadmap { list-style: none; margin: 8px 0 0; padding: 0; position: relative; display: flex; flex-direction: column; }
+.roadmap::before { content: ""; position: absolute; left: 50%; top: 14px; bottom: 30px; width: 4px; margin-left: -2px; border-radius: 4px; background: repeating-linear-gradient(to bottom, var(--line) 0 10px, transparent 10px 18px); }
+.rm-start, .rm-end { display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; z-index: 1; }
+.rm-start::before { content: ""; width: 14px; height: 14px; border-radius: 50%; background: var(--tc); box-shadow: 0 0 0 5px color-mix(in srgb, var(--tc) 20%, var(--bg)); }
+.rm-cap { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); background: var(--bg); padding: 2px 10px; border-radius: 99px; }
+.rm-end { margin-top: 18px; }
+.rm-goalnode { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-size: 1.5rem; background: var(--surface); border: 2px dashed var(--line); color: var(--muted); }
+.rm-end .rm-goalnode { line-height: 1; }
+.rm-end.passed .rm-goalnode { background: var(--tc); border: 0; color: #fff; box-shadow: 0 6px 18px color-mix(in srgb, var(--tc) 35%, transparent); }
+.rm-end.passed .rm-cap { color: var(--tc); }
+.rm-item { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr); align-items: center; padding: 14px 0; }
+.rm-item::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: transparent; }
+.rm-item.passed::before { background: var(--tc); }
+.rm-item.passed + .rm-item:not(.passed)::before { background: linear-gradient(to bottom, var(--tc) 50%, transparent 50%); }
+.rm-node { grid-column: 2; grid-row: 1; justify-self: center; position: relative; z-index: 1; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font: 700 15px var(--font-display); background: var(--surface); border: 3px solid var(--line); color: var(--muted); }
+.rm-item.started .rm-node { border-color: var(--tc); color: var(--tc); background: conic-gradient(color-mix(in srgb, var(--tc) 22%, var(--surface)) 0 50%, var(--surface) 50% 100%); }
+.rm-item.done .rm-node { background: var(--tc); border-color: var(--tc); color: #fff; }
+.rm-item.due .rm-node { background: var(--warn); border-color: var(--warn); color: #fff; }
+.rm-item.here .rm-node { box-shadow: 0 0 0 6px color-mix(in srgb, var(--tc) 22%, transparent); animation: rm-pulse 2.2s ease-in-out infinite; }
+@keyframes rm-pulse { 50% { box-shadow: 0 0 0 11px color-mix(in srgb, var(--tc) 8%, transparent); } }
+.rm-card { grid-row: 1; position: relative; display: flex; flex-direction: column; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; text-decoration: none; color: var(--ink); transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+.rm-card:hover { transform: translateY(-2px); border-color: var(--tc); box-shadow: 0 8px 22px color-mix(in srgb, var(--tc) 14%, transparent); }
+.rm-item.left .rm-card { grid-column: 1; margin-right: 6px; }
+.rm-item.right .rm-card { grid-column: 3; margin-left: 6px; }
+.rm-item.left .rm-card::after, .rm-item.right .rm-card::after { content: ""; position: absolute; top: 50%; width: 14px; height: 2px; background: var(--line); }
+.rm-item.left .rm-card::after { right: -21px; }
+.rm-item.right .rm-card::after { left: -21px; }
+.rm-item.here .rm-card { border: 2px solid var(--tc); box-shadow: 0 8px 26px color-mix(in srgb, var(--tc) 18%, transparent); }
+.rm-item.done .rm-card { background: color-mix(in srgb, var(--tc) 5%, var(--surface)); }
+.rm-flag { position: absolute; top: -11px; left: 14px; background: var(--tc); color: #fff; font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 99px; }
+.rm-meta { display: flex; gap: 10px; align-items: center; font-size: 0.76rem; color: var(--muted); }
+.rm-num { font: 600 0.76rem var(--font-mono); color: var(--tc); text-transform: uppercase; }
+.rm-title { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; line-height: 1.25; }
+.rm-goal { font-size: 0.86rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rm-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }
+.rm-steps { display: flex; gap: 4px; }
+.rm-steps i { width: 18px; height: 5px; border-radius: 9px; background: var(--surface-2); }
+.rm-steps i.on { background: var(--tc); }
+@media (max-width: 760px) {
+  .roadmap::before { left: 22px; }
+  .rm-start, .rm-end { align-items: flex-start; padding-left: 0; }
+  .rm-start::before { margin-left: 15px; }
+  .rm-end .rm-goalnode { margin-left: -5px; }
+  .rm-item { grid-template-columns: 44px minmax(0, 1fr); column-gap: 18px; }
+  .rm-item::before { left: 22px; }
+  .rm-node { grid-column: 1; }
+  .rm-item.left .rm-card, .rm-item.right .rm-card { grid-column: 2; margin: 0; }
+  .rm-item.left .rm-card::after, .rm-item.right .rm-card::after { left: -18px; right: auto; width: 14px; }
+}
 /* Barre latérale repliable */
 .side-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 0 10px; }
 .groups { display: flex; flex-direction: column; gap: 2px; margin-top: -8px; }
@@ -717,14 +773,45 @@ function viewTrack(tid) {
   const t = track(tid);
   const ms = modulesOf(tid);
   const s = trackStats(tid);
+  const nextId = (ms.find((m) => status(m.id) === "started") || ms.find((m) => status(m.id) === "due") || ms.find((m) => status(m.id) === "new") || {}).id;
+  const minsLeft = ms.filter((m) => !prog(m.id)?.done).reduce((a, m) => a + (m.minutes || 15), 0);
+  const items = ms.map((m, i) => {
+    const st = status(m.id);
+    const here = m.id === nextId;
+    const steps = [0, 1, 2, 3].map((k) => `<i class="${stepDone(m, k) ? "on" : ""}"></i>`).join("");
+    const nodeIn = st === "done" ? "✓" : st === "due" ? "↻" : String(i + 1);
+    const side = i % 2 === 0 ? "left" : "right";
+    return `<li class="rm-item ${side} ${st} ${here ? "here" : ""} ${prog(m.id)?.done ? "passed" : ""}">
+      <a class="rm-card" href="#m-${esc(m.id)}">
+        ${here ? `<span class="rm-flag">${st === "started" ? "Tu en es là" : st === "due" ? "À réviser" : "Prochaine étape"}</span>` : ""}
+        <span class="rm-meta"><span class="rm-num">Étape ${i + 1}</span><span>${m.minutes || 15} min</span>${isCustom(m.id) ? '<span class="pill custom">ajouté</span>' : ""}</span>
+        <span class="rm-title">${esc(m.title)}</span>
+        <span class="rm-goal">${inl(m.goal)}</span>
+        <span class="rm-foot"><span class="rm-steps" title="Comprendre · Exemple · Quiz · TD">${steps}</span><span class="pill ${st}">${STATUS_LABEL[st]}</span></span>
+      </a>
+      <span class="rm-node" aria-hidden="true">${nodeIn}</span>
+    </li>`;
+  }).join("");
+  const finished = s.total > 0 && s.done === s.total;
   return `<div class="wrap" style="${tc(t)}">
-    <div class="stack" style="gap:8px">
-      <a class="small" href="#accueil">← Tableau de bord</a>
-      <h1>${esc(t.name)}</h1>
-      <p class="lead">${esc(t.desc || "")}</p>
-      <div class="row" style="max-width:420px"><div class="bar" style="flex:1"><i style="width:${s.total ? 100 * s.done / s.total : 0}%"></i></div><span class="small muted">${s.done}/${s.total} acquis</span></div>
+    <a class="small" href="#accueil">← Tableau de bord</a>
+    <div class="rm-head card">
+      ${ring(s.total ? s.done / s.total : 0, 96, 10, "var(--tc)", `${s.done}<small>/${s.total}</small>`)}
+      <div class="stack" style="gap:6px;flex:1;min-width:220px">
+        <div class="eyebrow">Parcours</div>
+        <h1>${esc(t.name)}</h1>
+        <p class="muted small">${esc(t.desc || "")}</p>
+      </div>
+      <div class="rm-kpis">
+        <div><b>${s.total - s.done}</b><span>étapes restantes</span></div>
+        <div><b>${minsLeft >= 60 ? Math.floor(minsLeft / 60) + " h " + String(minsLeft % 60).padStart(2, "0") : minsLeft + " min"}</b><span>de travail estimé</span></div>
+      </div>
     </div>
-    <div class="card list">${ms.map((m, i) => `<a class="list-mod" href="#m-${esc(m.id)}"><span class="num">${String(i + 1).padStart(2, "0")}</span><span><span class="t">${esc(m.title)}</span>${isCustom(m.id) ? ' <span class="pill custom">ajouté</span>' : ""}<br><span class="g">${inl(m.goal)}</span></span><span class="pill ${status(m.id)}">${STATUS_LABEL[status(m.id)]}</span></a>`).join("") || `<p class="muted" style="padding:16px">Aucun module pour l'instant. <a href="#ajouter">Ajoute le premier.</a></p>`}</div>
+    ${ms.length ? `<ol class="roadmap">
+      <li class="rm-start"><span class="rm-cap">Départ</span></li>
+      ${items}
+      <li class="rm-end ${finished ? "passed" : ""}"><span class="rm-goalnode" aria-hidden="true">★</span><span class="rm-cap">${finished ? "Parcours terminé" : "Objectif : " + esc(t.short || t.name) + " maîtrisé"}</span></li>
+    </ol>` : `<p class="muted card">Aucun module pour l'instant. <a href="#ajouter">Ajoute le premier.</a></p>`}
   </div>`;
 }
 
