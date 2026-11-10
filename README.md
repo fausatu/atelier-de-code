@@ -20,7 +20,7 @@ Le plus simple :
 |---|---|---|
 | Cours, quiz, TD, révisions | Oui | Oui |
 | Progression | Sur ton compte (tous tes appareils) | Dans le navigateur (localStorage), par appareil |
-| « Explique-moi autrement », correction des TD, génération de modules | Oui | Non (boutons masqués automatiquement) |
+| « Explique-moi autrement », correction des TD, génération de modules | Oui | Oui, avec ta clé API Anthropic (menu « Activer les boutons Claude ») |
 | Import JSON de modules | Oui | Oui |
 
 ## Modifier le contenu
@@ -41,3 +41,11 @@ python3 build.py   # produit index.html à partir de template.html + contenu
 `build.py` vérifie aussi que chaque module est complet (index de bonne réponse valide, TD complet…).
 
 Pour ajouter un parcours : crée `c_monparcours.py`, importe-le dans `build.py`, ajoute le parcours dans `TRACKS`.
+
+## Boutons Claude hors de claude.ai
+
+Sur GitHub Pages (ou tout autre hébergement), ouvre « Activer les boutons Claude » dans le menu et colle une clé API créée sur https://console.anthropic.com/settings/keys.
+
+- La clé est stockée uniquement dans ton navigateur (localStorage), jamais dans le dépôt.
+- Les appels partent directement de ton navigateur vers api.anthropic.com.
+- L'API est facturée à l'usage, séparément de l'abonnement Claude : fixe une limite de dépense dans la console.

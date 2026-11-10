@@ -409,8 +409,57 @@ function setSync(s) {
   el.innerHTML = `<span class="sync-dot ${s === "wait" ? "" : s}"></span><span>${txt}</span>`;
 }
 
+/* ---------- Claude hors de claude.ai : clé API personnelle ---------- */
+const KEY_LS = "atelier-anthropic-key";
+const API_MODEL = "claude-sonnet-5-5";
+let standalone = false;
+function getKey() { try { return localStorage.getItem(KEY_LS) || ""; } catch (e) { return ""; } }
+function setKey(k) { try { k ? localStorage.setItem(KEY_LS, k) : localStorage.removeItem(KEY_LS); } catch (e) {} }
+function apiError(status, msg) { return { code: status === 401 || status === 403 ? "not_granted" : status === 429 ? "rate_limited" : "unavailable", message: msg || "HTTP " + status }; }
+async function callApi(input, opts = {}, maxTokens = 2048) {
+  const key = getKey();
+  if (!key) throw { code: "not_granted", message: "Pas de clé API" };
+  const messages = typeof input === "string" ? [{ role: "user", content: input }] : input;
+  const stream = typeof opts.onText === "function";
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+    body: JSON.stringify({ model: API_MODEL, max_tokens: maxTokens, stream, messages }),
+  });
+  if (!res.ok) { let m = ""; try { m = (await res.json()).error?.message; } catch (e) {} throw apiError(res.status, m); }
+  if (!stream) { const d = await res.json(); return { text: (d.content || []).filter((b) => b.type === "text").map((b) => b.text).join(""), truncated: d.stop_reason === "max_tokens" }; }
+  const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "", text = "", truncated = false;
+  for (;;) {
+    const { value, done } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split("\n"); buf = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith("data:")) continue;
+      let ev; try { ev = JSON.parse(line.slice(5)); } catch (e) { continue; }
+      if (ev.type === "content_block_delta" && ev.delta && ev.delta.type === "text_delta") { text += ev.delta.text; opts.onText({ text, delta: ev.delta.text }); }
+      if (ev.type === "message_delta" && ev.delta && ev.delta.stop_reason === "max_tokens") truncated = true;
+      if (ev.type === "error") throw apiError(0, ev.error && ev.error.message);
+    }
+  }
+  return { text, truncated };
+}
+function makeApiSample() {
+  const fn = (input, opts) => callApi(input, opts, 2048);
+  fn.json = async (input) => {
+    const r = await callApi(input + "\n\nRéponds uniquement avec le JSON, sans texte autour ni bloc de code.", {}, 8000);
+    const t = r.text; const a = t.indexOf("{"), b = t.lastIndexOf("}");
+    if (a < 0 || b < a) throw { code: "unavailable", message: "Réponse non JSON" };
+    return JSON.parse(t.slice(a, b + 1));
+  };
+  return fn;
+}
+function applyStandaloneAI() {
+  sample = getKey() ? makeApiSample() : null;
+  document.body.classList.toggle("has-ai", !!sample);
+}
+
 async function initCaps() {
-  if (!window.claude || typeof window.claude.use !== "function") { setSync("local"); return; }
+  if (!window.claude || typeof window.claude.use !== "function") { standalone = true; applyStandaloneAI(); setSync("local"); render(); return; }
   claude.use("sample").then((s) => { sample = s; if (s) document.body.classList.add("has-ai"); }).catch(() => {});
   setSync("wait");
   let db, user;
@@ -461,6 +510,7 @@ function renderSide() {
       <a class="nav-link ${r === "ajouter" ? "on" : ""}" href="#ajouter">Ajouter un module</a>
     </nav>
     ${groups}
+    ${standalone ? `<a class="nav-link ${r === "claude" ? "on" : ""}" href="#claude" style="font-size:0.86rem">${sample ? "Claude activé" : "Activer les boutons Claude"}</a>` : ""}
     <div class="side-foot" id="sync"></div>`;
   setSync(syncState);
 }
@@ -755,7 +805,7 @@ function viewAdd() {
     <div class="stack" style="gap:6px"><h1>Ajouter un module</h1><p class="lead">Ajoute un sujet à un parcours existant ou crée un nouveau parcours. Le module aura la même forme que les autres : mécanisme, exemple, quiz, TD.</p></div>
     <form class="card stack" data-form="gen">
       <h2>Générer avec Claude</h2>
-      <p class="muted small no-ai">La génération n'est pas disponible dans cette vue. Tu peux importer un module en JSON plus bas.</p>
+      <p class="muted small no-ai">La génération n'est pas disponible dans cette vue. ${standalone ? `<a href="#claude">Active les boutons Claude avec ta clé API</a>, ou importe` : "Tu peux importer"} un module en JSON plus bas.</p>
       <div class="form-grid">
         <label for="g-track">Parcours</label>
         <select class="field" id="g-track" name="track">${trackOpts}<option value="__new" ${isNew ? "selected" : ""}>Nouveau parcours…</option></select>
@@ -782,6 +832,30 @@ function viewAdd() {
   </div>`;
 }
 
+
+/* ---------- rendu : réglage de la clé API ---------- */
+function viewClaude() {
+  const has = !!getKey();
+  if (!standalone) return `<div class="wrap"><h1>Claude est déjà actif</h1><p class="lead">Sur claude.ai, les boutons Claude fonctionnent sans clé. <a href="#accueil">Retour</a></p></div>`;
+  return `<div class="wrap">
+    <div class="stack" style="gap:6px"><h1>Activer les boutons Claude</h1>
+      <p class="lead">Hors de claude.ai, les boutons « Explique-moi autrement », « Faire corriger par Claude » et la génération de modules passent par ta propre clé API Anthropic.</p></div>
+    <div class="card stack">
+      <h3>${has ? "Clé enregistrée dans ce navigateur" : "1. Crée une clé API"}</h3>
+      ${has ? `<p class="small">Les boutons Claude sont actifs. La clé reste dans ce navigateur (localStorage) et n'est envoyée qu'à api.anthropic.com.</p>
+        <div class="row"><button class="btn" data-act="testKey">Tester la clé</button><button class="btn danger" data-act="forgetKey">Oublier la clé</button><span class="small" id="key-msg"></span></div>`
+      : `<p class="small">Sur <a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a> : crée un compte, ajoute un peu de crédit, puis « Create Key ». L'API est facturée à l'usage, séparément de ton abonnement Claude. Fixe une limite de dépense dans la console.</p>
+        <h3>2. Colle-la ici</h3>
+        <form class="ask" data-form="key"><input class="field" id="api-key" name="key" type="password" placeholder="sk-ant-..." autocomplete="off"><button class="btn primary">Enregistrer</button></form>
+        <span class="small" id="key-msg"></span>`}
+    </div>
+    <div class="card stack small">
+      <b>Sécurité</b>
+      <p>La clé n'est jamais dans le code ni sur GitHub : elle est stockée uniquement dans ce navigateur. Toute personne qui utilise ce navigateur pourrait la lire : ne l'enregistre pas sur un ordinateur partagé. Si tu as un doute, supprime-la dans la console Anthropic et crée-en une autre.</p>
+    </div>
+  </div>`;
+}
+
 /* ---------- rendu principal ---------- */
 let lastRoute = null;
 function render() {
@@ -789,6 +863,7 @@ function render() {
   let html;
   if (r === "revision") html = viewReview();
   else if (r === "ajouter") html = viewAdd();
+  else if (r === "claude") html = viewClaude();
   else if (r.startsWith("t-")) html = viewTrack(r.slice(2));
   else if (r.startsWith("m-")) html = viewModule(r.slice(2));
   else html = viewHome();
@@ -866,6 +941,12 @@ const ACTIONS = {
     render();
   },
   closeReview() { state.ui.review = null; render(); },
+  forgetKey() { setKey(""); applyStandaloneAI(); render(); toast("Clé supprimée de ce navigateur."); },
+  async testKey() {
+    const msg = $("#key-msg"); msg.textContent = "Test en cours…";
+    try { await callApi("Réponds juste : OK", {}, 10); msg.textContent = "La clé fonctionne."; }
+    catch (e) { msg.textContent = e.code === "not_granted" ? "Clé refusée : vérifie-la dans la console." : "Échec : " + (e.message || "erreur réseau"); }
+  },
   color(el) { state.ui.newTrackColor = el.dataset.c; readGenForm(); render(); },
   genRun() { readGenForm(); aiGenerate(); },
   genSave() { saveGenerated(); },
@@ -898,6 +979,11 @@ document.addEventListener("submit", (e) => {
   e.preventDefault();
   if (f.dataset.form === "ask") { const q = f.q.value.trim(); if (q) aiAsk(mod(f.dataset.id), q); }
   if (f.dataset.form === "gen") { readGenForm(); aiGenerate(); }
+  if (f.dataset.form === "key") {
+    const k = f.key.value.trim();
+    if (!k.startsWith("sk-")) { $("#key-msg").textContent = "Une clé Anthropic commence par sk-ant-."; return; }
+    setKey(k); applyStandaloneAI(); render(); toast("Clé enregistrée. Les boutons Claude sont actifs.");
+  }
 });
 document.addEventListener("change", (e) => {
   if (e.target.id === "g-track") { readGenForm(); render(); }
@@ -937,7 +1023,7 @@ async function runAI(outSel, prompt, intro) {
   } catch (e) {
     const o = $(outSel);
     if (!o) return;
-    if (e && e.code === "not_granted") { o.innerHTML = `<p class="err">Claude n'est pas autorisé dans cette vue.</p>`; }
+    if (e && e.code === "not_granted") { o.innerHTML = standalone ? `<p class="err">Clé API refusée. <a href="#claude">Vérifie ta clé</a>.</p>` : `<p class="err">Claude n'est pas autorisé dans cette vue.</p>`; }
     else if (e && e.code === "rate_limited") { o.innerHTML = `<p class="err">Trop de demandes d'un coup. Réessaie dans une minute.</p>`; }
     else { o.innerHTML = `<p class="err">La réponse n'a pas pu être générée. Réessaie.</p>`; }
   }
@@ -977,7 +1063,7 @@ async function aiGenerate() {
     if (!m) throw new Error("format");
     g.result = m;
   } catch (e) {
-    g.error = e && e.code === "rate_limited" ? "Trop de demandes. Réessaie dans une minute." : e && e.code === "not_granted" ? "Claude n'est pas autorisé dans cette vue." : "Le module généré était incomplet. Réessaie.";
+    g.error = e && e.code === "rate_limited" ? "Trop de demandes. Réessaie dans une minute." : e && e.code === "not_granted" ? (standalone ? "Clé API refusée : vérifie-la dans « Activer les boutons Claude »." : "Claude n'est pas autorisé dans cette vue.") : "Le module généré était incomplet. Réessaie.";
   }
   g.loading = false;
   if (currentRoute() === "ajouter") render();
