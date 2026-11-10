@@ -231,6 +231,70 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 0.92rem; box-shadow: 0 6px 20px rgb(0 0 0 / 0.2); z-index: 50; max-width: calc(100% - 32px); }
 .toast[hidden] { display: none; }
 
+
+/* Accueil graphique */
+.home-hero { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.25fr) minmax(0, 0.75fr) minmax(0, 0.75fr); gap: 14px; }
+.ring { position: relative; flex: none; }
+.ring svg { display: block; }
+.ring circle { transition: stroke-dasharray 0.6s ease; }
+.ring-in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+.ring-in b { font-family: var(--font-display); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.ring-in b small { font-size: 0.7em; color: var(--muted); font-weight: 600; }
+.ring-in span { font-size: 0.78rem; color: var(--muted); }
+.hero-ring { display: flex; align-items: center; gap: 18px; }
+.hero-ring .ring-in b { font-size: 2rem; }
+.kpis { display: flex; flex-direction: column; gap: 10px; }
+.kpis div { display: flex; align-items: baseline; gap: 8px; }
+.kpis b { font-family: var(--font-display); font-size: 1.35rem; font-variant-numeric: tabular-nums; min-width: 2ch; }
+.kpis span { color: var(--muted); font-size: 0.86rem; white-space: nowrap; }
+.kpis div:nth-child(1) b { color: var(--good); }
+.kpis div:nth-child(2) b { color: var(--accent); }
+.next-card { display: flex; flex-direction: column; gap: 8px; justify-content: center; border-left: 4px solid var(--tc, var(--accent)); }
+.next-card h2 { font-size: 1.25rem; }
+.next-card .btn { align-self: flex-start; }
+.stat-card { display: flex; flex-direction: column; justify-content: center; gap: 4px; text-decoration: none; color: var(--ink); }
+.stat-card .btn { align-self: flex-start; margin-top: 6px; }
+.stat-num { font-family: var(--font-display); font-size: 2.6rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat-num small { font-size: 0.45em; color: var(--muted); }
+.stat-lbl { color: var(--muted); font-size: 0.88rem; }
+.stat-card.warn .stat-num { color: var(--warn); }
+.tr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.tr-ring { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 6px; border-radius: var(--r); text-decoration: none; color: var(--ink); font-size: 0.86rem; font-weight: 500; text-align: center; }
+.tr-ring:hover { background: var(--surface-2); }
+.hm-wrap { display: flex; flex-direction: column; gap: 6px; flex: 1 1 300px; min-width: 260px; max-width: 680px; }
+.hm-months { display: grid; gap: 4px; font-size: 0.72rem; color: var(--muted); }
+.hm-months span { white-space: nowrap; overflow: visible; }
+.hm-grid { display: grid; gap: 4px; }
+.hm-col { display: grid; gap: 4px; }
+.hm { display: block; width: 100%; aspect-ratio: 1; border-radius: 4px; background: var(--surface-2); }
+.hm-legend .hm { width: 11px; }
+.hm.l-1 { background: transparent; }
+.hm.l1 { background: color-mix(in srgb, var(--accent) 30%, var(--surface-2)); }
+.hm.l2 { background: color-mix(in srgb, var(--accent) 55%, var(--surface-2)); }
+.hm.l3 { background: color-mix(in srgb, var(--accent) 78%, var(--surface-2)); }
+.hm.l4 { background: var(--accent); }
+.hm-legend { display: flex; align-items: center; gap: 3px; font-size: 0.72rem; color: var(--muted); }
+.hm-legend span { margin: 0 4px; }
+.act-row { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+.act-stats { display: flex; flex-direction: column; gap: 12px; }
+.act-stats div { display: flex; align-items: baseline; gap: 8px; }
+.act-stats b { font-family: var(--font-display); font-size: 1.5rem; font-variant-numeric: tabular-nums; min-width: 2.5ch; }
+.act-stats span { color: var(--muted); font-size: 0.86rem; }
+/* Barre latérale repliable */
+.side-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 0 10px; }
+.groups { display: flex; flex-direction: column; gap: 2px; margin-top: -8px; }
+.track-head { width: 100%; border: 0; background: none; cursor: pointer; text-align: left; }
+.track-head .tname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chev { width: 7px; height: 7px; border-right: 1.6px solid var(--muted); border-bottom: 1.6px solid var(--muted); transform: rotate(-45deg); flex: none; margin-right: 2px; transition: transform 0.15s; }
+.track-group.open .chev { transform: rotate(45deg); }
+.minibar { margin-left: auto; width: 36px; height: 4px; border-radius: 9px; background: var(--surface-2); overflow: hidden; flex: none; }
+.minibar i { display: block; height: 100%; background: var(--tc); }
+.track-head .frac { margin-left: 6px; min-width: 30px; text-align: right; }
+.mods { display: flex; flex-direction: column; gap: 1px; padding: 2px 0 8px; }
+.mod-link.all { color: var(--accent); font-size: 0.8rem; padding-left: 35px; }
+@media (max-width: 1100px) { .home-hero { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .home-hero { grid-template-columns: minmax(0, 1fr); } .hero-ring { flex-direction: column; } .kpis { flex-direction: row; gap: 18px; } .kpis div { flex-direction: column; align-items: center; gap: 0; } .act-stats { flex-direction: row; gap: 18px; } .act-stats div { flex-direction: column; gap: 0; } .hm-months { font-size: 0.62rem; } }
+
 @media (max-width: 1000px) {
   .method { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ex { grid-template-columns: minmax(0, 1fr); }
@@ -494,13 +558,22 @@ async function initCaps() {
 
 /* ---------- rendu : barre latérale ---------- */
 function currentRoute() { return (location.hash || "#accueil").slice(1); }
+const OPEN_LS = "atelier-open-tracks";
+let openTracks = (() => { try { return new Set(JSON.parse(localStorage.getItem(OPEN_LS) || "[]")); } catch (e) { return new Set(); } })();
+function saveOpen() { try { localStorage.setItem(OPEN_LS, JSON.stringify([...openTracks])); } catch (e) {} }
 function renderSide() {
   const r = currentRoute();
   const due = dueModules().length;
+  const curTrack = r.startsWith("m-") ? mod(r.slice(2))?.track : r.startsWith("t-") ? r.slice(2) : null;
   const groups = tracks().map((t) => {
     const s = trackStats(t.id);
-    const mods = modulesOf(t.id).map((m) => `<a class="mod-link ${r === "m-" + m.id ? "on" : ""}" href="#m-${esc(m.id)}"><span class="st ${status(m.id)}" title="${STATUS_LABEL[status(m.id)]}"></span>${esc(m.title)}</a>`).join("");
-    return `<div class="track-group" style="${tc(t)}"><a class="track-head" href="#t-${esc(t.id)}"><span class="dot"></span>${esc(t.short || t.name)}<span class="frac">${s.done}/${s.total}</span></a>${mods}</div>`;
+    const open = openTracks.has(t.id) || t.id === curTrack;
+    const mods = open ? modulesOf(t.id).map((m) => `<a class="mod-link ${r === "m-" + m.id ? "on" : ""}" href="#m-${esc(m.id)}"><span class="st ${status(m.id)}" title="${STATUS_LABEL[status(m.id)]}"></span>${esc(m.title)}</a>`).join("") : "";
+    const pctW = s.total ? (100 * s.done / s.total) : 0;
+    return `<div class="track-group ${open ? "open" : ""}" style="${tc(t)}">
+      <button class="track-head" data-act="toggleTrack" data-id="${esc(t.id)}" aria-expanded="${open}"><span class="chev" aria-hidden="true"></span><span class="dot"></span><span class="tname">${esc(t.short || t.name)}</span><span class="minibar"><i style="width:${pctW}%"></i></span><span class="frac">${s.done}/${s.total}</span></button>
+      ${open ? `<div class="mods">${mods}<a class="mod-link all" href="#t-${esc(t.id)}">Voir le parcours</a></div>` : ""}
+    </div>`;
   }).join("");
   $("#side").innerHTML = `
     <a class="brand" href="#accueil"><span class="brand-mark">&lt;/&gt;</span><b>Atelier de code</b></a>
@@ -509,7 +582,8 @@ function renderSide() {
       <a class="nav-link ${r === "revision" ? "on" : ""}" href="#revision">Révisions <span class="count ${due ? "" : "zero"}">${due}</span></a>
       <a class="nav-link ${r === "ajouter" ? "on" : ""}" href="#ajouter">Ajouter un module</a>
     </nav>
-    ${groups}
+    <div class="side-label">Parcours</div>
+    <div class="groups">${groups}</div>
     ${standalone ? `<a class="nav-link ${r === "claude" ? "on" : ""}" href="#claude" style="font-size:0.86rem">${sample ? "Claude activé" : "Activer les boutons Claude"}</a>` : ""}
     <div class="side-foot" id="sync"></div>`;
   setSync(syncState);
@@ -528,69 +602,104 @@ function nextModule() {
   }
   return all.find((m) => status(m.id) === "new") || null;
 }
+/* ---------- graphiques ---------- */
+function ring(pct, size, stroke, color, inner, sub) {
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r, p = Math.max(0, Math.min(1, pct));
+  const arc = p > 0 ? `<circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${(c * p).toFixed(2)} ${c.toFixed(2)}" transform="rotate(-90 ${size / 2} ${size / 2})"/>` : "";
+  return `<div class="ring" style="width:${size}px;height:${size}px"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="${stroke}"/>${arc}</svg><div class="ring-in"><b>${inner}</b>${sub ? `<span>${sub}</span>` : ""}</div></div>`;
+}
+function logActivity() {
+  const a = (state.progress.activity = state.progress.activity || {});
+  const d = today(); a[d] = (a[d] || 0) + 1;
+  const limit = addDays(-200);
+  for (const k of Object.keys(a)) if (k < limit) delete a[k];
+}
+function activityStats() {
+  const a = state.progress.activity || {};
+  let streak = 0; const d = new Date();
+  if (!a[ymd(d)]) d.setDate(d.getDate() - 1);
+  while (a[ymd(d)]) { streak++; d.setDate(d.getDate() - 1); }
+  let week = 0; for (let i = 0; i < 7; i++) week += a[addDays(-i)] || 0;
+  return { streak, week };
+}
+function heatmap(weeks) {
+  const a = state.progress.activity || {};
+  const start = new Date(); start.setHours(0, 0, 0, 0);
+  const dow = (start.getDay() + 6) % 7;            // lundi = 0
+  start.setDate(start.getDate() - dow - 7 * (weeks - 1));
+  const t = today(); let cols = "", months = "", lastMonth = -1, lastLabel = -9;
+  for (let w = 0; w < weeks; w++) {
+    let cells = "";
+    const first = new Date(start); first.setDate(start.getDate() + 7 * w);
+    const m = first.getMonth();
+    const showM = m !== lastMonth && w - lastLabel >= 3;
+    months += `<span>${showM ? first.toLocaleDateString("fr-FR", { month: "short" }).replace(".", "") : ""}</span>`;
+    if (showM) lastLabel = w;
+    lastMonth = m;
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(start); day.setDate(start.getDate() + 7 * w + d);
+      const k = ymd(day); const n = a[k] || 0;
+      const lvl = k > t ? -1 : n === 0 ? 0 : n < 3 ? 1 : n < 6 ? 2 : n < 10 ? 3 : 4;
+      cells += `<i class="hm l${lvl}" title="${frDate(k)} : ${n} action${n > 1 ? "s" : ""}"></i>`;
+    }
+    cols += `<div class="hm-col">${cells}</div>`;
+  }
+  return `<div class="hm-wrap"><div class="hm-months" style="grid-template-columns:repeat(${weeks}, minmax(0, 1fr))">${months}</div><div class="hm-grid" style="grid-template-columns:repeat(${weeks}, minmax(0, 1fr))">${cols}</div>
+    <div class="hm-legend"><span>Moins</span><i class="hm l0"></i><i class="hm l1"></i><i class="hm l2"></i><i class="hm l3"></i><i class="hm l4"></i><span>Plus</span></div></div>`;
+}
+
 function viewHome() {
   const all = allModules();
   const doneCount = all.filter((m) => prog(m.id)?.done).length;
+  const startedCount = all.filter((m) => status(m.id) === "started").length;
   const due = dueModules();
   const nxt = nextModule();
-  const upcoming = all.filter((m) => prog(m.id)?.done && status(m.id) === "done").map((m) => ({ m, due: prog(m.id).due })).sort((a, b) => (a.due < b.due ? -1 : 1));
   const nt = nxt ? track(nxt.track) : null;
-  const resume = nxt ? `
-      <div class="eyebrow">${status(nxt.id) === "started" ? "Reprendre" : "Prochain module"}</div>
-      <div class="row"><span class="chip" style="${tc(nt)}">${esc(nt.short || nt.name)}</span><span class="muted small">${nxt.minutes || 15} min</span></div>
-      <h2>${esc(nxt.title)}</h2>
-      <p class="muted small">${inl(nxt.goal)}</p>
-      <div><a class="btn primary" href="#m-${esc(nxt.id)}">${status(nxt.id) === "started" ? "Continuer" : "Commencer"}</a></div>`
-    : `<div class="eyebrow">Parcours</div><h2>Tout est acquis</h2><p class="muted small">Ajoute un module pour continuer à apprendre.</p><div><a class="btn primary" href="#ajouter">Ajouter un module</a></div>`;
-  const dueCard = due.length ? `
-      <div class="eyebrow">À réviser aujourd'hui</div>
-      <div class="big" style="color: var(--warn)">${due.length}</div>
-      <div class="due-list">${due.slice(0, 4).map((m) => `<a href="#m-${esc(m.id)}" style="${tc(track(m.track))}"><span class="st due"></span>${esc(m.title)}</a>`).join("")}${due.length > 4 ? `<span class="muted">et ${due.length - 4} autre(s)</span>` : ""}</div>
-      <div><a class="btn" href="#revision">Lancer la révision</a></div>`
-    : `
-      <div class="eyebrow">Révisions</div>
-      <div class="big muted">0</div>
-      <p class="muted small">${upcoming.length ? `Prochaine révision : <b>${esc(upcoming[0].m.title)}</b>, ${frDate(upcoming[0].due)}` : "Termine un module (quiz + TD) : il reviendra ici pour une révision le lendemain, puis à 3, 7, 16 et 35 jours."}</p>`;
-  const segs = tracks().map((t) => { const s = trackStats(t.id); return `<div class="stack" style="gap:4px;${tc(t)}"><div class="row small"><span>${esc(t.short || t.name)}</span><span class="spacer"></span><span class="muted" style="font-variant-numeric: tabular-nums">${s.done}/${s.total}</span></div><div class="bar"><i style="width:${s.total ? (100 * s.done / s.total) : 0}%"></i></div></div>`; }).join("");
-  const cards = tracks().map((t) => {
+  const act = activityStats();
+  const pct = all.length ? doneCount / all.length : 0;
+  const trackRings = tracks().map((t) => {
     const s = trackStats(t.id);
-    const first = modulesOf(t.id).find((m) => !prog(m.id)?.done);
-    return `<a class="card track-card" style="${tc(t)}" href="#t-${esc(t.id)}">
-      <div class="row"><h3>${esc(t.name)}</h3><span class="spacer"></span><span class="muted small">${s.done}/${s.total}</span></div>
-      <p class="muted small">${esc(t.desc || "")}</p>
-      <div class="bar"><i style="width:${s.total ? (100 * s.done / s.total) : 0}%"></i></div>
-      <span class="small">${first ? `Suivant : ${esc(first.title)}` : "Parcours terminé"}</span>
-    </a>`;
+    return `<a class="tr-ring" href="#t-${esc(t.id)}" style="${tc(t)}">${ring(s.total ? s.done / s.total : 0, 76, 8, "var(--tc)", `${s.done}<small>/${s.total}</small>`)}<span>${esc(t.short || t.name)}</span></a>`;
   }).join("");
   return `<div class="wrap">
-    <div class="stack" style="gap:6px">
-      <div class="eyebrow">${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div>
-      <h1>Ton atelier de code</h1>
-      <p class="lead">Chaque module t'explique d'abord comment ça marche, puis te fait pratiquer. Compte 15 minutes par module.</p>
+    <div class="row" style="align-items:flex-end">
+      <div class="stack" style="gap:4px"><div class="eyebrow">${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div><h1>Ton atelier de code</h1></div>
     </div>
-    <div class="grid3 home-top">
-      <div class="card" style="${nt ? tc(nt) : ""}">${resume}</div>
-      <div class="card">${dueCard}</div>
-      <div class="card"><div class="eyebrow">Progression</div><div class="row" style="align-items:baseline"><span class="big">${doneCount}</span><span class="muted">/ ${all.length} modules acquis</span></div><div class="stack" style="gap:8px">${segs}</div></div>
-    </div>
-    <div class="card stack">
-      <h3>Ordre conseillé</h3>
-      <div class="path"><span class="muted" style="width:56px">Back</span><span class="chip" style="${tc(track("php"))}">PHP POO</span><span class="arrow">→</span><span class="chip" style="${tc(track("doctrine"))}">Doctrine</span><span class="arrow">→</span><span class="chip" style="${tc(track("dto"))}">DTO</span><span class="arrow">→</span><span class="chip" style="${tc(track("arch"))}">Architecture</span><span class="arrow">→</span><span class="chip" style="${tc(track("ddd"))}">DDD (bonus)</span></div>
-      <div class="path"><span class="muted" style="width:56px">Front</span><span class="chip" style="${tc(track("react"))}">React</span><span class="arrow">→</span><span class="chip" style="${tc(track("data"))}">Données & API</span><span class="arrow">→</span><span class="chip" style="${tc(track("next"))}">Next.js</span></div>
-      <div class="path"><span class="muted" style="width:56px">Outils</span><span class="chip" style="${tc(track("git"))}">Git & GitHub</span><span class="muted small">à faire en parallèle, un module de temps en temps</span></div>
-      <p class="muted small">Les deux lignes se rejoignent : le JSON que React envoie avec axios (parcours Données & API) arrive dans les DTO Symfony (parcours DTO). Le parcours Architecture assemble les deux : fais-le après Données & API.</p>
-    </div>
-    <div class="grid3">${cards}</div>
-    <div class="card stack">
-      <h3>Comment chaque module t'apprend</h3>
-      <div class="method">
-        <div><b>1. Le mécanisme</b><span>Un schéma en 4 étapes : comment ça marche avant les détails.</span></div>
-        <div><b>2. L'exemple commenté</b><span>Un code réel, avec ce qu'il faut remarquer.</span></div>
-        <div><b>3. Le quiz</b><span>Te tester fixe mieux en mémoire que relire.</span></div>
-        <div><b>4. Le TD</b><span>Tu écris le code toi-même, avec indices et correction.</span></div>
-        <div><b>5. Les révisions</b><span>Le module revient à 1, 3, 7, 16 puis 35 jours.</span></div>
+    <div class="home-hero">
+      <div class="card hero-ring">
+        ${ring(pct, 150, 14, "var(--accent)", `${Math.round(pct * 100)}%`, "acquis")}
+        <div class="kpis">
+          <div><b>${doneCount}</b><span>acquis</span></div>
+          <div><b>${startedCount}</b><span>en cours</span></div>
+          <div><b>${all.length - doneCount - startedCount}</b><span>à faire</span></div>
+        </div>
+      </div>
+      <div class="card next-card" style="${nt ? tc(nt) : ""}">
+        ${nxt ? `<div class="row"><span class="chip">${esc(nt.short || nt.name)}</span><span class="muted small">${nxt.minutes || 15} min</span></div>
+          <div class="eyebrow">${status(nxt.id) === "started" ? "Reprendre" : "Prochain module"}</div>
+          <h2>${esc(nxt.title)}</h2>
+          <a class="btn primary" href="#m-${esc(nxt.id)}">${status(nxt.id) === "started" ? "Continuer" : "Commencer"} →</a>`
+        : `<div class="eyebrow">Parcours</div><h2>Tout est acquis</h2><a class="btn primary" href="#ajouter">Ajouter un module</a>`}
+      </div>
+      <a class="card stat-card ${due.length ? "warn" : ""}" href="#revision">
+        <span class="stat-num">${due.length}</span><span class="stat-lbl">${due.length > 1 ? "révisions" : "révision"} aujourd'hui</span>
+        <span class="btn sm ${due.length ? "" : "ghost"}">${due.length ? "Réviser" : "Voir le planning"}</span>
+      </a>
+      <div class="card stat-card">
+        <span class="stat-num">${act.streak}<small> j</small></span><span class="stat-lbl">jours d'affilée</span>
+        <span class="muted small">${act.week} action${act.week > 1 ? "s" : ""} cette semaine</span>
       </div>
     </div>
+    <div class="card stack"><div class="row"><h3>Parcours</h3><span class="spacer"></span><span class="muted small">Back : PHP → Doctrine → DTO → Architecture · Front : React → Données → Next.js · Git en parallèle</span></div>
+      <div class="tr-grid">${trackRings}</div></div>
+    <div class="card stack"><div class="row"><h3>Activité</h3><span class="spacer"></span><span class="muted small">quiz, TD, étapes et révisions</span></div>
+      <div class="act-row">${heatmap(22)}
+        <div class="act-stats">
+          <div><b>${Object.keys(state.progress.activity || {}).length}</b><span>jours actifs</span></div>
+          <div><b>${Object.values(state.progress.activity || {}).reduce((a, b) => a + b, 0)}</b><span>actions au total</span></div>
+          <div><b>${Object.values(state.progress.activity || {}).reduce((a, b) => Math.max(a, b), 0)}</b><span>record sur une journée</span></div>
+        </div>
+      </div></div>
   </div>`;
 }
 
@@ -882,7 +991,7 @@ function refresh() {
 }
 
 /* ---------- actions ---------- */
-function markSeen(id, step) { const p = ensure(id); p.seen = p.seen || []; if (!p.seen.includes(step)) p.seen.push(step); }
+function markSeen(id, step) { const p = ensure(id); p.seen = p.seen || []; if (!p.seen.includes(step)) { p.seen.push(step); logActivity(); } }
 function checkComplete(id) {
   const p = ensure(id);
   if (p.quizDone && p.tdDone && !p.done) {
@@ -893,6 +1002,13 @@ function checkComplete(id) {
 function saveDraftFrom(el) { const id = el.dataset.id; state.drafts[id] = el.value; draftWriter.schedule(); }
 
 const ACTIONS = {
+  toggleTrack(el) {
+    const id = el.dataset.id; const r = currentRoute();
+    const cur = r.startsWith("m-") ? mod(r.slice(2))?.track : r.startsWith("t-") ? r.slice(2) : null;
+    const isOpen = openTracks.has(id) || id === cur;
+    if (isOpen) { openTracks.delete(id); if (id === cur) location.hash = "#accueil"; } else openTracks.add(id);
+    saveOpen(); renderSide();
+  },
   menu() { document.body.classList.toggle("menu-open"); },
   step(el) {
     keepDraft(); const id = el.dataset.id; const s = Number(el.dataset.step);
@@ -906,6 +1022,7 @@ const ACTIONS = {
     const id = el.dataset.id; const m = mod(id); const p = ensure(id);
     p.answers = p.answers || {};
     p.answers[el.dataset.q] = Number(el.dataset.o);
+    logActivity();
     if (Object.keys(p.answers).length === m.quiz.length) { p.quizDone = true; checkComplete(id); }
     saveProgress(); render();
   },
@@ -917,7 +1034,7 @@ const ACTIONS = {
     p.checks = (p.checks || []).filter((x) => x !== i); if (el.checked) p.checks.push(i);
     saveProgress();
   },
-  tdDone(el) { const id = el.dataset.id; keepDraft(); const p = ensure(id); p.tdDone = true; checkComplete(id); saveProgress(); render(); },
+  tdDone(el) { const id = el.dataset.id; keepDraft(); const p = ensure(id); p.tdDone = true; logActivity(); checkComplete(id); saveProgress(); render(); },
   tdUndo(el) { const p = ensure(el.dataset.id); p.tdDone = false; saveProgress(); render(); },
   resetCode(el) { const id = el.dataset.id; delete state.drafts[id]; draftWriter.schedule(); const ed = $("#ed-" + CSS.escape(id)); if (ed) ed.value = mod(id).td.starter.code; },
   async copyCode(el) { const ed = $("#ed-" + CSS.escape(el.dataset.id)); try { await navigator.clipboard.writeText(ed.value); toast("Code copié."); } catch (e) { ed.select(); toast("Sélectionné : copie avec Ctrl+C."); } },
@@ -934,7 +1051,7 @@ const ACTIONS = {
       const p = ensure(it.id);
       if (it.result) { p.box = Math.min((p.box || 1) + 1, INTERVALS.length); p.due = addDays(INTERVALS[p.box - 1]); }
       else { p.box = 1; p.due = addDays(1); }
-      p.lastReview = today(); p.reviews = (p.reviews || 0) + 1;
+      p.lastReview = today(); p.reviews = (p.reviews || 0) + 1; logActivity();
       saveProgress();
     }
     if (r.idx < r.queue.length - 1) r.idx++; else r.finished = true;
