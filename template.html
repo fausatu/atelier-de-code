@@ -1106,14 +1106,25 @@ async function getPhp(onStatus) {
 function joinPhpFiles(files) {
   // Plusieurs fichiers PHP sans namespace : on les concatène, un seul <?php au début.
   let body = "";
+  const seenUse = new Set();
   files.forEach((f, i) => {
     let c = f.code.replace(/^﻿/, "");
+    c = c.replace(/^use\s+[^;\n]+;[ \t]*$/gm, (line) => { const k = line.replace(/\s+/g, " ").trim(); if (seenUse.has(k)) return "// " + k + " (déjà importé)"; seenUse.add(k); return line; });
     if (i > 0) { c = c.replace(/^\s*<\?php\s*/i, "").replace(/^\s*declare\s*\(\s*strict_types\s*=\s*1\s*\)\s*;\s*/i, ""); }
     body += (i ? "\n\n// ---- " + f.path + " ----\n" : "") + c;
   });
   if (!/^\s*<\?php/i.test(body)) body = "<?php\n" + body;
   return body;
 }
+const PHP_POLYFILLS = `if (!function_exists('mb_strlen')) {
+  function mb_strlen(string $s): int { return (int) preg_match_all('/./us', $s); }
+  function mb_strtolower(string $s): string { return strtr(strtolower($s), ['À'=>'à','Â'=>'â','Ä'=>'ä','É'=>'é','È'=>'è','Ê'=>'ê','Ë'=>'ë','Î'=>'î','Ï'=>'ï','Ô'=>'ô','Ö'=>'ö','Ù'=>'ù','Û'=>'û','Ü'=>'ü','Ç'=>'ç']); }
+  function mb_strtoupper(string $s): string { return strtr(strtoupper($s), ['à'=>'À','â'=>'Â','ä'=>'Ä','é'=>'É','è'=>'È','ê'=>'Ê','ë'=>'Ë','î'=>'Î','ï'=>'Ï','ô'=>'Ô','ö'=>'Ö','ù'=>'Ù','û'=>'Û','ü'=>'Ü','ç'=>'Ç']); }
+  function mb_substr(string $s, int $start, ?int $length = null): string { $c = preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY); return implode('', array_slice($c, $start, $length)); }
+  function mb_str_split(string $s, int $n = 1): array { $c = preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY); return $n === 1 ? $c : array_map('implode', array_chunk($c, $n, false) === [] ? [] : array_map(fn($x) => $x, array_chunk($c, $n))); }
+  function mb_strpos(string $h, string $n, int $o = 0): int|false { $p = strpos($h, $n, strlen(mb_substr($h, 0, $o))); return $p === false ? false : mb_strlen(substr($h, 0, $p)); }
+  function mb_str_pad(string $s, int $len, string $pad = ' ', int $type = STR_PAD_RIGHT): string { return str_pad($s, strlen($s) - mb_strlen($s) + $len, $pad, $type); }
+}`;
 const PHP_TEST_PRELUDE = `
 if (!function_exists('check')) {
   function check(string $desc, bool $ok, string $detail = ''): void { echo "\\n@@CHECK|" . ($ok ? 'PASS' : 'FAIL') . "|" . str_replace(["|", "\\n"], [" ", " "], $desc) . "|" . str_replace(["|", "\\n"], [" ", " "], $detail); }
@@ -1128,6 +1139,7 @@ async function runPhp(m, td, key, withTests) {
     const php = await getPhp((s) => { const c = con(); if (c) c.innerHTML = `<span class="dim">${esc(s)}</span>`; });
     const files = currentFiles(m, td);
     let code = joinPhpFiles(files);
+    { const mm = code.match(/^\s*<\?php\s*(declare\s*\([^)]*\)\s*;)?/i); code = mm[0] + "\n" + PHP_POLYFILLS + "\n" + code.slice(mm[0].length); }
     if (td.run.setup) { const mm = code.match(/^\s*<\?php\s*(declare\s*\([^)]*\)\s*;)?/i); code = mm[0] + "\n" + td.run.setup + "\n" + code.slice(mm[0].length); }
     if (withTests && td.run.tests) code += "\n\n// ---- tests ----\n" + PHP_TEST_PRELUDE + "\n" + td.run.tests + "\n";
     phpOut = [];
