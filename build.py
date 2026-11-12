@@ -49,7 +49,7 @@ for m in modules:
             for f in td["files"] + td["solution"]:
                 assert f.get("path"), (m["id"], td["level"], "fichier sans chemin")
             if td.get("run"):
-                assert td["run"]["kind"] in ("php", "react", "js"), (m["id"], td["level"])
+                assert td["run"]["kind"] in ("php", "react", "js", "next"), (m["id"], td["level"])
         assert m["lessons"], (m["id"], "pas de leçon")
         assert m["example"]["files"], (m["id"], "exemple vide")
         if m.get("diagram"):

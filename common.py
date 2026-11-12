@@ -73,7 +73,7 @@ def LANE(label, col_from, col_to, color=None):
     return l
 
 
-def RUN(kind, tests="", entry=None, api=None, setup=None):
+def RUN(kind, tests="", entry=None, api=None, setup=None, start=None):
     """kind : 'php' | 'react' | 'js'.
     tests : code de test (PHP : utilise check('desc', bool) ; JS : assert(cond, 'desc'), root, click(), type(), tick()).
     entry : fichier d'entrée (react/js). api : code JS définissant window.__api pour le faux axios.
@@ -85,6 +85,8 @@ def RUN(kind, tests="", entry=None, api=None, setup=None):
         r["api"] = api.strip("\n")
     if setup:
         r["setup"] = setup.strip("\n")
+    if start:
+        r["start"] = start
     return r
 
 

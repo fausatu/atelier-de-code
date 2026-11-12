@@ -460,6 +460,7 @@ function loadLocal() {
 }
 function saveLocal() {
   try { localStorage.setItem(LS_KEY, JSON.stringify({ progress: state.progress, drafts: state.drafts, custom: state.custom })); } catch (e) {}
+  if (typeof gistPush === "function") gistPush(false);
 }
 
 /* ---------- helpers ---------- */
@@ -707,8 +708,10 @@ function renderSide() {
     </nav>
     <div class="side-label">Parcours</div>
     <div class="groups">${groups}</div>
+    <a class="nav-link ${r === "synchro" ? "on" : ""}" href="#synchro" style="font-size:0.86rem">Synchroniser ma progression</a>
     ${standalone ? `<a class="nav-link ${r === "claude" ? "on" : ""}" href="#claude" style="font-size:0.86rem">${sample ? "Claude activé" : "Activer les boutons Claude"}</a>` : ""}
-    <div class="side-foot" id="sync"></div>`;
+    <div class="side-foot" id="sync"></div><div class="side-foot small" id="gist-side" style="border:0;padding-top:0"></div>`;
+  renderSideSyncLine();
   setSync(syncState);
 }
 
@@ -1494,6 +1497,140 @@ function viewClaude() {
   </div>`;
 }
 
+
+/* ---------- synchronisation : export / import + gist GitHub ---------- */
+function snapshotData() { return { v: 1, at: new Date().toISOString(), progress: state.progress, drafts: state.drafts, custom: state.custom }; }
+function encodeExport(d) { const bytes = new TextEncoder().encode(JSON.stringify(d)); let bin = ""; bytes.forEach((b) => (bin += String.fromCharCode(b))); return "ATELIER1:" + btoa(bin); }
+function decodeExport(txt) {
+  txt = String(txt || "").trim();
+  if (txt.startsWith("{")) return JSON.parse(txt);
+  if (!txt.startsWith("ATELIER1:")) throw new Error("Ce n'est pas un code d'export de l'Atelier.");
+  const bin = atob(txt.slice(9).replace(/\s+/g, "")); const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+const rankStatus = (p) => (!p ? 0 : p.done ? 3 + (p.box || 1) / 10 : (p.quizDone ? 1 : 0) + (p.tdDone ? 1 : 0) + ((p.seen || []).length ? 0.5 : 0));
+function mergeModule(a, b) {
+  if (!a) return b; if (!b) return a;
+  const best = rankStatus(b) > rankStatus(a) ? b : a, other = best === a ? b : a;
+  const m = JSON.parse(JSON.stringify(best));
+  m.seen = [...new Set([...(a.seen || []), ...(b.seen || [])])];
+  m.checks = [...new Set([...(a.checks || []), ...(b.checks || [])])];
+  m.levels = Object.assign({}, other.levels || {}, best.levels || {});
+  m.quizDone = !!(a.quizDone || b.quizDone); m.tdDone = !!(a.tdDone || b.tdDone);
+  if (Object.keys(other.answers || {}).length > Object.keys(m.answers || {}).length) m.answers = other.answers;
+  if (!m.done && other.done) { m.done = true; m.box = other.box; m.due = other.due; }
+  return m;
+}
+function mergeData(inc) {
+  if (!inc || !inc.progress) throw new Error("Données de progression introuvables.");
+  const pm = state.progress.modules || (state.progress.modules = {});
+  for (const [id, p] of Object.entries(inc.progress.modules || {})) pm[id] = mergeModule(pm[id], p);
+  const act = (state.progress.activity = state.progress.activity || {});
+  for (const [d, n] of Object.entries(inc.progress.activity || {})) act[d] = Math.max(act[d] || 0, n);
+  for (const [k, v] of Object.entries(inc.drafts || {})) if (state.drafts[k] === undefined) state.drafts[k] = v;
+  const c = inc.custom || {};
+  for (const t of c.tracks || []) if (!state.custom.tracks.some((x) => x.id === t.id)) state.custom.tracks.push(t);
+  for (const m of c.modules || []) if (!state.custom.modules.some((x) => x.id === m.id)) state.custom.modules.push(m);
+}
+function persistAll() { saveLocal(); saveProgress(); draftWriter.schedule(); libWriter.schedule(); }
+
+const GIST_LS = "atelier-gist", GIST_DESC = "atelier-de-code-progression", GIST_FILE = "progression.json";
+const gist = { token: "", id: "", status: "off", last: null, timer: null, busy: false, again: false };
+try { const g = JSON.parse(localStorage.getItem(GIST_LS) || "{}"); gist.token = g.token || ""; gist.id = g.id || ""; } catch (e) {}
+function saveGistConf() { try { gist.token ? localStorage.setItem(GIST_LS, JSON.stringify({ token: gist.token, id: gist.id })) : localStorage.removeItem(GIST_LS); } catch (e) {} }
+async function gh(path, opts = {}) {
+  const res = await fetch("https://api.github.com" + path, Object.assign({}, opts, { headers: Object.assign({ Accept: "application/vnd.github+json", Authorization: "Bearer " + gist.token, "X-GitHub-Api-Version": "2022-11-28" }, opts.body ? { "Content-Type": "application/json" } : {}) }) );
+  if (res.status === 401) throw new Error("Jeton GitHub refusé (expiré ou faux).");
+  if (res.status === 404) { const e = new Error("introuvable"); e.notFound = true; throw e; }
+  if (!res.ok) throw new Error("GitHub a répondu " + res.status + ".");
+  return res.status === 204 ? null : res.json();
+}
+function setGistStatus(s, msg) { gist.status = s; gist.msg = msg || ""; const el = $("#gist-status"); if (el) el.innerHTML = gistStatusHtml(); renderSideSyncLine(); }
+function gistStatusHtml() {
+  const t = { off: "Synchronisation désactivée", wait: "Synchronisation…", ok: "Synchronisé" + (gist.last ? " à " + gist.last.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : ""), err: "Échec : " + gist.msg }[gist.status];
+  return `<span class="sync-dot ${gist.status === "ok" ? "ok" : gist.status === "err" ? "err" : ""}"></span> ${esc(t)}`;
+}
+function renderSideSyncLine() { const el = $("#gist-side"); if (el) el.innerHTML = gist.token ? gistStatusHtml() : ""; }
+async function readGist() {
+  const g = await gh("/gists/" + gist.id);
+  const f = g.files && g.files[GIST_FILE];
+  if (!f) return null;
+  const txt = f.truncated ? await (await fetch(f.raw_url)).text() : f.content;
+  return txt ? JSON.parse(txt) : null;
+}
+async function gistConnect(token) {
+  gist.token = token.trim(); setGistStatus("wait");
+  try {
+    let found = null;
+    for (let page = 1; page <= 5 && !found; page++) {
+      const list = await gh("/gists?per_page=100&page=" + page);
+      found = list.find((g) => g.description === GIST_DESC && g.files && g.files[GIST_FILE]);
+      if (list.length < 100) break;
+    }
+    if (found) { gist.id = found.id; saveGistConf(); await gistPull(); }
+    else {
+      const g = await gh("/gists", { method: "POST", body: JSON.stringify({ description: GIST_DESC, public: false, files: { [GIST_FILE]: { content: JSON.stringify(snapshotData()) } } }) });
+      gist.id = g.id; saveGistConf(); gist.last = new Date(); setGistStatus("ok");
+    }
+    return true;
+  } catch (e) { setGistStatus("err", e.message); return false; }
+}
+async function gistPull() {
+  if (!gist.token || !gist.id) return;
+  setGistStatus("wait");
+  try {
+    const d = await readGist();
+    if (d) { mergeData(d); persistAll(); refresh(); }
+    await gistPush(true);
+  } catch (e) { if (e.notFound) { gist.id = ""; saveGistConf(); return gistConnect(gist.token); } setGistStatus("err", e.message); }
+}
+async function gistPush(now) {
+  if (!gist.token || !gist.id) return;
+  if (!now) { clearTimeout(gist.timer); gist.timer = setTimeout(() => gistPush(true), 4000); return; }
+  if (gist.busy) { gist.again = true; return; }
+  gist.busy = true; setGistStatus("wait");
+  try {
+    await gh("/gists/" + gist.id, { method: "PATCH", body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(snapshotData()) } } }) });
+    gist.last = new Date(); setGistStatus("ok");
+  } catch (e) { setGistStatus("err", e.message); }
+  gist.busy = false;
+  if (gist.again) { gist.again = false; gistPush(true); }
+}
+function gistDisconnect() { clearTimeout(gist.timer); gist.token = ""; gist.id = ""; saveGistConf(); setGistStatus("off"); }
+
+function viewSynchro() {
+  const code = state.ui.exportCode || "";
+  const gistBlock = standalone ? `
+    <div class="card stack">
+      <h2>Synchronisation automatique (GitHub)</h2>
+      ${gist.token ? `<p class="small" id="gist-status">${gistStatusHtml()}</p>
+        <p class="small muted">Ta progression est enregistrée dans un gist privé « ${GIST_DESC} » de ton compte GitHub, et récupérée au démarrage sur chaque appareil où tu as collé ce jeton.</p>
+        <div class="row"><button class="btn" data-act="gistSyncNow">Synchroniser maintenant</button><button class="btn danger" data-act="gistOff">Désactiver sur cet appareil</button></div>`
+      : `<ol class="consignes small">
+          <li>Sur GitHub : <a href="https://github.com/settings/tokens/new?scopes=gist&description=Atelier%20de%20code">créer un jeton classique</a> avec <b>uniquement</b> la case <code>gist</code> cochée (et une date d'expiration si tu veux), puis « Generate token ».</li>
+          <li>Colle le jeton ici. Fais la même chose sur tes autres appareils (même jeton ou un autre).</li>
+        </ol>
+        <form class="ask" data-form="gist"><input class="field" id="gist-token" name="token" type="password" placeholder="ghp_..." autocomplete="off"><button class="btn primary">Activer</button></form>
+        <p class="small" id="gist-status">${gist.status === "err" ? gistStatusHtml() : ""}</p>
+        <p class="small muted">Le jeton reste dans ce navigateur. Il ne donne accès qu'à tes gists. Ne l'enregistre pas sur un ordinateur partagé.</p>`}
+    </div>` : `
+    <div class="card stack small"><h2>Synchronisation automatique</h2><p>Sur claude.ai, ta progression est déjà enregistrée sur ton compte Claude et suit tous tes appareils. Pour passer vers la version GitHub Pages (ou l'inverse), utilise l'export / import ci-dessous.</p></div>`;
+  return `<div class="wrap">
+    <div class="stack" style="gap:6px"><h1>Synchroniser ma progression</h1>
+      <p class="lead">Modules faits, révisions, brouillons des TD et modules ajoutés. Les deux méthodes <b>fusionnent</b> : rien n'est effacé, le plus avancé l'emporte.</p></div>
+    ${gistBlock}
+    <div class="card stack">
+      <h2>Exporter / importer</h2>
+      <p class="small">Pour passer entre claude.ai et GitHub Pages, ou faire une sauvegarde : exporte ici, puis importe le code de l'autre côté.</p>
+      <div class="row"><button class="btn primary" data-act="exportProg">Exporter ma progression</button>${code ? `<button class="btn" data-act="copyExport">Copier le code</button>` : ""}</div>
+      ${code ? `<textarea class="field" id="export-code" rows="3" readonly style="font-family:var(--font-mono);font-size:12px">${esc(code)}</textarea>` : ""}
+      <h3>Importer</h3>
+      <textarea class="field" id="import-code" rows="3" placeholder="ATELIER1:..." style="font-family:var(--font-mono);font-size:12px"></textarea>
+      <div class="row"><button class="btn" data-act="importProg">Importer et fusionner</button><span class="small" id="import-msg"></span></div>
+    </div>
+  </div>`;
+}
+
 /* ---------- rendu principal ---------- */
 let lastRoute = null;
 function render() {
@@ -1502,6 +1639,7 @@ function render() {
   if (r === "revision") html = viewReview();
   else if (r === "ajouter") html = viewAdd();
   else if (r === "claude") html = viewClaude();
+  else if (r === "synchro") html = viewSynchro();
   else if (r.startsWith("t-")) html = viewTrack(r.slice(2));
   else if (r.startsWith("m-")) html = viewModule(r.slice(2));
   else html = viewHome();
@@ -1603,6 +1741,15 @@ const ACTIONS = {
     render();
   },
   closeReview() { state.ui.review = null; render(); },
+  exportProg() { state.ui.exportCode = encodeExport(snapshotData()); render(); },
+  async copyExport() { const t = $("#export-code"); try { await navigator.clipboard.writeText(t.value); toast("Code copié."); } catch (e) { t.select(); toast("Code sélectionné : copie avec Ctrl+C."); } },
+  importProg() {
+    const msg = $("#import-msg");
+    try { const d = decodeExport($("#import-code").value); mergeData(d); persistAll(); render(); toast("Progression importée et fusionnée."); }
+    catch (e) { msg.textContent = "Import impossible : " + e.message; msg.className = "small err"; }
+  },
+  gistSyncNow() { gistPull(); },
+  gistOff() { gistDisconnect(); render(); toast("Synchronisation désactivée sur cet appareil."); },
   forgetKey() { setKey(""); applyStandaloneAI(); render(); toast("Clé supprimée de ce navigateur."); },
   async testKey() {
     const msg = $("#key-msg"); msg.textContent = "Test en cours…";
@@ -1640,6 +1787,11 @@ document.addEventListener("submit", (e) => {
   e.preventDefault();
   if (f.dataset.form === "ask") { const q = f.q.value.trim(); if (q) aiAsk(mod(f.dataset.id), q); }
   if (f.dataset.form === "gen") { readGenForm(); aiGenerate(); }
+  if (f.dataset.form === "gist") {
+    const t = f.token.value.trim();
+    if (t.length < 20) { $("#gist-status").textContent = "Ce jeton semble incomplet."; return; }
+    gistConnect(t).then((ok) => { render(); if (ok) toast("Synchronisation GitHub activée."); });
+  }
   if (f.dataset.form === "key") {
     const k = f.key.value.trim();
     if (!k.startsWith("sk-")) { $("#key-msg").textContent = "Une clé Anthropic commence par sk-ant-."; return; }
@@ -1806,6 +1958,7 @@ function importJSON() {
 loadLocal();
 render();
 initCaps();
+if (gist.token && gist.id) setTimeout(() => { if (standalone) gistPull(); }, 1500);
 </script>
 </body>
 </html>
