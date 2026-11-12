@@ -352,6 +352,7 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .console .dim { color: #8a93a6; }
 .preview { border: 1px solid var(--line); border-radius: var(--r); background: #fff; overflow: hidden; }
 .preview iframe { width: 100%; height: 300px; border: 0; display: block; }
+.preview.tall iframe { height: 560px; }
 .tests { display: flex; flex-direction: column; gap: 4px; }
 .tcase { display: flex; gap: 8px; align-items: flex-start; font-size: 0.9rem; padding: 6px 10px; border-radius: 7px; background: var(--surface-2); }
 .tcase.pass { background: var(--good-soft); } .tcase.pass::before { content: "✓"; color: var(--good); font-weight: 700; }
@@ -945,7 +946,7 @@ function diagram(d) {
     if (n.sub && k !== "actor") out += dgText(p.cx, p.cy + 12, n.sub, "", "middle", 11, 400, "var(--muted)", 13);
   }
   out += labels;
-  const minw = Math.min(W, 640);
+  const minw = Math.min(W, 560);
   return `<figure class="diagram" style="margin:0;--minw:${minw}px"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(d.caption || "Schéma")}">${out}</svg>${d.caption ? `<figcaption class="cap">${inl(d.caption)}</figcaption>` : ""}</figure>`;
 }
 
@@ -1057,8 +1058,8 @@ function panelTD(m) {
   const levelTabs = list.length > 1 ? `<div class="levels">${list.map((x) => `<button class="lvl-tab ${x.level === td.level ? "on" : ""} ${levelDone(p, x.level) ? "ok" : ""}" data-act="level" data-id="${esc(m.id)}" data-level="${x.level}"><b>${LEVEL_NAMES[x.level] || "Niveau " + x.level}</b><span>${esc(x.title)}</span></button>`).join("")}</div>` : "";
   const runnerUI = run ? `
       <div class="runout">
-        <div class="row"><button class="btn run" data-act="run" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>${runState.busy ? '<span class="spin"></span> Exécution…' : (run === "php" ? "▶ Exécuter le PHP" : "▶ Exécuter")}</button>${td.run.tests ? `<button class="btn" data-act="runTests" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>Lancer les tests</button>` : ""}<span class="muted small">${run === "php" ? "PHP 8.4 tourne dans ton navigateur." : "Ton code tourne dans ton navigateur."}</span></div>
-        ${run !== "php" ? `<div class="preview" ${runState.html === undefined && !runState.frame ? 'style="display:none"' : ""}><iframe id="prev-${esc(key)}" sandbox="allow-scripts allow-forms" title="Aperçu"></iframe></div>` : ""}
+        <div class="row"><button class="btn run" data-act="run" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>${runState.busy ? '<span class="spin"></span> Exécution…' : (run === "php" ? "▶ Exécuter le PHP" : run === "git" ? "▶ Lancer les commandes" : "▶ Exécuter")}</button>${td.run.tests ? `<button class="btn" data-act="runTests" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>Lancer les tests</button>` : ""}<span class="muted small">${run === "php" ? "PHP 8.4 tourne dans ton navigateur." : run === "git" ? "Git simulé : tes commandes s'exécutent dans un dépôt de test, recréé à chaque lancement." : "Ton code tourne dans ton navigateur."}</span></div>
+        ${run !== "php" ? `<div class="preview${run === "git" ? " tall" : ""}" ${runState.html === undefined && !runState.frame ? 'style="display:none"' : ""}><iframe id="prev-${esc(key)}" sandbox="allow-scripts allow-forms" title="Aperçu"></iframe></div>` : ""}
         <div class="out-head">Sortie</div>
         <pre class="console" id="con-${esc(key)}">${runState.console !== undefined ? runState.console : '<span class="dim">Clique sur Exécuter pour voir le résultat ici.</span>'}</pre>
         ${runState.tests ? renderTests(runState.tests) : ""}
@@ -1170,7 +1171,7 @@ async function runPhp(m, td, key, withTests) {
   rs.busy = false; render();
 }
 const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font:14px/1.5 system-ui,sans-serif;margin:12px;color:#1f2633}button{font:inherit}input,textarea,select{font:inherit}</style></head><body><div id="root"></div>
-<script src="${libs.react}"><\/script><script src="${libs.reactDom}"><\/script><script src="${libs.babel}"><\/script>${libs.tanstack ? `<script src="${libs.tanstack}"><\/script>` : ""}${libs.next ? `<script src="${libs.next}"><\/script>` : ""}
+<script src="${libs.react}"><\/script><script src="${libs.reactDom}"><\/script><script src="${libs.babel}"><\/script>${libs.tanstack ? `<script src="${libs.tanstack}"><\/script>` : ""}${libs.next ? `<script src="${libs.next}"><\/script>` : ""}${libs.git ? `<script src="${libs.git}"><\/script>` : ""}
 <script>
 (function(){
   const files = ${JSON.stringify(files)};
@@ -1284,6 +1285,7 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start) => `<!DOCTYP
   async function tick(ms) { await sleep(ms === undefined ? 60 : ms); }
   const h = {
     get next() { return window.__next; },
+    get git() { return window.__git; },
     sleep, tick, root, require: req, source: (p) => files[p] || "",
     $: (s) => root.querySelector(s), $$: (s) => Array.from(root.querySelectorAll(s)),
     text: () => root.textContent,
@@ -1307,7 +1309,7 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start) => `<!DOCTYP
   try {
     const entry = ${JSON.stringify(entry)};
     const KIND = ${JSON.stringify(kind || "react")};
-    const mounted = KIND === "js" ? (req("./" + entry), false) : KIND === "next" ? (window.NextSim({ req, files, root, post }), window.__next.render(${JSON.stringify(start || "/")}), true) : mount(entry);
+    const mounted = KIND === "js" ? (req("./" + entry), false) : KIND === "next" ? (window.NextSim({ req, files, root, post }), window.__next.render(${JSON.stringify(start || "/")}), true) : KIND === "git" ? (function () { const g = window.GitSim({ root, post }); const setup = ${JSON.stringify(kind === "git" ? start || "" : "")}; if (setup) g.setup(new Function("git", setup)); g.sh(files[entry] || ""); const f = g.failed(); post({ type: "console", level: f.length ? "warn" : "info", text: g.commands().length + " commande(s) exécutée(s)" + (f.length ? ", " + f.length + " en erreur : " + f.join(" · ") : "") }); return true; })() : mount(entry);
     if (!mounted) post({ type: "console", level: "info", text: "(le fichier d'entrée n'exporte pas de composant : code exécuté)" });
     setTimeout(() => post({ type: "ready", html: root.innerHTML }), 80);
     ${tests ? `setTimeout(() => runTests(${JSON.stringify(tests)}), 160);` : ""}
@@ -1324,6 +1326,7 @@ function runJs(m, td, key, withTests) {
   const libs = { react: BASE + "vendor/react/react.development.js", reactDom: BASE + "vendor/react/react-dom.development.js", babel: BASE + "vendor/babel/babel.min.js" };
   if (Object.values(files).some((c) => c.includes("@tanstack/react-query"))) libs.tanstack = BASE + "vendor/tanstack/tanstack-query.js";
   if (td.run.kind === "next") libs.next = BASE + "vendor/next-sim/next-sim.js?v=2";
+  if (td.run.kind === "git") libs.git = BASE + "vendor/git-sim/git-sim.js?v=1";
   const html = JS_RUNNER(files, entry, td.run.api || "", withTests ? td.run.tests || "" : "", libs, td.run.kind, td.run.start);
   const iframe = $("#prev-" + CSS.escape(key));
   if (!iframe) { rs.busy = false; return; }
@@ -1332,7 +1335,7 @@ function runJs(m, td, key, withTests) {
     if (d.type === "console") lines.push(`<span class="${d.level === "error" ? "err" : d.level === "warn" ? "warnl" : ""}">${esc(d.text)}</span>`);
     if (d.type === "net") lines.push(`<span class="dim">${esc(d.text)}</span>`);
     if (d.type === "error") lines.push(`<span class="err">Erreur : ${esc(d.text)}</span>`);
-    if (d.type === "ready") { rs.busy = false; rs.html = d.html || ""; const b = document.querySelector(`[data-act="run"][data-id="${CSS.escape(m.id)}"]`); if (b) { b.disabled = false; b.innerHTML = td.run.kind === "php" ? "▶ Exécuter le PHP" : "▶ Exécuter"; } const tb = document.querySelector(`[data-act="runTests"][data-id="${CSS.escape(m.id)}"]`); if (tb) tb.disabled = false; }
+    if (d.type === "ready") { rs.busy = false; rs.html = d.html || ""; const b = document.querySelector(`[data-act="run"][data-id="${CSS.escape(m.id)}"]`); if (b) { b.disabled = false; b.innerHTML = td.run.kind === "php" ? "▶ Exécuter le PHP" : td.run.kind === "git" ? "▶ Lancer les commandes" : "▶ Exécuter"; } const tb = document.querySelector(`[data-act="runTests"][data-id="${CSS.escape(m.id)}"]`); if (tb) tb.disabled = false; }
     if (d.type === "tests") { rs.tests = { cases: d.cases || [], error: d.error }; if (!d.error && d.cases.length && d.cases.every((c) => c.ok)) logActivity(); const box = iframe.closest(".runout"); const old = box && box.querySelector(".tests"); if (old) old.remove(); if (box) box.insertAdjacentHTML("beforeend", renderTests(rs.tests)); }
     rs.console = lines.join("\n") || '<span class="dim">(aucune sortie console)</span>';
     const c = $("#con-" + CSS.escape(key)); if (c) c.innerHTML = rs.console;

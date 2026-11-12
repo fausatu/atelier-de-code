@@ -7,7 +7,7 @@ D(...)        : un diagramme (rendu en SVG par la page)
 F(path, lang, code) : un fichier de code
 Q(...)        : une question de quiz
 TD(...)       : un exercice (niveau 1, 2 ou 3)
-RUN(kind, tests, ...) : exécution dans le navigateur (php | react | js) + tests
+RUN(kind, tests, ...) : exécution dans le navigateur (php | react | js | next | git) + tests
 """
 
 
