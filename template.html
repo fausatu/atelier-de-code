@@ -1050,7 +1050,7 @@ function panelTD(m) {
   const runnerUI = run ? `
       <div class="runout">
         <div class="row"><button class="btn run" data-act="run" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>${runState.busy ? '<span class="spin"></span> Exécution…' : (run === "php" ? "▶ Exécuter le PHP" : "▶ Exécuter")}</button>${td.run.tests ? `<button class="btn" data-act="runTests" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>Lancer les tests</button>` : ""}<span class="muted small">${run === "php" ? "PHP 8.4 tourne dans ton navigateur." : "Ton code tourne dans ton navigateur."}</span></div>
-        ${run !== "php" ? `<div class="preview" ${runState.html === undefined && !runState.frame ? 'style="display:none"' : ""}><iframe id="prev-${esc(key)}" sandbox="allow-scripts" title="Aperçu"></iframe></div>` : ""}
+        ${run !== "php" ? `<div class="preview" ${runState.html === undefined && !runState.frame ? 'style="display:none"' : ""}><iframe id="prev-${esc(key)}" sandbox="allow-scripts allow-forms" title="Aperçu"></iframe></div>` : ""}
         <div class="out-head">Sortie</div>
         <pre class="console" id="con-${esc(key)}">${runState.console !== undefined ? runState.console : '<span class="dim">Clique sur Exécuter pour voir le résultat ici.</span>'}</pre>
         ${runState.tests ? renderTests(runState.tests) : ""}
@@ -1234,7 +1234,8 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs) => `<!DOCTYPE html><html>
     sleep, tick, root, require: req,
     $: (s) => root.querySelector(s), $$: (s) => Array.from(root.querySelectorAll(s)),
     text: () => root.textContent,
-    click: async (el) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Élément introuvable pour click()"); el.dispatchEvent(new MouseEvent("click", { bubbles: true })); await tick(); },
+    click: async (el) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Élément introuvable pour click()"); if (typeof el.click === "function") el.click(); else el.dispatchEvent(new MouseEvent("click", { bubbles: true })); await tick(); },
+    blur: async (el) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Champ introuvable pour blur()"); el.dispatchEvent(new FocusEvent("focusout", { bubbles: true })); el.dispatchEvent(new FocusEvent("blur")); await tick(); },
     type: async (el, v) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Champ introuvable pour type()"); const proto = el.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, "value").set.call(el, v); el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true })); await tick(); },
     submit: async (el) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Formulaire introuvable"); el.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })); await tick(); },
     byText: (t) => Array.from(root.querySelectorAll("*")).find((e) => e.children.length === 0 && e.textContent.trim() === t) || Array.from(root.querySelectorAll("button,a,li,p,span,h1,h2,h3,td,label")).find((e) => e.textContent.includes(t)),
