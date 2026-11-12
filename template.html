@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* Un seul thème clair, teinté bleu-gris (choix : pas de mode sombre). Layout : barre latérale (parcours + modules) | zone de travail. Un module = 4 étapes courtes en onglets. */
+/* Un seul thème clair, teinté bleu-gris. Layout : barre latérale repliable (parcours) | zone de travail. Un module = 4 étapes en onglets ; le TD a 3 niveaux. */
 :root {
   --bg: #eef3f8;
   --surface: #fbfcfe;
@@ -34,8 +34,8 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
-h1, h2, h3 { font-family: var(--font-display); line-height: 1.2; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
-h1 { font-size: 1.85rem; } h2 { font-size: 1.3rem; } h3 { font-size: 1.05rem; }
+h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.2; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: 1.85rem; } h2 { font-size: 1.3rem; } h3 { font-size: 1.05rem; } h4 { font-size: 0.95rem; }
 p { margin: 0; }
 a { color: var(--accent); }
 code { font-family: var(--font-mono); font-size: 0.86em; background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 4px; }
@@ -46,7 +46,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .app { display: grid; grid-template-columns: 284px minmax(0, 1fr); min-height: 100%; }
 .side { align-self: start; background: var(--surface); border-right: 1px solid var(--line); padding: 18px 14px 14px; display: flex; flex-direction: column; gap: 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; text-decoration: none; color: var(--ink); }
-.brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: #fff; display: grid; place-items: center; font: 600 13px var(--font-mono); }
 .brand b { font-family: var(--font-display); font-size: 1.1rem; }
 .nav-main { display: flex; flex-direction: column; gap: 2px; }
 .nav-link { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 8px; color: var(--ink); text-decoration: none; font-weight: 500; }
@@ -54,14 +53,22 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .nav-link.on { background: var(--accent-soft); color: var(--accent); }
 .count { min-width: 22px; padding: 0 7px; border-radius: 999px; background: var(--warn); color: #fff; font: 600 12px/20px var(--font-body); text-align: center; font-variant-numeric: tabular-nums; }
 .count.zero { background: var(--surface-2); color: var(--muted); }
+.side-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 0 10px; }
+.groups { display: flex; flex-direction: column; gap: 2px; margin-top: -8px; }
 .track-group { display: flex; flex-direction: column; gap: 1px; }
-.track-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; text-decoration: none; color: var(--ink); font-weight: 600; font-size: 0.86rem; }
+.track-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; color: var(--ink); font-weight: 600; font-size: 0.86rem; width: 100%; border: 0; background: none; cursor: pointer; text-align: left; }
 .track-head:hover { background: var(--surface-2); }
-.track-head .dot { width: 9px; height: 9px; border-radius: 3px; background: var(--tc); flex: none; }
-.track-head .frac { margin-left: auto; color: var(--muted); font-weight: 500; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.track-head .tname { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chev { width: 7px; height: 7px; border-right: 1.6px solid var(--muted); border-bottom: 1.6px solid var(--muted); transform: rotate(-45deg); flex: none; margin-right: 2px; transition: transform 0.15s; }
+.track-group.open .chev { transform: rotate(45deg); }
+.minibar { margin-left: 8px; width: 32px; height: 4px; border-radius: 9px; background: var(--surface-2); overflow: hidden; flex: none; }
+.minibar i { display: block; height: 100%; background: var(--tc); }
+.track-head .frac { margin-left: 6px; min-width: 30px; text-align: right; color: var(--muted); font-weight: 500; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.mods { display: flex; flex-direction: column; gap: 1px; padding: 2px 0 8px; }
 .mod-link { display: flex; align-items: center; gap: 9px; padding: 4px 10px 4px 14px; border-radius: 7px; color: var(--muted); text-decoration: none; font-size: 0.86rem; line-height: 1.35; }
 .mod-link:hover { background: var(--surface-2); color: var(--ink); }
 .mod-link.on { background: var(--surface-2); color: var(--ink); font-weight: 500; }
+.mod-link.all { color: var(--accent); font-size: 0.8rem; padding-left: 35px; }
 .st { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--line); flex: none; position: relative; }
 .st.started { border-color: var(--tc, var(--accent)); background: linear-gradient(90deg, var(--tc, var(--accent)) 50%, transparent 50%); }
 .st.done { border-color: var(--good); background: var(--good); }
@@ -70,24 +77,36 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); margin-top: 7px; flex: none; }
 .sync-dot.ok { background: var(--good); } .sync-dot.err { background: var(--bad); } .sync-dot.local { background: var(--warn); }
 
+/* Logo d'un parcours : image logos/<id>.svg|png si présente, sinon badge texte */
+.tlogo { display: inline-flex; align-items: center; justify-content: center; flex: none; width: var(--ls, 20px); height: var(--ls, 20px); border-radius: 6px; overflow: hidden; }
+.tlogo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.tlogo .tbadge { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; border-radius: inherit; background: color-mix(in srgb, var(--tc) 14%, transparent); color: var(--tc); font: 600 calc(var(--ls, 20px) * 0.42) var(--font-mono); letter-spacing: -0.02em; white-space: nowrap; }
+.tlogo.nologo .tbadge { display: flex; }
+.tlogo.nologo img { display: none; }
+
 .topbar { display: none; }
 main { padding: 32px clamp(16px, 4vw, 48px) 64px; min-width: 0; }
-.wrap { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+.wrap { max-width: 1020px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
 .eyebrow { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-.lead { color: var(--muted); max-width: 65ch; }
+.lead { color: var(--muted); max-width: 70ch; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; }
-.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .stack { display: flex; flex-direction: column; gap: 10px; }
 .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .spacer { flex: 1; }
 .muted { color: var(--muted); }
 .small { font-size: 0.86rem; }
+.prose { max-width: 75ch; display: flex; flex-direction: column; gap: 12px; line-height: 1.7; }
+.prose p { margin: 0; }
+.prose pre.code { max-width: none; }
+.prose ul.points { margin: 2px 0; }
+.prose h4 { margin-top: 6px; }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 500; cursor: pointer; text-decoration: none; line-height: 1.3; }
 .btn:hover { border-color: var(--muted); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .btn.primary:hover { filter: brightness(1.08); }
+.btn.run { background: var(--good); border-color: var(--good); color: #fff; }
+.btn.run:hover { filter: brightness(1.08); }
 .btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
 .btn.ghost:hover { color: var(--ink); background: var(--surface-2); }
 .btn.sm { padding: 5px 10px; font-size: 0.84rem; }
@@ -105,134 +124,15 @@ body.has-ai .no-ai { display: none !important; }
 .pill.done { background: var(--good-soft); color: var(--good); }
 .pill.due { background: var(--warn-soft); color: var(--warn); }
 .pill.custom { background: var(--surface-2); color: var(--muted); }
-
+.pill.lvl { background: var(--surface-2); color: var(--muted); }
 .bar { height: 7px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
 .bar > i { display: block; height: 100%; background: var(--tc, var(--accent)); border-radius: 99px; }
 .big { font-family: var(--font-display); font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
-
-.home-top .card { display: flex; flex-direction: column; gap: 10px; }
-.track-card { border-top: 3px solid var(--tc); display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: var(--ink); }
-.track-card:hover { border-color: var(--tc); box-shadow: 0 1px 0 var(--line); }
-.track-card .row .muted { font-variant-numeric: tabular-nums; }
-.path { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.86rem; }
-.path .arrow { color: var(--muted); }
-.method { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; counter-reset: m; }
-.method div { border-left: 2px solid var(--line); padding: 2px 0 2px 12px; }
-.method b { display: block; font-size: 0.9rem; }
-.method span { font-size: 0.84rem; color: var(--muted); }
 .due-list { display: flex; flex-direction: column; gap: 4px; font-size: 0.88rem; }
 .due-list a { color: var(--ink); text-decoration: none; display: flex; gap: 8px; align-items: center; }
 .due-list a:hover { color: var(--accent); }
 
-/* Module */
-.mod-head { display: flex; flex-direction: column; gap: 8px; }
-.steps { display: flex; gap: 6px; border-bottom: 1px solid var(--line); overflow-x: auto; }
-.step-tab { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border: 0; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; color: var(--muted); font-weight: 500; white-space: nowrap; }
-.step-tab .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 600 12px var(--font-mono); background: var(--surface-2); color: var(--muted); }
-.step-tab.ok .n { background: var(--good); color: #fff; }
-.step-tab.on { color: var(--ink); border-bottom-color: var(--tc); }
-.step-tab.on .n { background: var(--tc); color: #fff; }
-.step-tab.ok.on .n { background: var(--good); }
-.panel { display: flex; flex-direction: column; gap: 18px; }
-.why { border-left: 3px solid var(--tc); padding: 4px 0 4px 14px; max-width: 70ch; }
-.flow { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 0; align-items: stretch; }
-.flow-step { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 12px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; line-height: 1.45; margin-right: 22px; }
-.flow-step:last-child { margin-right: 0; }
-.flow-step:not(:last-child)::after { content: ""; position: absolute; right: -17px; top: 50%; width: 12px; height: 12px; border-top: 2px solid var(--tc); border-right: 2px solid var(--tc); transform: translateY(-50%) rotate(45deg); }
-.flow-step .k { font: 600 12px var(--font-mono); color: var(--tc); }
-.points { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; max-width: 75ch; }
-.points li { padding-left: 18px; position: relative; }
-.points li::before { content: ""; position: absolute; left: 2px; top: 0.62em; width: 7px; height: 7px; border-radius: 2px; background: var(--tc); }
-.pitfalls { background: var(--bad-soft); border-radius: var(--r); padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
-.pitfalls h3 { color: var(--bad); font-size: 0.9rem; }
-.pitfalls li { margin-left: 16px; }
-.pitfalls ul { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.ai-box { border: 1px dashed var(--line); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
-.ai-out { font-size: 0.93rem; display: flex; flex-direction: column; gap: 8px; max-width: 75ch; }
-.ai-out:empty { display: none; }
-.ai-out pre { margin: 0; }
-.ask { display: flex; gap: 8px; }
-.ask input { flex: 1; min-width: 0; }
-.field { padding: 8px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); }
-textarea.field { width: 100%; resize: vertical; }
-
-pre.code { margin: 0; border: 1px solid var(--code-line); background: var(--code-bg); color: var(--code-ink); border-radius: var(--r); padding: 14px 16px; overflow-x: auto; font: 13px/1.6 var(--font-mono); tab-size: 4; }
-pre.code code { background: none; padding: 0; font-size: inherit; color: inherit; }
-.ex { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-.notes { display: flex; flex-direction: column; gap: 10px; counter-reset: n; margin: 0; padding: 0; list-style: none; }
-.notes li { counter-increment: n; display: grid; grid-template-columns: 24px 1fr; gap: 8px; font-size: 0.9rem; }
-.notes li::before { content: counter(n); width: 22px; height: 22px; border-radius: 6px; background: var(--surface-2); display: grid; place-items: center; font: 600 12px var(--font-mono); color: var(--tc); }
-.hljs-keyword, .hljs-selector-tag, .hljs-built_in.hljs-keyword { color: #cf222e; }
-.hljs-string, .hljs-regexp { color: #0a3069; }
-.hljs-number, .hljs-literal { color: #0550ae; }
-.hljs-comment { color: #6e7781; font-style: italic; }
-.hljs-title, .hljs-title.function_ { color: #8250df; }
-.hljs-variable, .hljs-template-variable { color: #953800; }
-.hljs-attr, .hljs-attribute, .hljs-type, .hljs-title.class_, .hljs-built_in { color: #0550ae; }
-.hljs-meta, .hljs-tag, .hljs-name, .hljs-symbol { color: #116329; }
-.hljs-subst { color: var(--code-ink); }
-
-.q { display: flex; flex-direction: column; gap: 10px; }
-.q-title { font-weight: 600; display: flex; gap: 10px; }
-.q-title .k { font: 600 13px var(--font-mono); color: var(--tc); padding-top: 1px; }
-.opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.opt { text-align: left; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; line-height: 1.4; }
-.opt:hover:not([disabled]) { border-color: var(--tc); }
-.opt[disabled] { cursor: default; }
-.opt.right { border-color: var(--good); background: var(--good-soft); }
-.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
-.feedback { font-size: 0.9rem; padding: 8px 12px; border-radius: 8px; }
-.feedback.right { background: var(--good-soft); }
-.feedback.wrong { background: var(--bad-soft); }
-.feedback b { margin-right: 4px; }
-.score { display: flex; align-items: center; gap: 14px; }
-
-.td-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.consignes { margin: 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 5px; }
-.editor { width: 100%; min-height: 280px; background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--code-line); border-radius: var(--r); padding: 14px 16px; font: 13px/1.6 var(--font-mono); tab-size: 4; resize: vertical; white-space: pre; overflow: auto; }
-.editor:focus { outline: 2px solid var(--tc); outline-offset: 1px; }
-.hint { background: var(--warn-soft); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; }
-.checks { display: flex; flex-direction: column; gap: 6px; }
-.checks label { display: flex; gap: 9px; align-items: flex-start; cursor: pointer; font-size: 0.92rem; }
-.checks input { margin-top: 4px; accent-color: var(--good); }
-.solution-warn { font-size: 0.86rem; color: var(--muted); }
-.done-banner { display: flex; align-items: center; gap: 12px; background: var(--good-soft); border-radius: var(--r); padding: 12px 16px; }
-.done-banner b { color: var(--good); }
-.nav-steps { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
-
-.list-mod { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); text-decoration: none; color: var(--ink); }
-.list-mod:last-child { border-bottom: 0; }
-.list-mod:hover { background: var(--surface-2); }
-.list-mod .num { font: 600 13px var(--font-mono); color: var(--tc); }
-.list-mod .t { font-weight: 600; }
-.list-mod .g { font-size: 0.86rem; color: var(--muted); }
-.list { padding: 0; overflow: hidden; }
-
-.rev-card { display: flex; flex-direction: column; gap: 14px; border-top: 3px solid var(--tc); }
-.recall-flow { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 0.92rem; }
-.progress-dots { display: flex; gap: 5px; }
-.progress-dots i { width: 22px; height: 5px; border-radius: 99px; background: var(--surface-2); }
-.progress-dots i.on { background: var(--accent); }
-.progress-dots i.ok { background: var(--good); }
-.progress-dots i.ko { background: var(--warn); }
-.sched { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-.sched td, .sched th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
-.sched th { font-weight: 600; color: var(--muted); font-size: 0.8rem; }
-.sched td.num { font-variant-numeric: tabular-nums; }
-
-.form-grid { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 10px 14px; align-items: center; }
-.form-grid label { font-weight: 500; font-size: 0.9rem; }
-.swatches { display: flex; gap: 6px; }
-.swatch { width: 26px; height: 26px; border-radius: 7px; border: 2px solid transparent; background: var(--tc); cursor: pointer; }
-.swatch.on { border-color: var(--ink); }
-.spin { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: s 0.8s linear infinite; display: inline-block; }
-@keyframes s { to { transform: rotate(360deg); } }
-.err { color: var(--bad); font-size: 0.9rem; }
-.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 0.92rem; box-shadow: 0 6px 20px rgb(0 0 0 / 0.2); z-index: 50; max-width: calc(100% - 32px); }
-.toast[hidden] { display: none; }
-
-
-/* Accueil graphique */
+/* Accueil */
 .home-hero { display: grid; grid-template-columns: minmax(330px, 1.15fr) minmax(0, 1.2fr) minmax(190px, 0.8fr); gap: 14px; align-items: stretch; }
 .home-hero > .card, .stat-col > .card { min-width: 0; }
 .stat-col { display: grid; grid-template-rows: 1fr 1fr; gap: 14px; }
@@ -259,14 +159,14 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .stat-link { font-size: 0.84rem; color: var(--accent); font-weight: 500; }
 a.stat-card:hover { border-color: var(--accent); }
 .stat-link.muted { color: var(--muted); font-weight: 400; }
-
 .stat-num { font-family: var(--font-display); font-size: 2.3rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .stat-num small { font-size: 0.45em; color: var(--muted); }
 .stat-lbl { color: var(--muted); font-size: 0.88rem; }
 .stat-card.warn .stat-num { color: var(--warn); }
-.tr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
-.tr-ring { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 6px; border-radius: var(--r); text-decoration: none; color: var(--ink); font-size: 0.86rem; font-weight: 500; text-align: center; }
+.tr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+.tr-ring { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; border-radius: var(--r); text-decoration: none; color: var(--ink); font-size: 0.84rem; font-weight: 500; text-align: center; }
 .tr-ring:hover { background: var(--surface-2); }
+.tr-ring .ring-in .tlogo { --ls: 26px; }
 .hm-wrap { display: flex; flex-direction: column; gap: 6px; flex: 1 1 300px; min-width: 260px; max-width: 680px; }
 .hm-months { display: grid; gap: 4px; font-size: 0.72rem; color: var(--muted); }
 .hm-months span { white-space: nowrap; overflow: visible; }
@@ -287,8 +187,9 @@ a.stat-card:hover { border-color: var(--accent); }
 .act-stats b { font-family: var(--font-display); font-size: 1.5rem; font-variant-numeric: tabular-nums; min-width: 2.5ch; }
 .act-stats span { color: var(--muted); font-size: 0.86rem; }
 
-/* Roadmap d'un parcours */
+/* Roadmap */
 .rm-head { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.rm-head .tlogo { --ls: 56px; border-radius: 14px; }
 .rm-kpis { display: flex; gap: 22px; }
 .rm-kpis div { display: flex; flex-direction: column; }
 .rm-kpis b { font-family: var(--font-display); font-size: 1.4rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -299,8 +200,7 @@ a.stat-card:hover { border-color: var(--accent); }
 .rm-start::before { content: ""; width: 14px; height: 14px; border-radius: 50%; background: var(--tc); box-shadow: 0 0 0 5px color-mix(in srgb, var(--tc) 20%, var(--bg)); }
 .rm-cap { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); background: var(--bg); padding: 2px 10px; border-radius: 99px; }
 .rm-end { margin-top: 18px; }
-.rm-goalnode { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-size: 1.5rem; background: var(--surface); border: 2px dashed var(--line); color: var(--muted); }
-.rm-end .rm-goalnode { line-height: 1; }
+.rm-goalnode { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-size: 1.5rem; line-height: 1; background: var(--surface); border: 2px dashed var(--line); color: var(--muted); }
 .rm-end.passed .rm-goalnode { background: var(--tc); border: 0; color: #fff; box-shadow: 0 6px 18px color-mix(in srgb, var(--tc) 35%, transparent); }
 .rm-end.passed .rm-cap { color: var(--tc); }
 .rm-item { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr); align-items: center; padding: 14px 0; }
@@ -328,9 +228,178 @@ a.stat-card:hover { border-color: var(--accent); }
 .rm-title { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; line-height: 1.25; }
 .rm-goal { font-size: 0.86rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .rm-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }
-.rm-steps { display: flex; gap: 4px; }
+.rm-steps { display: flex; gap: 4px; align-items: center; }
 .rm-steps i { width: 18px; height: 5px; border-radius: 9px; background: var(--surface-2); }
 .rm-steps i.on { background: var(--tc); }
+.rm-steps i.lv { width: 8px; height: 8px; border-radius: 50%; }
+.rm-steps .sep { width: 1px; height: 10px; background: var(--line); margin: 0 3px; }
+
+/* Module */
+.mod-head { display: flex; flex-direction: column; gap: 8px; }
+.mod-head .tlogo { --ls: 22px; }
+.steps { display: flex; gap: 6px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.step-tab { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border: 0; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.step-tab .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 600 12px var(--font-mono); background: var(--surface-2); color: var(--muted); }
+.step-tab.ok .n { background: var(--good); color: #fff; }
+.step-tab.on { color: var(--ink); border-bottom-color: var(--tc); }
+.step-tab.on .n { background: var(--tc); color: #fff; }
+.step-tab.ok.on .n { background: var(--good); }
+.panel { display: flex; flex-direction: column; gap: 22px; }
+.why { border-left: 3px solid var(--tc); padding: 4px 0 4px 14px; max-width: 75ch; }
+.prereq { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.prereq summary { cursor: pointer; padding: 12px 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; list-style: none; }
+.prereq summary::-webkit-details-marker { display: none; }
+.prereq summary::before { content: ""; width: 7px; height: 7px; border-right: 1.6px solid var(--muted); border-bottom: 1.6px solid var(--muted); transform: rotate(-45deg); transition: transform 0.15s; }
+.prereq[open] summary::before { transform: rotate(45deg); }
+.prereq summary .muted { font-weight: 400; }
+.prereq dl { margin: 0; padding: 0 16px 14px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; font-size: 0.92rem; }
+.prereq dt { font-weight: 600; color: var(--tc); }
+.prereq dd { margin: 0; }
+.mech { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(220px, 0.8fr); gap: 18px; align-items: start; }
+.flow-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; counter-reset: f; }
+.flow-list li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; font-size: 0.92rem; line-height: 1.45; align-items: start; }
+.flow-list li::before { counter-increment: f; content: counter(f); width: 26px; height: 26px; border-radius: 50%; background: var(--tc); color: #fff; display: grid; place-items: center; font: 600 12px var(--font-mono); }
+.diagram { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; overflow-x: auto; }
+.diagram svg { display: block; width: 100%; height: auto; min-width: var(--minw, 480px); font-family: var(--font-body); }
+.diagram .cap { font-size: 0.82rem; color: var(--muted); padding: 8px 6px 0; }
+.lesson { display: flex; flex-direction: column; gap: 10px; }
+.lesson h2 { font-size: 1.2rem; }
+.points { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; max-width: 75ch; }
+.points li { padding-left: 18px; position: relative; }
+.points li::before { content: ""; position: absolute; left: 2px; top: 0.62em; width: 7px; height: 7px; border-radius: 2px; background: var(--tc); }
+.pitfalls { background: var(--bad-soft); border-radius: var(--r); padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+.pitfalls h3 { color: var(--bad); font-size: 0.9rem; }
+.pitfalls ul { margin: 0; padding: 0 0 0 16px; display: flex; flex-direction: column; gap: 4px; }
+.recap { background: color-mix(in srgb, var(--tc) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--tc) 30%, transparent); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.recap h3 { color: var(--tc); font-size: 0.9rem; }
+.recap ol { margin: 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 5px; font-size: 0.93rem; }
+.ai-box { border: 1px dashed var(--line); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.ai-out { font-size: 0.93rem; display: flex; flex-direction: column; gap: 8px; max-width: 75ch; }
+.ai-out:empty { display: none; }
+.ai-out pre { margin: 0; }
+.ask { display: flex; gap: 8px; }
+.ask input { flex: 1; min-width: 0; }
+.field { padding: 8px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); }
+textarea.field { width: 100%; resize: vertical; }
+
+/* Code : fichiers à onglets */
+pre.code { margin: 0; border: 1px solid var(--code-line); background: var(--code-bg); color: var(--code-ink); border-radius: var(--r); padding: 14px 16px; overflow-x: auto; font: 13px/1.6 var(--font-mono); tab-size: 4; }
+pre.code code { background: none; padding: 0; font-size: inherit; color: inherit; }
+.files { border: 1px solid var(--code-line); border-radius: var(--r); overflow: hidden; background: var(--code-bg); }
+.files-tabs { display: flex; gap: 2px; background: var(--surface-2); border-bottom: 1px solid var(--code-line); padding: 4px 4px 0; overflow-x: auto; }
+.ftab { border: 0; background: transparent; padding: 6px 12px; font: 500 12.5px var(--font-mono); color: var(--muted); border-radius: 7px 7px 0 0; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+.ftab .dir { opacity: 0.6; }
+.ftab.on { background: var(--code-bg); color: var(--ink); }
+.ftab.mod::after { content: "•"; color: var(--accent); }
+.fpane { display: none; }
+.fpane.on { display: block; }
+.files pre.code { border: 0; border-radius: 0; }
+.files .editor { border: 0; border-radius: 0; min-height: 320px; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in.hljs-keyword { color: #cf222e; }
+.hljs-string, .hljs-regexp { color: #0a3069; }
+.hljs-number, .hljs-literal { color: #0550ae; }
+.hljs-comment { color: #6e7781; font-style: italic; }
+.hljs-title, .hljs-title.function_ { color: #8250df; }
+.hljs-variable, .hljs-template-variable { color: #953800; }
+.hljs-attr, .hljs-attribute, .hljs-type, .hljs-title.class_, .hljs-built_in { color: #0550ae; }
+.hljs-meta, .hljs-tag, .hljs-name, .hljs-symbol { color: #116329; }
+.hljs-subst { color: var(--code-ink); }
+.ex { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.notes { display: flex; flex-direction: column; gap: 10px; counter-reset: n; margin: 0; padding: 0; list-style: none; }
+.notes li { counter-increment: n; display: grid; grid-template-columns: 24px 1fr; gap: 8px; font-size: 0.9rem; }
+.notes li::before { content: counter(n); width: 22px; height: 22px; border-radius: 6px; background: var(--surface-2); display: grid; place-items: center; font: 600 12px var(--font-mono); color: var(--tc); }
+
+/* Quiz */
+.q { display: flex; flex-direction: column; gap: 10px; }
+.q-title { font-weight: 600; display: flex; gap: 10px; }
+.q-title .k { font: 600 13px var(--font-mono); color: var(--tc); padding-top: 1px; }
+.opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.opt { text-align: left; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; line-height: 1.4; }
+.opt:hover:not([disabled]) { border-color: var(--tc); }
+.opt[disabled] { cursor: default; }
+.opt.right { border-color: var(--good); background: var(--good-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.feedback { font-size: 0.9rem; padding: 8px 12px; border-radius: 8px; }
+.feedback.right { background: var(--good-soft); }
+.feedback.wrong { background: var(--bad-soft); }
+.feedback b { margin-right: 4px; }
+.score { display: flex; align-items: center; gap: 14px; }
+
+/* TD */
+.levels { display: flex; gap: 8px; flex-wrap: wrap; }
+.lvl-tab { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface); cursor: pointer; min-width: 180px; text-align: left; flex: 1; }
+.lvl-tab b { font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.lvl-tab span { font-size: 0.8rem; color: var(--muted); }
+.lvl-tab.on { border-color: var(--tc); box-shadow: inset 0 0 0 1px var(--tc); }
+.lvl-tab.ok b::after { content: "✓"; color: var(--good); font-weight: 700; }
+.consignes { margin: 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 5px; }
+.editor { width: 100%; min-height: 300px; background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--code-line); border-radius: var(--r); padding: 14px 16px; font: 13px/1.6 var(--font-mono); tab-size: 4; resize: vertical; white-space: pre; overflow: auto; display: block; }
+.editor:focus { outline: 2px solid var(--tc); outline-offset: -2px; }
+.hint { background: var(--warn-soft); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; }
+.checks { display: flex; flex-direction: column; gap: 6px; }
+.checks label { display: flex; gap: 9px; align-items: flex-start; cursor: pointer; font-size: 0.92rem; }
+.checks input { margin-top: 4px; accent-color: var(--good); }
+.solution-warn { font-size: 0.86rem; color: var(--muted); }
+.done-banner { display: flex; align-items: center; gap: 12px; background: var(--good-soft); border-radius: var(--r); padding: 12px 16px; }
+.done-banner b { color: var(--good); }
+.nav-steps { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
+.workbench { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); gap: 14px; align-items: start; }
+.workbench.single { grid-template-columns: minmax(0, 1fr); }
+.runout { display: flex; flex-direction: column; gap: 10px; }
+.console { background: #1b1f27; color: #d7dce8; border-radius: var(--r); padding: 12px 14px; font: 12.5px/1.55 var(--font-mono); white-space: pre-wrap; word-break: break-word; min-height: 60px; max-height: 320px; overflow: auto; margin: 0; }
+.console .err { color: #ff8585; }
+.console .warnl { color: #ffd37a; }
+.console .dim { color: #8a93a6; }
+.preview { border: 1px solid var(--line); border-radius: var(--r); background: #fff; overflow: hidden; }
+.preview iframe { width: 100%; height: 300px; border: 0; display: block; }
+.tests { display: flex; flex-direction: column; gap: 4px; }
+.tcase { display: flex; gap: 8px; align-items: flex-start; font-size: 0.9rem; padding: 6px 10px; border-radius: 7px; background: var(--surface-2); }
+.tcase.pass { background: var(--good-soft); } .tcase.pass::before { content: "✓"; color: var(--good); font-weight: 700; }
+.tcase.fail { background: var(--bad-soft); } .tcase.fail::before { content: "✗"; color: var(--bad); font-weight: 700; }
+.tcase .detail { color: var(--muted); font-size: 0.84rem; display: block; }
+.tsum { font-weight: 600; font-size: 0.9rem; }
+.tsum.ok { color: var(--good); } .tsum.ko { color: var(--bad); }
+.expected { border-left: 3px solid var(--line); padding-left: 14px; }
+.out-head { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.loading-php { font-size: 0.86rem; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+
+/* Révision */
+.rev-card { display: flex; flex-direction: column; gap: 14px; border-top: 3px solid var(--tc); }
+.recall-flow { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 0.92rem; }
+.progress-dots { display: flex; gap: 5px; }
+.progress-dots i { width: 22px; height: 5px; border-radius: 99px; background: var(--surface-2); }
+.progress-dots i.on { background: var(--accent); }
+.progress-dots i.ok { background: var(--good); }
+.progress-dots i.ko { background: var(--warn); }
+.sched { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.sched td, .sched th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.sched th { font-weight: 600; color: var(--muted); font-size: 0.8rem; }
+.sched td.num { font-variant-numeric: tabular-nums; }
+
+.form-grid { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 10px 14px; align-items: center; }
+.form-grid label { font-weight: 500; font-size: 0.9rem; }
+.swatches { display: flex; gap: 6px; }
+.swatch { width: 26px; height: 26px; border-radius: 7px; border: 2px solid transparent; background: var(--tc); cursor: pointer; }
+.swatch.on { border-color: var(--ink); }
+.spin { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: s 0.8s linear infinite; display: inline-block; }
+@keyframes s { to { transform: rotate(360deg); } }
+.err { color: var(--bad); font-size: 0.9rem; }
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 0.92rem; box-shadow: 0 6px 20px rgb(0 0 0 / 0.2); z-index: 50; max-width: calc(100% - 32px); }
+.toast[hidden] { display: none; }
+
+@media (max-width: 1280px) { .home-hero { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stat-col { grid-column: 1 / -1; grid-template-rows: none; grid-template-columns: 1fr 1fr; } }
+@media (max-width: 1000px) { .home-hero { grid-template-columns: minmax(0, 1fr); } .ex, .mech, .workbench { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .side { position: fixed; inset: 0 auto 0 0; width: min(300px, 86vw); z-index: 40; transform: translateX(-102%); transition: transform 0.2s; box-shadow: 0 0 40px rgb(0 0 0 / 0.25); }
+  body.menu-open .side { transform: none; }
+  .topbar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30; }
+  main { padding-top: 20px; }
+  .opts { grid-template-columns: minmax(0, 1fr); }
+  .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .prereq dl { grid-template-columns: minmax(0, 1fr); gap: 2px 0; }
+  .prereq dd { margin-bottom: 8px; }
+}
 @media (max-width: 760px) {
   .roadmap::before { left: 22px; }
   .rm-start, .rm-end { align-items: flex-start; padding-left: 0; }
@@ -342,44 +411,7 @@ a.stat-card:hover { border-color: var(--accent); }
   .rm-item.left .rm-card, .rm-item.right .rm-card { grid-column: 2; margin: 0; }
   .rm-item.left .rm-card::after, .rm-item.right .rm-card::after { left: -18px; right: auto; width: 14px; }
 }
-/* Barre latérale repliable */
-.side-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 0 10px; }
-.groups { display: flex; flex-direction: column; gap: 2px; margin-top: -8px; }
-.track-head { width: 100%; border: 0; background: none; cursor: pointer; text-align: left; }
-.track-head .tname { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chev { width: 7px; height: 7px; border-right: 1.6px solid var(--muted); border-bottom: 1.6px solid var(--muted); transform: rotate(-45deg); flex: none; margin-right: 2px; transition: transform 0.15s; }
-.track-group.open .chev { transform: rotate(45deg); }
-.minibar { margin-left: 8px; width: 32px; height: 4px; border-radius: 9px; background: var(--surface-2); overflow: hidden; flex: none; }
-.minibar i { display: block; height: 100%; background: var(--tc); }
-.track-head .frac { margin-left: 6px; min-width: 30px; text-align: right; }
-.mods { display: flex; flex-direction: column; gap: 1px; padding: 2px 0 8px; }
-.mod-link.all { color: var(--accent); font-size: 0.8rem; padding-left: 35px; }
-@media (max-width: 1280px) { .home-hero { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stat-col { grid-column: 1 / -1; grid-template-rows: none; grid-template-columns: 1fr 1fr; } }
-@media (max-width: 1000px) { .home-hero { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 520px) { .stat-col { grid-template-columns: minmax(0, 1fr); } .hero-ring { flex-direction: column; } .kpis { flex-direction: row; gap: 18px; } .kpis div { flex-direction: column; align-items: center; gap: 0; } .act-stats { flex-direction: row; gap: 18px; } .act-stats div { flex-direction: column; gap: 0; } .hm-months { font-size: 0.62rem; } }
-
-@media (max-width: 1000px) {
-  .method { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ex { grid-template-columns: minmax(0, 1fr); }
-}
-@media (max-width: 860px) {
-  .app { grid-template-columns: minmax(0, 1fr); }
-  .side { position: fixed; inset: 0 auto 0 0; width: min(300px, 86vw); z-index: 40; transform: translateX(-102%); transition: transform 0.2s; box-shadow: 0 0 40px rgb(0 0 0 / 0.25); }
-  body.menu-open .side { transform: none; }
-  .topbar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30; }
-  main { padding-top: 20px; }
-  .grid3, .grid2 { grid-template-columns: minmax(0, 1fr); }
-  .flow { grid-template-columns: minmax(0, 1fr); }
-  .flow-step { margin-right: 0; margin-bottom: 18px; }
-  .flow-step:last-child { margin-bottom: 0; }
-  .flow-step:not(:last-child)::after { right: auto; left: 50%; top: auto; bottom: -15px; transform: translateX(-50%) rotate(135deg); }
-  .opts { grid-template-columns: minmax(0, 1fr); }
-  .form-grid { grid-template-columns: minmax(0, 1fr); }
-}
-@media (max-width: 480px) {
-  .method { grid-template-columns: minmax(0, 1fr); }
-  h1 { font-size: 1.5rem; }
-}
+@media (max-width: 520px) { .stat-col { grid-template-columns: minmax(0, 1fr); } .hero-ring { flex-direction: column; } .kpis { flex-direction: row; gap: 18px; } .kpis div { flex-direction: column; align-items: center; gap: 0; } .act-stats { flex-direction: row; gap: 18px; } .act-stats div { flex-direction: column; gap: 0; } .hm-months { font-size: 0.62rem; } h1 { font-size: 1.5rem; } .lvl-tab { min-width: 0; } }
 </style>
 </head>
 <body>
@@ -401,14 +433,17 @@ const INTERVALS = [1, 3, 7, 16, 35];
 const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick"];
 const LANGS = { php: "php", tsx: "typescript", ts: "typescript", typescript: "typescript", js: "javascript", jsx: "javascript", javascript: "javascript", sql: "sql", bash: "bash", shell: "bash", yaml: "yaml", json: "json", python: "python", css: "css", html: "xml", xml: "xml", twig: "xml", plaintext: null };
 const STEPS = ["Comprendre", "Exemple", "Quiz", "TD"];
+const LEVEL_NAMES = { 1: "Niveau 1 · Appliquer", 2: "Niveau 2 · Adapter", 3: "Niveau 3 · Approfondir" };
+const LEVEL_DESC = { 1: "Refait directement ce que montre le cours.", 2: "Un cas un peu différent : il faut adapter.", 3: "Combine avec les modules précédents." };
 const LS_KEY = "atelier-code-v1";
+const BASE = new URL(".", location.href).href;
 
 /* ---------- état ---------- */
 const state = {
   progress: { modules: {} },
   drafts: {},
   custom: { tracks: [], modules: [] },
-  ui: { step: {}, hints: {}, showSol: {}, review: null, gen: null, confirmDel: null, newTrackColor: "rose" },
+  ui: { step: {}, level: {}, hints: {}, showSol: {}, ftab: {}, review: null, gen: null, confirmDel: null, newTrackColor: "rose", runs: {} },
 };
 let sample = null, uid = null, refs = null;
 
@@ -431,27 +466,30 @@ function saveLocal() {
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function inl(s) {
-  return String(s ?? "").split("`").map((part, i) => i % 2 ? `<code>${esc(part)}</code>` : esc(part).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")).join("");
+  return String(s ?? "").split("`").map((part, i) => i % 2 ? `<code>${esc(part)}</code>` : esc(part).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,;:!?]|$)/g, "$1<em>$2</em>")).join("");
 }
 function md(text) {
   const out = []; const lines = String(text || "").split("\n"); let i = 0; let list = null; let para = [];
   const flushPara = () => { if (para.length) { out.push(`<p>${inl(para.join(" "))}</p>`); para = []; } };
-  const flushList = () => { if (list) { out.push(`<ul class="points">${list.map((l) => `<li>${inl(l)}</li>`).join("")}</ul>`); list = null; } };
+  const flushList = () => { if (list) { out.push(`<${list.ol ? "ol class=\"consignes\"" : "ul class=\"points\""}>${list.items.map((l) => `<li>${inl(l)}</li>`).join("")}</${list.ol ? "ol" : "ul"}>`); list = null; } };
   while (i < lines.length) {
     const line = lines[i];
-    const fence = line.match(/^```\s*(\w+)?/);
+    const fence = line.match(/^```\s*(\S+)?/);
     if (fence) {
       flushPara(); flushList();
       const buf = []; i++;
       while (i < lines.length && !/^```/.test(lines[i])) { buf.push(lines[i]); i++; }
       i++;
-      out.push(codeBlock(buf.join("\n"), fence[1] || "plaintext"));
+      const spec = fence[1] || "plaintext"; const [lang, ...rest] = spec.split(":");
+      out.push(rest.length ? filesBlock([{ path: rest.join(":"), lang, code: buf.join("\n") }], "md" + out.length) : codeBlock(buf.join("\n"), lang));
       continue;
     }
-    const li = line.match(/^\s*(?:[-*]|\d+\.)\s+(.*)$/);
-    if (li) { flushPara(); (list = list || []).push(li[1]); i++; continue; }
+    const li = line.match(/^\s*([-*]|\d+\.)\s+(.*)$/);
+    if (li) { flushPara(); const ol = /\d/.test(li[1]); if (list && list.ol !== ol) flushList(); (list = list || { ol, items: [] }).items.push(li[2]); i++; continue; }
     const h = line.match(/^#{1,4}\s+(.*)$/);
-    if (h) { flushPara(); flushList(); out.push(`<p><strong>${inl(h[1])}</strong></p>`); i++; continue; }
+    if (h) { flushPara(); flushList(); out.push(`<h4>${inl(h[1])}</h4>`); i++; continue; }
+    const quote = line.match(/^>\s?(.*)$/);
+    if (quote) { flushPara(); flushList(); out.push(`<div class="hint">${inl(quote[1])}</div>`); i++; continue; }
     if (!line.trim()) { flushPara(); flushList(); i++; continue; }
     flushList(); para.push(line.trim()); i++;
   }
@@ -461,6 +499,16 @@ function md(text) {
 function codeBlock(src, lang) {
   const l = LANGS[lang] === undefined ? null : LANGS[lang];
   return `<pre class="code"><code data-lang="${esc(l || "")}">${esc(src)}</code></pre>`;
+}
+function splitPath(p) { const i = p.lastIndexOf("/"); return i < 0 ? ["", p] : [p.slice(0, i + 1), p.slice(i + 1)]; }
+function filesBlock(files, key, editable, modified) {
+  files = (files || []).filter((f) => f && typeof f.code === "string");
+  if (!files.length) return "";
+  if (files.length === 1 && !files[0].path && !editable) return codeBlock(files[0].code, files[0].lang);
+  const cur = Math.min(state.ui.ftab[key] || 0, files.length - 1);
+  const tabs = files.map((f, i) => { const [dir, name] = splitPath(f.path || `fichier${i + 1}`); return `<button class="ftab ${i === cur ? "on" : ""} ${modified && modified[i] ? "mod" : ""}" data-act="ftab" data-key="${esc(key)}" data-i="${i}" type="button"><span class="dir">${esc(dir)}</span>${esc(name)}</button>`; }).join("");
+  const panes = files.map((f, i) => `<div class="fpane ${i === cur ? "on" : ""}">${editable ? `<textarea class="editor" data-ed="${esc(key)}" data-path="${esc(f.path)}" spellcheck="false" aria-label="${esc(f.path)}">${esc(f.code)}</textarea>` : codeBlock(f.code, f.lang)}</div>`).join("");
+  return `<div class="files" data-files="${esc(key)}"><div class="files-tabs">${tabs}</div>${panes}</div>`;
 }
 function highlight(root) {
   if (!window.hljs) return;
@@ -488,13 +536,25 @@ function allModules() { return tracks().flatMap((t) => modulesOf(t.id)); }
 function mod(id) { return DATA.modules.find((m) => m.id === id) || (state.custom.modules || []).find((m) => m.id === id); }
 function isCustom(id) { return !DATA.modules.some((m) => m.id === id); }
 function tc(t) { return `--tc: var(--t-${COLORS.includes(t.color) ? t.color : "graphite"})`; }
+function logo(t, size) {
+  const badge = t.badge || (t.short || t.name || "?").slice(0, 4);
+  return `<span class="tlogo" style="${size ? `--ls:${size}px;` : ""}${tc(t)}"><img src="${esc(BASE)}logos/${esc(t.id)}.svg" alt="" onerror="if(this.dataset.p){this.parentNode.classList.add('nologo');this.remove()}else{this.dataset.p=1;this.src=this.src.replace(/\\.svg$/,'.png')}"><span class="tbadge">${esc(badge)}</span></span>`;
+}
+function withPath(files, lang) { return (files || []).map((f, i) => ({ ...f, path: f.path || ("code" + (i ? i + 1 : "") + "." + ({ php: "php", tsx: "tsx", ts: "ts", javascript: "js", js: "js", jsx: "jsx", sql: "sql", bash: "sh", yaml: "yaml", json: "json", python: "py" }[f.lang || lang] || "txt")) })); }
+function tds(m) {
+  if (Array.isArray(m.tds) && m.tds.length) return m.tds.map((td) => ({ ...td, files: withPath(td.files), solution: withPath(td.solution) }));
+  if (m.td) { const t = m.td; return [{ ...t, level: 1, files: withPath(t.starter ? [t.starter] : []), solution: withPath(t.solution ? [t.solution] : []) }]; }
+  return [];
+}
+function exFiles(m) { const ex = m.example || {}; return Array.isArray(ex.files) ? ex.files : ex.code !== undefined ? [{ path: "", lang: ex.lang, code: ex.code }] : []; }
 function prog(id) { return state.progress.modules[id]; }
-function ensure(id) { return (state.progress.modules[id] = state.progress.modules[id] || { seen: [], answers: {}, checks: [] }); }
+function ensure(id) { return (state.progress.modules[id] = state.progress.modules[id] || { seen: [], answers: {}, checks: [], levels: {} }); }
+function levelDone(p, lvl) { if (!p) return false; if (lvl === 1 && p.tdDone) return true; return !!(p.levels && p.levels[lvl]); }
 function status(id) {
   const p = prog(id);
   if (!p) return "new";
   if (p.done) return p.due && p.due <= today() ? "due" : "done";
-  return (p.seen && p.seen.length) || p.quizDone || p.tdDone ? "started" : "new";
+  return (p.seen && p.seen.length) || p.quizDone || levelDone(p, 1) || (p.levels && Object.keys(p.levels).length) ? "started" : "new";
 }
 const STATUS_LABEL = { new: "À faire", started: "En cours", done: "Acquis", due: "À réviser" };
 function dueModules() { return allModules().filter((m) => status(m.id) === "due"); }
@@ -573,7 +633,7 @@ async function callApi(input, opts = {}, maxTokens = 2048) {
 function makeApiSample() {
   const fn = (input, opts) => callApi(input, opts, 2048);
   fn.json = async (input) => {
-    const r = await callApi(input + "\n\nRéponds uniquement avec le JSON, sans texte autour ni bloc de code.", {}, 8000);
+    const r = await callApi(input + "\n\nRéponds uniquement avec le JSON, sans texte autour ni bloc de code.", {}, 16000);
     const t = r.text; const a = t.indexOf("{"), b = t.lastIndexOf("}");
     if (a < 0 || b < a) throw { code: "unavailable", message: "Réponse non JSON" };
     return JSON.parse(t.slice(a, b + 1));
@@ -634,7 +694,7 @@ function renderSide() {
     const mods = open ? modulesOf(t.id).map((m) => `<a class="mod-link ${r === "m-" + m.id ? "on" : ""}" href="#m-${esc(m.id)}"><span class="st ${status(m.id)}" title="${STATUS_LABEL[status(m.id)]}"></span>${esc(m.title)}</a>`).join("") : "";
     const pctW = s.total ? (100 * s.done / s.total) : 0;
     return `<div class="track-group ${open ? "open" : ""}" style="${tc(t)}">
-      <button class="track-head" data-act="toggleTrack" data-id="${esc(t.id)}" aria-expanded="${open}"><span class="chev" aria-hidden="true"></span><span class="dot"></span><span class="tname">${esc(t.short || t.name)}</span><span class="minibar"><i style="width:${pctW}%"></i></span><span class="frac">${s.done}/${s.total}</span></button>
+      <button class="track-head" data-act="toggleTrack" data-id="${esc(t.id)}" aria-expanded="${open}"><span class="chev" aria-hidden="true"></span>${logo(t, 18)}<span class="tname">${esc(t.short || t.name)}</span><span class="minibar"><i style="width:${pctW}%"></i></span><span class="frac">${s.done}/${s.total}</span></button>
       ${open ? `<div class="mods">${mods}<a class="mod-link all" href="#t-${esc(t.id)}">Voir le parcours</a></div>` : ""}
     </div>`;
   }).join("");
@@ -665,7 +725,6 @@ function nextModule() {
   }
   return all.find((m) => status(m.id) === "new") || null;
 }
-/* ---------- graphiques ---------- */
 function ring(pct, size, stroke, color, inner, sub) {
   const r = (size - stroke) / 2, c = 2 * Math.PI * r, p = Math.max(0, Math.min(1, pct));
   const arc = p > 0 ? `<circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${(c * p).toFixed(2)} ${c.toFixed(2)}" transform="rotate(-90 ${size / 2} ${size / 2})"/>` : "";
@@ -688,7 +747,7 @@ function activityStats() {
 function heatmap(weeks) {
   const a = state.progress.activity || {};
   const start = new Date(); start.setHours(0, 0, 0, 0);
-  const dow = (start.getDay() + 6) % 7;            // lundi = 0
+  const dow = (start.getDay() + 6) % 7;
   start.setDate(start.getDate() - dow - 7 * (weeks - 1));
   const t = today(); let cols = "", months = "", lastMonth = -1, lastLabel = -9;
   for (let w = 0; w < weeks; w++) {
@@ -710,7 +769,6 @@ function heatmap(weeks) {
   return `<div class="hm-wrap"><div class="hm-months" style="grid-template-columns:repeat(${weeks}, minmax(0, 1fr))">${months}</div><div class="hm-grid" style="grid-template-columns:repeat(${weeks}, minmax(0, 1fr))">${cols}</div>
     <div class="hm-legend"><span>Moins</span><i class="hm l0"></i><i class="hm l1"></i><i class="hm l2"></i><i class="hm l3"></i><i class="hm l4"></i><span>Plus</span></div></div>`;
 }
-
 function viewHome() {
   const all = allModules();
   const doneCount = all.filter((m) => prog(m.id)?.done).length;
@@ -722,12 +780,10 @@ function viewHome() {
   const pct = all.length ? doneCount / all.length : 0;
   const trackRings = tracks().map((t) => {
     const s = trackStats(t.id);
-    return `<a class="tr-ring" href="#t-${esc(t.id)}" style="${tc(t)}">${ring(s.total ? s.done / s.total : 0, 76, 8, "var(--tc)", `${s.done}<small>/${s.total}</small>`)}<span>${esc(t.short || t.name)}</span></a>`;
+    return `<a class="tr-ring" href="#t-${esc(t.id)}" style="${tc(t)}">${ring(s.total ? s.done / s.total : 0, 80, 7, "var(--tc)", logo(t, 28), `${s.done}/${s.total}`)}<span>${esc(t.short || t.name)}</span></a>`;
   }).join("");
   return `<div class="wrap">
-    <div class="row" style="align-items:flex-end">
-      <div class="stack" style="gap:4px"><div class="eyebrow">${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div><h1>Mon atelier de code</h1></div>
-    </div>
+    <div class="stack" style="gap:4px"><div class="eyebrow">${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div><h1>Mon atelier de code</h1></div>
     <div class="home-hero">
       <div class="card hero-ring">
         ${ring(pct, 150, 14, "var(--accent)", `${Math.round(pct * 100)}%`, "acquis")}
@@ -738,7 +794,7 @@ function viewHome() {
         </div>
       </div>
       <div class="card next-card" style="${nt ? tc(nt) : ""}">
-        ${nxt ? `<div class="row"><span class="chip">${esc(nt.short || nt.name)}</span><span class="muted small">${nxt.minutes || 15} min</span></div>
+        ${nxt ? `<div class="row">${logo(nt, 20)}<span class="chip">${esc(nt.short || nt.name)}</span><span class="muted small">${nxt.minutes || 15} min</span></div>
           <div class="eyebrow">${status(nxt.id) === "started" ? "Reprendre" : "Prochain module"}</div>
           <h2>${esc(nxt.title)}</h2>
           <a class="btn primary" href="#m-${esc(nxt.id)}">${status(nxt.id) === "started" ? "Continuer" : "Commencer"} →</a>`
@@ -768,7 +824,7 @@ function viewHome() {
   </div>`;
 }
 
-/* ---------- rendu : parcours ---------- */
+/* ---------- rendu : parcours (roadmap) ---------- */
 function viewTrack(tid) {
   const t = track(tid);
   const ms = modulesOf(tid);
@@ -778,16 +834,17 @@ function viewTrack(tid) {
   const items = ms.map((m, i) => {
     const st = status(m.id);
     const here = m.id === nextId;
-    const steps = [0, 1, 2, 3].map((k) => `<i class="${stepDone(m, k) ? "on" : ""}"></i>`).join("");
+    const p = prog(m.id);
+    const steps = [0, 1, 2, 3].map((k) => `<i class="${stepDone(m, k) ? "on" : ""}"></i>`).join("") + (tds(m).length > 1 ? `<span class="sep"></span>` + tds(m).map((td) => `<i class="lv ${levelDone(p, td.level) ? "on" : ""}" title="TD niveau ${td.level}"></i>`).join("") : "");
     const nodeIn = st === "done" ? "✓" : st === "due" ? "↻" : String(i + 1);
     const side = i % 2 === 0 ? "left" : "right";
-    return `<li class="rm-item ${side} ${st} ${here ? "here" : ""} ${prog(m.id)?.done ? "passed" : ""}">
+    return `<li class="rm-item ${side} ${st} ${here ? "here" : ""} ${p?.done ? "passed" : ""}">
       <a class="rm-card" href="#m-${esc(m.id)}">
         ${here ? `<span class="rm-flag">${st === "started" ? "Tu en es là" : st === "due" ? "À réviser" : "Prochaine étape"}</span>` : ""}
         <span class="rm-meta"><span class="rm-num">Étape ${i + 1}</span><span>${m.minutes || 15} min</span>${isCustom(m.id) ? '<span class="pill custom">ajouté</span>' : ""}</span>
         <span class="rm-title">${esc(m.title)}</span>
         <span class="rm-goal">${inl(m.goal)}</span>
-        <span class="rm-foot"><span class="rm-steps" title="Comprendre · Exemple · Quiz · TD">${steps}</span><span class="pill ${st}">${STATUS_LABEL[st]}</span></span>
+        <span class="rm-foot"><span class="rm-steps" title="Comprendre · Exemple · Quiz · TD, puis niveaux du TD">${steps}</span><span class="pill ${st}">${STATUS_LABEL[st]}</span></span>
       </a>
       <span class="rm-node" aria-hidden="true">${nodeIn}</span>
     </li>`;
@@ -796,6 +853,7 @@ function viewTrack(tid) {
   return `<div class="wrap" style="${tc(t)}">
     <a class="small" href="#accueil">← Tableau de bord</a>
     <div class="rm-head card">
+      ${logo(t, 56)}
       ${ring(s.total ? s.done / s.total : 0, 96, 10, "var(--tc)", `${s.done}<small>/${s.total}</small>`)}
       <div class="stack" style="gap:6px;flex:1;min-width:220px">
         <div class="eyebrow">Parcours</div>
@@ -815,11 +873,79 @@ function viewTrack(tid) {
   </div>`;
 }
 
+/* ---------- diagrammes SVG ---------- */
+const DG = { colW: 190, rowH: 96, nodeW: 158, nodeH: 58, padX: 16, padY: 14 };
+function dgColor(c) { return ({ tc: "var(--tc)", accent: "var(--accent)", good: "var(--good)", warn: "var(--warn)", bad: "var(--bad)", muted: "var(--muted)" })[c] || c || "var(--tc)"; }
+function dgText(x, y, text, cls, anchor = "middle", size = 13, weight = 600, fill = "var(--ink)", lineH = 15) {
+  const lines = String(text).split("\n");
+  const y0 = y - ((lines.length - 1) * lineH) / 2;
+  return lines.map((l, i) => `<text x="${x}" y="${y0 + i * lineH}" text-anchor="${anchor}" dominant-baseline="central" font-size="${size}" font-weight="${weight}" fill="${fill}" class="${cls || ""}">${esc(l)}</text>`).join("");
+}
+function diagram(d) {
+  if (!d || !Array.isArray(d.nodes) || !d.nodes.length) return "";
+  const cols = Math.max(...d.nodes.map((n) => n.col + (n.span || 1) - 1)) + 1;
+  const rows = Math.max(...d.nodes.map((n) => n.row)) + 1;
+  const W = DG.padX * 2 + cols * DG.colW, H = DG.padY * 2 + rows * DG.rowH + (d.lanes ? 26 : 0);
+  const top = DG.padY + (d.lanes ? 26 : 0);
+  const pos = {};
+  for (const n of d.nodes) {
+    const span = n.span || 1;
+    const w = DG.nodeW + (span - 1) * DG.colW, h = n.sub ? DG.nodeH + 14 : DG.nodeH;
+    const x = DG.padX + n.col * DG.colW + (DG.colW - DG.nodeW) / 2, y = top + n.row * DG.rowH + (DG.rowH - h) / 2;
+    pos[n.id] = { x, y, w, h, cx: x + w / 2, cy: y + h / 2 };
+  }
+  let out = `<defs><marker id="dg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
+  if (d.lanes) for (const l of d.lanes) {
+    const x = DG.padX + l.from * DG.colW - 6, w = (l.to - l.from + 1) * DG.colW + 12;
+    const col = dgColor(l.color || "muted");
+    out += `<rect x="${x}" y="${DG.padY}" width="${w}" height="${H - DG.padY * 2}" rx="12" fill="${col}" fill-opacity="0.07" stroke="${col}" stroke-opacity="0.25" stroke-dasharray="4 4"/>`;
+    out += dgText(x + w / 2, DG.padY + 13, l.label.toUpperCase(), "", "middle", 11, 700, col);
+  }
+  for (const e of d.edges || []) {
+    const a = pos[e.from], b = pos[e.to]; if (!a || !b) continue;
+    const col = dgColor(e.color || "muted");
+    let path, lx, ly;
+    if (Math.abs(a.cy - b.cy) < 2) {
+      const dir = b.cx > a.cx ? 1 : -1; const x1 = dir > 0 ? a.x + a.w : a.x, x2 = dir > 0 ? b.x : b.x + b.w;
+      const yy = a.cy + (e.back ? 14 : 0);
+      path = `M${x1},${yy} L${x2},${yy}`; lx = (x1 + x2) / 2; ly = yy - 11;
+    } else if (Math.abs(a.cx - b.cx) < 2) {
+      const dir = b.cy > a.cy ? 1 : -1; const y1 = dir > 0 ? a.y + a.h : a.y, y2 = dir > 0 ? b.y : b.y + b.h;
+      const xx = a.cx + (e.back ? 18 : 0);
+      path = `M${xx},${y1} L${xx},${y2}`; lx = xx + 8; ly = (y1 + y2) / 2;
+    } else {
+      const dir = b.cx > a.cx ? 1 : -1; const x1 = dir > 0 ? a.x + a.w : a.x;
+      const vdir = b.cy > a.cy ? 1 : -1; const y2 = vdir > 0 ? b.y : b.y + b.h;
+      path = `M${x1},${a.cy} L${b.cx},${a.cy} L${b.cx},${y2}`; lx = (x1 + b.cx) / 2; ly = a.cy - 11;
+    }
+    out += `<path d="${path}" fill="none" stroke="${col}" stroke-width="2" ${e.dashed ? 'stroke-dasharray="5 4"' : ""} marker-end="url(#dg-arrow)"/>`;
+    if (e.label) {
+      const tw = e.label.length * 6.4 + 12;
+      out += `<rect x="${lx - tw / 2}" y="${ly - 9}" width="${tw}" height="18" rx="9" fill="var(--surface)" stroke="${col}" stroke-opacity="0.35"/>` + dgText(lx, ly, e.label, "", "middle", 11, 500, "var(--ink)");
+    }
+  }
+  for (const n of d.nodes) {
+    const p = pos[n.id]; const col = dgColor(n.color || "tc"); const k = n.kind || "box";
+    const fill = `color-mix(in srgb, ${col} ${k === "note" ? 6 : 12}%, var(--surface))`;
+    if (k === "db") out += `<path d="M${p.x},${p.y + 10} a${p.w / 2},10 0 0 1 ${p.w},0 v${p.h - 20} a${p.w / 2},10 0 0 1 -${p.w},0 z" fill="${fill}" stroke="${col}" stroke-width="1.6"/><path d="M${p.x},${p.y + 10} a${p.w / 2},10 0 0 0 ${p.w},0" fill="none" stroke="${col}" stroke-width="1.6"/>`;
+    else if (k === "actor") out += `<circle cx="${p.cx}" cy="${p.y + 16}" r="9" fill="${fill}" stroke="${col}" stroke-width="1.6"/><path d="M${p.cx},${p.y + 25} v16 M${p.cx - 14},${p.y + 32} h28 M${p.cx},${p.y + 41} l-10,14 M${p.cx},${p.y + 41} l10,14" fill="none" stroke="${col}" stroke-width="1.6" stroke-linecap="round"/>`;
+    else if (k === "doc" || k === "file") out += `<path d="M${p.x},${p.y} h${p.w - 16} l16,16 v${p.h - 16} h-${p.w} z" fill="${fill}" stroke="${col}" stroke-width="1.6" stroke-linejoin="round"/><path d="M${p.x + p.w - 16},${p.y} v16 h16" fill="none" stroke="${col}" stroke-width="1.6"/>`;
+    else if (k === "pill") out += `<rect x="${p.x}" y="${p.y + 10}" width="${p.w}" height="${p.h - 20}" rx="${(p.h - 20) / 2}" fill="${fill}" stroke="${col}" stroke-width="1.6"/>`;
+    else if (k === "note") out += `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="6" fill="${fill}" stroke="${col}" stroke-width="1.2" stroke-dasharray="4 3"/>`;
+    else out += `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="10" fill="${fill}" stroke="${col}" stroke-width="1.6"/>`;
+    const ty = k === "actor" ? p.y + p.h - 2 + 8 : p.cy + (n.sub ? -8 : 0);
+    out += dgText(p.cx, k === "actor" ? p.y + p.h + 4 : ty, n.label, "", "middle", k === "note" ? 12 : 13, k === "note" ? 500 : 600, "var(--ink)");
+    if (n.sub && k !== "actor") out += dgText(p.cx, p.cy + 12, n.sub, "", "middle", 11, 400, "var(--muted)", 13);
+  }
+  const minw = Math.min(W, 640);
+  return `<figure class="diagram" style="margin:0;--minw:${minw}px"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(d.caption || "Schéma")}">${out}</svg>${d.caption ? `<figcaption class="cap">${inl(d.caption)}</figcaption>` : ""}</figure>`;
+}
+
 /* ---------- rendu : module ---------- */
 function stepDone(m, i) {
   const p = prog(m.id) || {};
   if (i === 2) return !!p.quizDone;
-  if (i === 3) return !!p.tdDone;
+  if (i === 3) return levelDone(p, 1);
   return (p.seen || []).includes(i);
 }
 function viewModule(id) {
@@ -829,7 +955,7 @@ function viewModule(id) {
   const ms = modulesOf(m.track);
   const idx = ms.findIndex((x) => x.id === id);
   const p = prog(id) || {};
-  const step = state.ui.step[id] ?? (p.done ? 0 : p.tdDone ? 2 : p.quizDone ? 3 : 0);
+  const step = state.ui.step[id] ?? (p.done ? 0 : levelDone(p, 1) ? 3 : p.quizDone ? 3 : 0);
   state.ui.step[id] = step;
   const st = status(id);
   const banner = p.done ? `<div class="done-banner"><b>Module acquis</b><span class="small">${st === "due" ? "Une révision est prévue aujourd'hui." : `Prochaine révision : ${frDate(p.due)}`}</span><span class="spacer"></span>${st === "due" ? `<a class="btn sm" href="#revision">Réviser</a>` : ""}</div>` : "";
@@ -838,7 +964,7 @@ function viewModule(id) {
   const next = step < 3 ? `<button class="btn primary" data-act="step" data-id="${esc(id)}" data-step="${step + 1}">${STEPS[step + 1]} →</button>` : (idx < ms.length - 1 ? `<a class="btn" href="#m-${esc(ms[idx + 1].id)}">Module suivant →</a>` : `<a class="btn" href="#t-${esc(t.id)}">Voir le parcours</a>`);
   return `<div class="wrap" style="${tc(t)}">
     <div class="mod-head">
-      <div class="row small"><a href="#t-${esc(t.id)}">${esc(t.name)}</a><span class="muted">· module ${idx + 1}/${ms.length} · ${m.minutes || 15} min</span><span class="spacer"></span><span class="pill ${st}">${STATUS_LABEL[st]}</span></div>
+      <div class="row small">${logo(t, 22)}<a href="#t-${esc(t.id)}">${esc(t.name)}</a><span class="muted">· module ${idx + 1}/${ms.length} · ${m.minutes || 15} min</span><span class="spacer"></span><span class="pill ${st}">${STATUS_LABEL[st]}</span></div>
       <h1>${esc(m.title)}</h1>
       <p class="lead"><b>Objectif :</b> ${inl(m.goal)}</p>
     </div>
@@ -849,14 +975,18 @@ function viewModule(id) {
   </div>`;
 }
 function panelLearn(m) {
-  const n = m.flow.length;
+  const pre = Array.isArray(m.prereq) ? m.prereq : [];
+  const lessons = Array.isArray(m.lessons) ? m.lessons : [];
   return `
     <div class="why"><div class="eyebrow">Le problème</div><p>${inl(m.why)}</p></div>
+    ${pre.length ? `<details class="prereq" ${state.ui.prereqOpen === false ? "" : "open"}><summary>Avant de commencer <span class="muted small">· ${pre.length} mot${pre.length > 1 ? "s" : ""} à connaître</span></summary><dl>${pre.map((x) => `<dt>${inl(x.term)}</dt><dd>${inl(x.def)}</dd>`).join("")}</dl></details>` : ""}
     <div class="stack"><h2>Comment ça marche</h2>
-      <div class="flow" style="--n:${n}">${m.flow.map((f, i) => `<div class="flow-step"><span class="k">${String(i + 1).padStart(2, "0")}</span><span>${inl(f)}</span></div>`).join("")}</div>
+      <div class="mech">${m.diagram ? diagram(m.diagram) : ""}<ol class="flow-list">${m.flow.map((f) => `<li><span>${inl(f)}</span></li>`).join("")}</ol></div>
     </div>
+    ${lessons.map((l) => `<section class="lesson"><h2>${inl(l.title)}</h2><div class="prose">${md(l.body)}</div></section>`).join("")}
     <div class="stack"><h2>L'essentiel</h2><ul class="points">${m.points.map((x) => `<li>${inl(x)}</li>`).join("")}</ul></div>
     ${m.pitfalls && m.pitfalls.length ? `<div class="pitfalls"><h3>Pièges fréquents</h3><ul>${m.pitfalls.map((x) => `<li>${inl(x)}</li>`).join("")}</ul></div>` : ""}
+    ${Array.isArray(m.recap) && m.recap.length ? `<div class="recap"><h3>À retenir</h3><ol>${m.recap.map((x) => `<li>${inl(x)}</li>`).join("")}</ol></div>` : ""}
     <div class="ai-box ai-block ai-only">
       <div class="row"><b>Pas encore clair ?</b><span class="spacer"></span><button class="btn sm" data-act="explain" data-id="${esc(m.id)}">Explique-moi autrement</button></div>
       <form class="ask" data-form="ask" data-id="${esc(m.id)}"><input class="field" id="ask-${esc(m.id)}" name="q" placeholder="Pose ta question sur ce module…" autocomplete="off"><button class="btn sm">Demander</button></form>
@@ -864,11 +994,12 @@ function panelLearn(m) {
     </div>`;
 }
 function panelExample(m) {
-  const ex = m.example;
+  const files = exFiles(m);
   return `
     <div class="ex">
-      ${codeBlock(ex.code, ex.lang)}
-      <div class="stack"><h3>À remarquer</h3><ol class="notes">${(ex.notes || []).map((x) => `<li><span>${inl(x)}</span></li>`).join("")}</ol>
+      ${filesBlock(files, "ex-" + m.id)}
+      <div class="stack"><h3>À remarquer</h3><ol class="notes">${(m.example.notes || []).map((x) => `<li><span>${inl(x)}</span></li>`).join("")}</ol>
+      ${files.length > 1 ? `<p class="muted small">Les onglets sont les fichiers du projet : clique dessus pour passer de l'un à l'autre, comme dans ton éditeur.</p>` : ""}
       <p class="muted small">Relis le code en cherchant chaque étape du schéma « Comment ça marche ».</p></div>
     </div>`;
 }
@@ -892,30 +1023,277 @@ function panelQuiz(m) {
   const end = nAns === m.quiz.length ? `<div class="card score"><span class="big">${correct}/${m.quiz.length}</span><span class="small">${correct === m.quiz.length ? "Tout juste. Passe au TD." : "Relis l'étape Comprendre pour les questions ratées, puis recommence."}</span><span class="spacer"></span><button class="btn sm" data-act="resetQuiz" data-id="${esc(m.id)}">Recommencer</button></div>` : "";
   return `<p class="muted small">Réponds sans revenir en arrière : chercher la réponse dans ta mémoire est ce qui la fixe.</p>${qs}${end}`;
 }
+function draftKey(id, lvl) { return `${id}#${lvl}`; }
+function currentFiles(m, td) {
+  const d = state.drafts[draftKey(m.id, td.level)];
+  const base = td.files || [];
+  if (d && typeof d === "object") return base.map((f) => ({ ...f, code: d[f.path] !== undefined ? d[f.path] : f.code }));
+  if (td.level === 1 && typeof state.drafts[m.id] === "string" && base.length === 1) return [{ ...base[0], code: state.drafts[m.id] }];
+  return base.map((f) => ({ ...f }));
+}
 function panelTD(m) {
-  const td = m.td;
+  const list = tds(m);
+  if (!list.length) return `<p class="muted">Pas de TD pour ce module.</p>`;
   const p = prog(m.id) || {};
-  const draft = state.drafts[m.id] ?? td.starter.code;
-  const hintsShown = state.ui.hints[m.id] || 0;
-  const showSol = !!state.ui.showSol[m.id];
-  const checks = p.checks || [];
+  const lvl = state.ui.level[m.id] || (list.find((td) => !levelDone(p, td.level)) || list[0]).level;
+  const td = list.find((x) => x.level === lvl) || list[0];
+  const key = `td-${m.id}-${td.level}`;
+  const files = currentFiles(m, td);
+  const modified = files.map((f, i) => f.code !== (td.files[i] || {}).code);
+  const hintsShown = state.ui.hints[key] || 0;
+  const showSol = !!state.ui.showSol[key];
+  const checks = (p.checks && p.checks[td.level]) || (td.level === 1 && Array.isArray(p.checks) ? p.checks : []) || [];
+  const done = levelDone(p, td.level);
+  const run = td.run && td.run.kind;
+  const runState = state.ui.runs[key] || {};
+  const levelTabs = list.length > 1 ? `<div class="levels">${list.map((x) => `<button class="lvl-tab ${x.level === td.level ? "on" : ""} ${levelDone(p, x.level) ? "ok" : ""}" data-act="level" data-id="${esc(m.id)}" data-level="${x.level}"><b>${LEVEL_NAMES[x.level] || "Niveau " + x.level}</b><span>${esc(x.title)}</span></button>`).join("")}</div>` : "";
+  const runnerUI = run ? `
+      <div class="runout">
+        <div class="row"><button class="btn run" data-act="run" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>${runState.busy ? '<span class="spin"></span> Exécution…' : (run === "php" ? "▶ Exécuter le PHP" : "▶ Exécuter")}</button>${td.run.tests ? `<button class="btn" data-act="runTests" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>Lancer les tests</button>` : ""}<span class="muted small">${run === "php" ? "PHP 8.4 tourne dans ton navigateur." : "Ton code tourne dans ton navigateur."}</span></div>
+        ${run !== "php" ? `<div class="preview" ${runState.html === undefined && !runState.frame ? 'style="display:none"' : ""}><iframe id="prev-${esc(key)}" sandbox="allow-scripts" title="Aperçu"></iframe></div>` : ""}
+        <div class="out-head">Sortie</div>
+        <pre class="console" id="con-${esc(key)}">${runState.console !== undefined ? runState.console : '<span class="dim">Clique sur Exécuter pour voir le résultat ici.</span>'}</pre>
+        ${runState.tests ? renderTests(runState.tests) : ""}
+      </div>` : "";
   return `
-    <div class="stack"><div class="eyebrow">TD</div><h2>${esc(td.title)}</h2><p>${inl(td.enonce)}</p></div>
+    ${levelTabs}
+    <div class="stack"><div class="row"><span class="pill lvl">${LEVEL_NAMES[td.level] || "TD"}</span><span class="muted small">${LEVEL_DESC[td.level] || ""}</span>${done ? '<span class="pill done">Terminé</span>' : ""}</div><h2>${esc(td.title)}</h2><div class="prose">${md(td.enonce)}</div></div>
     <div class="card stack"><h3>Consignes</h3><ol class="consignes">${td.consignes.map((c) => `<li>${inl(c)}</li>`).join("")}</ol></div>
-    <div class="stack">
-      <div class="row"><h3>Mon code</h3><span class="muted small">Écris ici ou dans ton éditeur, puis colle ton code pour la correction.</span><span class="spacer"></span><button class="btn sm ghost" data-act="copyCode" data-id="${esc(m.id)}">Copier</button><button class="btn sm ghost" data-act="resetCode" data-id="${esc(m.id)}">Repartir du code de départ</button></div>
-      <textarea class="editor" id="ed-${esc(m.id)}" data-id="${esc(m.id)}" spellcheck="false" aria-label="Éditeur du TD">${esc(draft)}</textarea>
+    <div class="workbench ${run ? "" : "single"}">
+      <div class="stack">
+        <div class="row"><h3>Mon code</h3><span class="spacer"></span><button class="btn sm ghost" data-act="copyCode" data-key="${esc(key)}">Copier</button><button class="btn sm ghost" data-act="resetCode" data-id="${esc(m.id)}" data-level="${td.level}">Repartir du code de départ</button></div>
+        ${filesBlock(files, key, true, modified)}
+        ${run ? "" : `<p class="muted small">${td.run === null || !td.run ? "Ce TD se fait dans ton projet ou ton terminal : l'éditeur sert de brouillon (il est sauvegardé)." : ""}</p>`}
+      </div>
+      ${runnerUI}
     </div>
     <div class="row">
-      <button class="btn primary ai-only" data-act="review" data-id="${esc(m.id)}">Faire corriger par Claude</button>
-      <button class="btn" data-act="hint" data-id="${esc(m.id)}" ${hintsShown >= td.hints.length ? "disabled" : ""}>Indice ${Math.min(hintsShown + 1, td.hints.length)}/${td.hints.length}</button>
-      <button class="btn ghost" data-act="solution" data-id="${esc(m.id)}">${showSol ? "Masquer la solution" : "Voir la solution"}</button>
+      <button class="btn primary ai-only" data-act="review" data-id="${esc(m.id)}" data-level="${td.level}">Faire corriger par Claude</button>
+      <button class="btn" data-act="hint" data-key="${esc(key)}" ${hintsShown >= td.hints.length ? "disabled" : ""}>Indice ${Math.min(hintsShown + 1, td.hints.length)}/${td.hints.length}</button>
+      <button class="btn ghost" data-act="solution" data-key="${esc(key)}">${showSol ? "Masquer la solution" : "Voir la solution"}</button>
     </div>
     ${hintsShown ? `<div class="stack">${td.hints.slice(0, hintsShown).map((h, i) => `<div class="hint"><b>Indice ${i + 1}.</b> ${inl(h)}</div>`).join("")}</div>` : ""}
     <div class="ai-out card" id="ai-td" style="display:none"></div>
-    ${showSol ? `<div class="stack"><p class="solution-warn">Compare avec ta version : il y a souvent plusieurs bonnes solutions.</p>${codeBlock(td.solution.code, td.solution.lang)}</div>` : ""}
-    <div class="card stack"><h3>Vérifie toi-même</h3><div class="checks">${td.checks.map((c, i) => `<label><input type="checkbox" data-act="check" data-id="${esc(m.id)}" data-i="${i}" ${checks.includes(i) ? "checked" : ""}><span>${inl(c)}</span></label>`).join("")}</div></div>
-    <div class="row">${p.tdDone ? `<span class="pill done">TD terminé</span><button class="btn sm ghost" data-act="tdUndo" data-id="${esc(m.id)}">Annuler</button>` : `<button class="btn primary" data-act="tdDone" data-id="${esc(m.id)}">J'ai terminé le TD</button><span class="muted small">${p.quizDone ? "Le module sera acquis." : "Il restera le quiz pour valider le module."}</span>`}</div>`;
+    ${td.expected ? `<div class="expected stack"><div class="out-head">Résultat attendu</div><pre class="code" style="font-size:12.5px">${esc(td.expected)}</pre></div>` : ""}
+    ${showSol ? `<div class="stack"><p class="solution-warn">Compare avec ta version : il y a souvent plusieurs bonnes solutions.</p>${filesBlock(td.solution, "sol-" + key)}</div>` : ""}
+    <div class="card stack"><h3>Vérifie toi-même</h3><div class="checks">${td.checks.map((c, i) => `<label><input type="checkbox" data-act="check" data-id="${esc(m.id)}" data-level="${td.level}" data-i="${i}" ${checks.includes(i) ? "checked" : ""}><span>${inl(c)}</span></label>`).join("")}</div></div>
+    <div class="row">${done ? `<span class="pill done">Niveau ${td.level} terminé</span><button class="btn sm ghost" data-act="tdUndo" data-id="${esc(m.id)}" data-level="${td.level}">Annuler</button>${list.find((x) => x.level > td.level) ? `<button class="btn" data-act="level" data-id="${esc(m.id)}" data-level="${td.level + 1}">Niveau ${td.level + 1} →</button>` : ""}` : `<button class="btn primary" data-act="tdDone" data-id="${esc(m.id)}" data-level="${td.level}">J'ai terminé ce niveau</button><span class="muted small">${td.level === 1 ? (p.quizDone ? "Le module sera acquis ; les niveaux 2 et 3 sont là pour aller plus loin." : "Avec le quiz, ce niveau valide le module.") : "Niveau optionnel, compté dans ta progression."}</span>`}</div>`;
+}
+function renderTests(t) {
+  const pass = t.cases.filter((c) => c.ok).length;
+  return `<div class="tests"><div class="tsum ${pass === t.cases.length && !t.error ? "ok" : "ko"}">${t.error ? "Les tests n'ont pas pu tourner" : `${pass}/${t.cases.length} test${t.cases.length > 1 ? "s" : ""} réussi${pass > 1 ? "s" : ""}`}</div>${t.error ? `<div class="tcase fail"><span>${esc(t.error)}</span></div>` : ""}${t.cases.map((c) => `<div class="tcase ${c.ok ? "pass" : "fail"}"><span>${esc(c.name)}${c.detail ? `<span class="detail">${esc(c.detail)}</span>` : ""}</span></div>`).join("")}</div>`;
+}
+
+/* ---------- exécution du code ---------- */
+let phpRuntime = null, phpOut = [];
+async function getPhp(onStatus) {
+  if (phpRuntime) return phpRuntime;
+  onStatus && onStatus("Chargement de PHP (12 Mo la première fois)…");
+  const modUrl = BASE + "vendor/php-wasm/PhpWeb.mjs";
+  const { PhpWeb } = await import(modUrl);
+  const php = new PhpWeb({ version: "8.4" });
+  php.addEventListener("output", (e) => phpOut.push({ t: "out", s: e.detail }));
+  php.addEventListener("error", (e) => phpOut.push({ t: "err", s: e.detail }));
+  await php.binary;
+  phpRuntime = php;
+  return php;
+}
+function joinPhpFiles(files) {
+  // Plusieurs fichiers PHP sans namespace : on les concatène, un seul <?php au début.
+  let body = "";
+  files.forEach((f, i) => {
+    let c = f.code.replace(/^﻿/, "");
+    if (i > 0) { c = c.replace(/^\s*<\?php\s*/i, "").replace(/^\s*declare\s*\(\s*strict_types\s*=\s*1\s*\)\s*;\s*/i, ""); }
+    body += (i ? "\n\n// ---- " + f.path + " ----\n" : "") + c;
+  });
+  if (!/^\s*<\?php/i.test(body)) body = "<?php\n" + body;
+  return body;
+}
+const PHP_TEST_PRELUDE = `
+if (!function_exists('check')) {
+  function check(string $desc, bool $ok, string $detail = ''): void { echo "\\n@@CHECK|" . ($ok ? 'PASS' : 'FAIL') . "|" . str_replace(["|", "\\n"], [" ", " "], $desc) . "|" . str_replace(["|", "\\n"], [" ", " "], $detail); }
+  function throws(callable $fn, string $class = \\Throwable::class): bool { try { $fn(); return false; } catch (\\Throwable $e) { return $e instanceof $class; } }
+}
+`;
+async function runPhp(m, td, key, withTests) {
+  const rs = (state.ui.runs[key] = state.ui.runs[key] || {});
+  rs.busy = true; rs.tests = null; render();
+  const con = () => $("#con-" + CSS.escape(key));
+  try {
+    const php = await getPhp((s) => { const c = con(); if (c) c.innerHTML = `<span class="dim">${esc(s)}</span>`; });
+    const files = currentFiles(m, td);
+    let code = joinPhpFiles(files);
+    if (td.run.setup) { const mm = code.match(/^\s*<\?php\s*(declare\s*\([^)]*\)\s*;)?/i); code = mm[0] + "\n" + td.run.setup + "\n" + code.slice(mm[0].length); }
+    if (withTests && td.run.tests) code += "\n\n// ---- tests ----\n" + PHP_TEST_PRELUDE + "\n" + td.run.tests + "\n";
+    phpOut = [];
+    const t0 = performance.now();
+    let rc;
+    try { rc = await php.run(code); } catch (e) { phpOut.push({ t: "err", s: String(e && e.message || e) }); rc = 255; }
+    try { await php.refresh(); } catch (e) {}
+    const ms = Math.round(performance.now() - t0);
+    const raw = phpOut.map((o) => o.s).join("");
+    const cases = [];
+    const text = raw.split("\n").filter((line) => {
+      const mm = line.match(/^@@CHECK\|(PASS|FAIL)\|([^|]*)\|?(.*)$/);
+      if (mm) { cases.push({ ok: mm[1] === "PASS", name: mm[2], detail: mm[3] }); return false; }
+      return true;
+    }).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+    const isErr = /^(PHP )?(Fatal error|Parse error|Warning|Notice|Deprecated)/m.test(text) || rc !== 0;
+    rs.console = (text ? (isErr ? text.replace(/^((PHP )?(Fatal error|Parse error|Warning|Notice|Deprecated)[^\n]*)/gm, '<span class="err">$1</span>') : esc(text)) : '<span class="dim">(aucune sortie)</span>') + `\n<span class="dim">[fin · ${ms} ms · code ${rc}]</span>`;
+    if (!text || isErr) rs.console = (text ? text.replace(/</g, "&lt;").replace(/^((PHP )?(Fatal error|Parse error|Warning|Notice|Deprecated)[^\n]*)/gm, '<span class="err">$1</span>') : '<span class="dim">(aucune sortie)</span>') + `\n<span class="dim">[fin · ${ms} ms · code ${rc}]</span>`;
+    if (withTests) rs.tests = cases.length ? { cases } : { cases: [], error: isErr ? "Corrige d'abord l'erreur PHP ci-dessus." : "Aucun test n'a renvoyé de résultat." };
+    if (withTests && cases.length && cases.every((c) => c.ok)) logActivity();
+  } catch (e) {
+    rs.console = `<span class="err">Impossible de charger PHP : ${esc(e && e.message || e)}</span>\n<span class="dim">Vérifie ta connexion, puis réessaie.</span>`;
+  }
+  rs.busy = false; render();
+}
+const JS_RUNNER = (files, entry, apiCode, tests, libs) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font:14px/1.5 system-ui,sans-serif;margin:12px;color:#1f2633}button{font:inherit}input,textarea,select{font:inherit}</style></head><body><div id="root"></div>
+<script src="${libs.react}"><\/script><script src="${libs.reactDom}"><\/script><script src="${libs.babel}"><\/script>
+<script>
+(function(){
+  const files = ${JSON.stringify(files)};
+  const post = (m) => parent.postMessage(Object.assign({ atelier: true }, m), "*");
+  const fmt = (a) => a.map((x) => { try { return typeof x === "string" ? x : JSON.stringify(x, null, 1); } catch (e) { return String(x); } }).join(" ");
+  ["log", "info", "warn", "error"].forEach((k) => { const o = console[k].bind(console); console[k] = (...a) => { o(...a); post({ type: "console", level: k, text: fmt(a) }); }; });
+  window.addEventListener("error", (e) => post({ type: "error", text: String(e.message) }));
+  window.addEventListener("unhandledrejection", (e) => post({ type: "error", text: "Promesse rejetée : " + String(e.reason && e.reason.message || e.reason) }));
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  /* faux axios : répond selon window.__api = { "GET /livres": (params, body) => data | [status, data] } */
+  window.__api = window.__api || {};
+  ${apiCode || ""}
+  function route(method, url, body, config) {
+    const u = new URL(url, "http://api.local/"); const path = u.pathname.replace(/\\/$/, "") || "/";
+    const params = Object.assign({}, Object.fromEntries(u.searchParams), (config && config.params) || {});
+    for (const k of Object.keys(window.__api)) {
+      const [m, pat] = k.split(" "); if (m !== method) continue;
+      const rx = new RegExp("^" + pat.replace(/:[a-zA-Z]+/g, "([^/]+)").replace(/\\//g, "\\\\/") + "$");
+      const mm = path.match(rx); if (!mm) continue;
+      const names = (pat.match(/:[a-zA-Z]+/g) || []).map((s) => s.slice(1));
+      const ps = {}; names.forEach((n, i) => (ps[n] = mm[i + 1]));
+      return window.__api[k](Object.assign({}, params, ps), body);
+    }
+    return [404, { error: "Route inconnue : " + method + " " + path }];
+  }
+  function axiosError(status, data, config) { const e = new Error("Request failed with status code " + status); e.isAxiosError = true; e.response = { status, data }; e.config = config; return e; }
+  function request(method, url, body, config) {
+    return sleep(120 + Math.random() * 180).then(() => {
+      if (config && config.signal && config.signal.aborted) { const e = new Error("canceled"); e.name = "CanceledError"; e.code = "ERR_CANCELED"; throw e; }
+      let r; try { r = route(method, url, body, config); } catch (err) { throw axiosError(500, { error: String(err.message) }, config); }
+      let status = 200, data = r;
+      if (Array.isArray(r) && r.length === 2 && typeof r[0] === "number" && r[0] >= 100 && r[0] < 600) { status = r[0]; data = r[1]; }
+      if (status >= 400) throw axiosError(status, data, config);
+      post({ type: "net", text: method + " " + url + " → " + status });
+      return { data, status, headers: {}, config };
+    });
+  }
+  function makeAxios(defaults) {
+    const base = (defaults && defaults.baseURL) || "";
+    const full = (u) => (/^https?:/.test(u) ? u : base.replace(/\\/$/, "") + "/" + u.replace(/^\\//, ""));
+    const ax = (config) => request((config.method || "get").toUpperCase(), full(config.url), config.data, config);
+    ax.get = (u, c) => request("GET", full(u), undefined, c);
+    ax.delete = (u, c) => request("DELETE", full(u), undefined, c);
+    ax.post = (u, d, c) => request("POST", full(u), d, c);
+    ax.put = (u, d, c) => request("PUT", full(u), d, c);
+    ax.patch = (u, d, c) => request("PATCH", full(u), d, c);
+    ax.create = (d) => makeAxios(d);
+    ax.isAxiosError = (e) => !!(e && e.isAxiosError);
+    ax.isCancel = (e) => !!(e && e.code === "ERR_CANCELED");
+    ax.defaults = defaults || {}; ax.interceptors = { request: { use() {} }, response: { use() {} } };
+    return ax;
+  }
+  const axios = makeAxios({}); axios.default = axios;
+  window.fetch = (url, init) => request(((init && init.method) || "GET").toUpperCase(), String(url), init && init.body ? JSON.parse(init.body) : undefined, init).then((r) => ({ ok: true, status: r.status, json: async () => r.data, text: async () => JSON.stringify(r.data) })).catch((e) => { if (e.response) return { ok: false, status: e.response.status, json: async () => e.response.data, text: async () => JSON.stringify(e.response.data) }; throw e; });
+  const cache = {};
+  function req(name) {
+    if (name === "react") return React;
+    if (name === "react-dom" || name === "react-dom/client") return ReactDOM;
+    if (name === "axios") return axios;
+    if (name === "react/jsx-runtime") return { jsx: React.createElement, jsxs: React.createElement, Fragment: React.Fragment };
+    const p = name.replace(/^\\.\\//, "").replace(/^\\.\\.\\//, "");
+    const cands = [p, p + ".tsx", p + ".ts", p + ".jsx", p + ".js", p + "/index.tsx", p + "/index.ts"];
+    const k = cands.find((c) => files[c] !== undefined);
+    if (!k) throw new Error("Module introuvable : '" + name + "'. Fichiers disponibles : " + Object.keys(files).join(", "));
+    if (cache[k]) return cache[k].exports;
+    const out = Babel.transform(files[k], { filename: k, presets: [["env", { modules: "commonjs", targets: { chrome: "100" } }], "react", ["typescript", { isTSX: /x$/.test(k), allExtensions: true }]] }).code;
+    const module = { exports: {} }; cache[k] = module;
+    new Function("require", "module", "exports", out)(req, module, module.exports);
+    return module.exports;
+  }
+  window.__req = req;
+  const root = document.getElementById("root");
+  let reactRoot = null;
+  function mount(entry) {
+    const mod = req("./" + entry);
+    const C = mod.default || Object.values(mod).find((v) => typeof v === "function");
+    if (C) { reactRoot = ReactDOM.createRoot(root); reactRoot.render(React.createElement(C)); return true; }
+    return false;
+  }
+  async function tick(ms) { await sleep(ms === undefined ? 60 : ms); }
+  const h = {
+    sleep, tick, root, require: req,
+    $: (s) => root.querySelector(s), $$: (s) => Array.from(root.querySelectorAll(s)),
+    text: () => root.textContent,
+    click: async (el) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Élément introuvable pour click()"); el.dispatchEvent(new MouseEvent("click", { bubbles: true })); await tick(); },
+    type: async (el, v) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Champ introuvable pour type()"); const proto = el.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, "value").set.call(el, v); el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true })); await tick(); },
+    submit: async (el) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Formulaire introuvable"); el.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })); await tick(); },
+    byText: (t) => Array.from(root.querySelectorAll("*")).find((e) => e.children.length === 0 && e.textContent.trim() === t) || Array.from(root.querySelectorAll("button,a,li,p,span,h1,h2,h3,td,label")).find((e) => e.textContent.includes(t)),
+    waitFor: async (fn, ms) => { const end = Date.now() + (ms || 2000); while (Date.now() < end) { try { const r = await fn(); if (r) return r; } catch (e) {} await sleep(40); } throw new Error("Condition non remplie après " + (ms || 2000) + " ms"); },
+  };
+  async function runTests(src) {
+    const cases = []; let error = null;
+    const assert = (cond, name, detail) => { cases.push({ ok: !!cond, name: name || "assertion", detail: cond ? "" : (detail || "") }); };
+    assert.equal = (a, b, name) => assert(a === b, name, "attendu : " + JSON.stringify(b) + " · obtenu : " + JSON.stringify(a));
+    assert.includes = (hay, needle, name) => assert(String(hay).includes(needle), name, "introuvable : " + JSON.stringify(needle));
+    try { const fn = new Function("assert", "h", "with (h) { return (async () => { " + src + "\\n })(); }"); await fn(assert, h); }
+    catch (e) { error = String(e && e.message || e); }
+    post({ type: "tests", cases, error });
+  }
+  window.addEventListener("message", async (e) => { if (e.data && e.data.atelier === true && e.data.type === "runTests") await runTests(e.data.src); });
+  try {
+    const entry = ${JSON.stringify(entry)};
+    const mounted = mount(entry);
+    if (!mounted) post({ type: "console", level: "info", text: "(le fichier d'entrée n'exporte pas de composant : code exécuté)" });
+    setTimeout(() => post({ type: "ready", html: root.innerHTML }), 80);
+    ${tests ? `setTimeout(() => runTests(${JSON.stringify(tests)}), 160);` : ""}
+  } catch (e) { post({ type: "error", text: String(e && e.message || e) }); post({ type: "ready" }); }
+})();
+<\/script></body></html>`;
+const pendingRuns = {};
+function runJs(m, td, key, withTests) {
+  const rs = (state.ui.runs[key] = state.ui.runs[key] || {});
+  rs.busy = true; rs.tests = null; rs.console = ""; rs.frame = true; render();
+  const files = {}; for (const f of currentFiles(m, td)) files[f.path] = f.code;
+  if (td.run.setup) { const extra = td.run.setup; for (const line of extra.split(/^\/\/ ==== (.+?) ====$/m).slice(1).reduce((a, v, i, arr) => (i % 2 === 0 ? a.concat([[v, arr[i + 1] || ""]]) : a), [])) files[line[0].trim()] = line[1]; }
+  const entry = td.run.entry || Object.keys(files).find((p) => /^(App|index|main)\.(tsx|jsx|ts|js)$/.test(p)) || Object.keys(files)[0];
+  const libs = { react: BASE + "vendor/react/react.development.js", reactDom: BASE + "vendor/react/react-dom.development.js", babel: BASE + "vendor/babel/babel.min.js" };
+  const html = JS_RUNNER(files, entry, td.run.api || "", withTests ? td.run.tests || "" : "", libs);
+  const iframe = $("#prev-" + CSS.escape(key));
+  if (!iframe) { rs.busy = false; return; }
+  const lines = [];
+  pendingRuns[key] = { onMsg(d) {
+    if (d.type === "console") lines.push(`<span class="${d.level === "error" ? "err" : d.level === "warn" ? "warnl" : ""}">${esc(d.text)}</span>`);
+    if (d.type === "net") lines.push(`<span class="dim">${esc(d.text)}</span>`);
+    if (d.type === "error") lines.push(`<span class="err">Erreur : ${esc(d.text)}</span>`);
+    if (d.type === "ready") { rs.busy = false; rs.html = d.html || ""; const b = document.querySelector(`[data-act="run"][data-id="${CSS.escape(m.id)}"]`); if (b) { b.disabled = false; b.innerHTML = td.run.kind === "php" ? "▶ Exécuter le PHP" : "▶ Exécuter"; } const tb = document.querySelector(`[data-act="runTests"][data-id="${CSS.escape(m.id)}"]`); if (tb) tb.disabled = false; }
+    if (d.type === "tests") { rs.tests = { cases: d.cases || [], error: d.error }; if (!d.error && d.cases.length && d.cases.every((c) => c.ok)) logActivity(); const box = iframe.closest(".runout"); const old = box && box.querySelector(".tests"); if (old) old.remove(); if (box) box.insertAdjacentHTML("beforeend", renderTests(rs.tests)); }
+    rs.console = lines.join("\n") || '<span class="dim">(aucune sortie console)</span>';
+    const c = $("#con-" + CSS.escape(key)); if (c) c.innerHTML = rs.console;
+  } };
+  iframe.dataset.key = key;
+  iframe.srcdoc = html;
+  setTimeout(() => { if (rs.busy) { rs.busy = false; const c = $("#con-" + CSS.escape(key)); if (c && !lines.length) c.innerHTML = '<span class="err">Le code n\'a pas répondu (boucle infinie ou chargement bloqué ?).</span>'; render(); } }, 12000);
+}
+window.addEventListener("message", (e) => {
+  const d = e.data; if (!d || d.atelier !== true) return;
+  const iframes = document.querySelectorAll("iframe[data-key]");
+  for (const f of iframes) if (f.contentWindow === e.source) { const r = pendingRuns[f.dataset.key]; if (r) r.onMsg(d); }
+});
+function runTD(id, level, withTests) {
+  const m = mod(id); const td = tds(m).find((x) => x.level === Number(level)); if (!m || !td || !td.run) return;
+  keepDrafts();
+  const key = `td-${id}-${td.level}`;
+  if (td.run.kind === "php") runPhp(m, td, key, withTests); else runJs(m, td, key, withTests);
 }
 
 /* ---------- rendu : révision ---------- */
@@ -938,7 +1316,7 @@ function viewReview() {
       <div class="card stack">
         ${due.length ? `<div class="row"><span class="big" style="color:var(--warn)">${due.length}</span><span>module(s) à réviser aujourd'hui</span><span class="spacer"></span><button class="btn primary" data-act="startReview">Commencer</button></div>
           <div class="due-list">${due.map((m) => `<a href="#m-${esc(m.id)}" style="${tc(track(m.track))}"><span class="st due"></span>${esc(m.title)} <span class="muted small">· ${esc(track(m.track).short)}</span></a>`).join("")}</div>`
-        : `<h3>Rien à réviser aujourd'hui</h3><p class="muted">${doneMods.length ? "Tu peux t'entraîner librement sur tes modules acquis, sans changer le planning." : "Termine un premier module (quiz + TD) pour lancer les révisions."}</p>${doneMods.length ? `<div><button class="btn" data-act="practice">S'entraîner sur 3 modules au hasard</button></div>` : ""}`}
+        : `<h3>Rien à réviser aujourd'hui</h3><p class="muted">${doneMods.length ? "Tu peux t'entraîner librement sur tes modules acquis, sans changer le planning." : "Termine un premier module (quiz + TD niveau 1) pour lancer les révisions."}</p>${doneMods.length ? `<div><button class="btn" data-act="practice">S'entraîner sur 3 modules au hasard</button></div>` : ""}`}
       </div>
       ${upcoming.length ? `<div class="card" style="padding:6px 8px"><table class="sched"><thead><tr><th>Module</th><th>Parcours</th><th>Prochaine révision</th><th>Palier</th></tr></thead><tbody>${upcoming.map((m) => `<tr><td><a href="#m-${esc(m.id)}">${esc(m.title)}</a></td><td>${esc(track(m.track).short)}</td><td class="num">${frDate(prog(m.id).due)} <span class="muted">(J+${daysFromToday(prog(m.id).due)})</span></td><td class="num">${prog(m.id).box || 1}/${INTERVALS.length}</td></tr>`).join("")}</tbody></table></div>` : ""}
     </div>`;
@@ -966,11 +1344,11 @@ function viewReview() {
   return `<div class="wrap" style="${tc(t)}">
     <div class="row"><h1 style="font-size:1.4rem">${r.practice ? "Entraînement" : "Révision"}</h1><span class="spacer"></span><div class="progress-dots">${dots}</div><button class="btn sm ghost" data-act="closeReview">Quitter</button></div>
     <div class="card rev-card">
-      <div class="row"><span class="chip" style="${tc(t)}">${esc(t.short || t.name)}</span><span class="muted small">${r.idx + 1}/${r.queue.length}</span></div>
+      <div class="row">${logo(t, 20)}<span class="chip" style="${tc(t)}">${esc(t.short || t.name)}</span><span class="muted small">${r.idx + 1}/${r.queue.length}</span></div>
       <h2>${esc(m.title)}</h2>
       <div class="stack"><b>1. Sans regarder : explique en 2 ou 3 phrases comment ça marche.</b>
         <textarea class="field" rows="3" placeholder="Écris de mémoire, même approximativement…" aria-label="Rappel libre"></textarea>
-        ${it.revealed ? `<div class="stack small"><span class="muted">Compare avec le mécanisme :</span><ol class="recall-flow">${m.flow.map((f) => `<li>${inl(f)}</li>`).join("")}</ol></div>` : `<div><button class="btn" data-act="reveal">Comparer avec le mécanisme</button></div>`}
+        ${it.revealed ? `<div class="stack small"><span class="muted">Compare avec le mécanisme :</span>${m.diagram ? diagram(m.diagram) : ""}<ol class="recall-flow">${m.flow.map((f) => `<li>${inl(f)}</li>`).join("")}</ol>${Array.isArray(m.recap) && m.recap.length ? `<div class="recap"><h3>À retenir</h3><ol>${m.recap.map((x) => `<li>${inl(x)}</li>`).join("")}</ol></div>` : ""}</div>` : `<div><button class="btn" data-act="reveal">Comparer avec le mécanisme</button></div>`}
       </div>
       ${it.revealed ? `<div class="stack" style="gap:18px"><b>2. Quiz</b>${qs}</div>` : ""}
       ${allAnswered ? `<div class="row"><button class="btn primary" data-act="rNext">${r.idx < r.queue.length - 1 ? "Module suivant" : "Terminer"}</button></div>` : ""}
@@ -983,11 +1361,13 @@ function moduleTemplate() {
   return JSON.stringify({
     trackName: "Symfony", title: "Titre du module", minutes: 15,
     goal: "Ce que tu sauras faire.", why: "Le problème que ça résout.",
+    prereq: [{ term: "Mot", def: "Définition courte" }],
     flow: ["Étape 1", "Étape 2", "Étape 3", "Étape 4"],
-    points: ["Point essentiel avec du `code`"], pitfalls: ["Erreur fréquente"],
-    example: { lang: "php", code: "<?php\n// exemple", notes: ["Ce qu'il faut remarquer"] },
+    lessons: [{ title: "Titre de la leçon", body: "Explication en plusieurs paragraphes.\n\n- liste\n- liste\n\n```php:src/Exemple.php\n<?php\n// code\n```" }],
+    points: ["Point essentiel avec du `code`"], pitfalls: ["Erreur fréquente"], recap: ["À retenir 1", "À retenir 2"],
+    example: { files: [{ path: "src/Exemple.php", lang: "php", code: "<?php\n// exemple" }], notes: ["Ce qu'il faut remarquer"] },
     quiz: [{ q: "Question ?", options: ["A", "B", "C", "D"], answer: 1, why: "Explication" }],
-    td: { title: "Titre du TD", enonce: "Énoncé", consignes: ["Consigne"], starter: { lang: "php", code: "// à toi" }, hints: ["Indice"], solution: { lang: "php", code: "// solution" }, checks: ["Vérification"] },
+    tds: [{ level: 1, title: "Titre du TD", enonce: "Énoncé", consignes: ["Consigne"], files: [{ path: "exo.php", lang: "php", code: "<?php\n// à toi" }], hints: ["Indice"], solution: [{ path: "exo.php", lang: "php", code: "<?php\n// solution" }], checks: ["Vérification"], run: { kind: "php", tests: "check('description', true);" } }],
   }, null, 2);
 }
 function viewAdd() {
@@ -1002,12 +1382,12 @@ function viewAdd() {
     return `<div class="card stack" style="${tc(isNew ? { color: state.ui.newTrackColor } : track(g.track))}">
       <div class="eyebrow">Aperçu</div><h3>${esc(m.title)}</h3><p class="small">${inl(m.goal)}</p>
       <ol class="recall-flow">${m.flow.map((f) => `<li>${inl(f)}</li>`).join("")}</ol>
-      <p class="muted small">${m.points.length} points clés · ${m.quiz.length} questions · TD « ${esc(m.td.title)} »</p>
+      <p class="muted small">${(m.lessons || []).length} leçon(s) · ${m.points.length} points clés · ${m.quiz.length} questions · ${tds(m).length} TD</p>
       <div class="row"><button class="btn primary" data-act="genSave">Ajouter au parcours</button><button class="btn" data-act="genRun">Régénérer</button></div>
     </div>`;
   })() : "";
   return `<div class="wrap">
-    <div class="stack" style="gap:6px"><h1>Ajouter un module</h1><p class="lead">Ajoute un sujet à un parcours existant ou crée un nouveau parcours. Le module aura la même forme que les autres : mécanisme, exemple, quiz, TD.</p></div>
+    <div class="stack" style="gap:6px"><h1>Ajouter un module</h1><p class="lead">Ajoute un sujet à un parcours existant ou crée un nouveau parcours. Le module aura la même forme que les autres : prérequis, mécanisme, leçons, exemple, quiz, TD à 3 niveaux.</p></div>
     <form class="card stack" data-form="gen">
       <h2>Générer avec Claude</h2>
       <p class="muted small no-ai">La génération n'est pas disponible dans cette vue. ${standalone ? `<a href="#claude">Active les boutons Claude avec ta clé API</a>, ou importe` : "Tu peux importer"} un module en JSON plus bas.</p>
@@ -1021,7 +1401,7 @@ function viewAdd() {
         <label for="g-notes">Précisions</label>
         <input class="field" id="g-notes" name="notes" value="${esc(g.notes || "")}" placeholder="Optionnel : ce que tu bloques, un cas de ton projet…">
       </div>
-      <div class="row"><button class="btn primary ai-only" ${g.loading ? "disabled" : ""}>${g.loading ? '<span class="spin"></span> Claude écrit le module…' : "Générer le module"}</button>${g.error ? `<span class="err">${esc(g.error)}</span>` : ""}</div>
+      <div class="row"><button class="btn primary ai-only" ${g.loading ? "disabled" : ""}>${g.loading ? '<span class="spin"></span> Claude écrit le module (1 à 2 min)…' : "Générer le module"}</button>${g.error ? `<span class="err">${esc(g.error)}</span>` : ""}</div>
     </form>
     ${preview}
     <div class="card stack">
@@ -1036,7 +1416,6 @@ function viewAdd() {
     </div>` : ""}
   </div>`;
 }
-
 
 /* ---------- rendu : réglage de la clé API ---------- */
 function viewClaude() {
@@ -1073,7 +1452,10 @@ function render() {
   else if (r.startsWith("m-")) html = viewModule(r.slice(2));
   else html = viewHome();
   const main = $("#main");
+  const keepFrames = {};
+  main.querySelectorAll("iframe[data-key]").forEach((f) => { keepFrames[f.dataset.key] = f; });
   main.innerHTML = html;
+  main.querySelectorAll("iframe[id^='prev-']").forEach((f) => { const k = f.id.slice(5); const old = keepFrames[k]; if (old && old.srcdoc) { old.id = f.id; f.replaceWith(old); } });
   highlight(main);
   renderSide();
   if (lastRoute !== r) { window.scrollTo(0, 0); lastRoute = r; }
@@ -1090,13 +1472,20 @@ function refresh() {
 function markSeen(id, step) { const p = ensure(id); p.seen = p.seen || []; if (!p.seen.includes(step)) { p.seen.push(step); logActivity(); } }
 function checkComplete(id) {
   const p = ensure(id);
-  if (p.quizDone && p.tdDone && !p.done) {
+  if (p.quizDone && levelDone(p, 1) && !p.done) {
     p.done = true; p.box = 1; p.due = addDays(INTERVALS[0]); p.doneAt = today();
     toast("Module acquis. Première révision demain.");
   }
 }
-function saveDraftFrom(el) { const id = el.dataset.id; state.drafts[id] = el.value; draftWriter.schedule(); }
-
+function keepDrafts() {
+  document.querySelectorAll("textarea.editor[data-ed]").forEach((ed) => {
+    const key = ed.dataset.ed; const mm = key.match(/^td-(.+)-(\d+)$/); if (!mm) return;
+    const dk = draftKey(mm[1], Number(mm[2]));
+    const d = (state.drafts[dk] && typeof state.drafts[dk] === "object") ? state.drafts[dk] : (state.drafts[dk] = {});
+    d[ed.dataset.path] = ed.value;
+  });
+  draftWriter.schedule();
+}
 const ACTIONS = {
   toggleTrack(el) {
     const id = el.dataset.id; const r = currentRoute();
@@ -1107,13 +1496,15 @@ const ACTIONS = {
   },
   menu() { document.body.classList.toggle("menu-open"); },
   step(el) {
-    keepDraft(); const id = el.dataset.id; const s = Number(el.dataset.step);
+    keepDrafts(); const id = el.dataset.id; const s = Number(el.dataset.step);
     const cur = state.ui.step[id] ?? 0;
     if (cur === 0 || cur === 1) markSeen(id, cur);
     state.ui.step[id] = s;
     saveProgress(); render();
     const tabs = $(".steps"); if (tabs) tabs.scrollIntoView({ block: "nearest" });
   },
+  level(el) { keepDrafts(); state.ui.level[el.dataset.id] = Number(el.dataset.level); render(); },
+  ftab(el) { keepDrafts(); state.ui.ftab[el.dataset.key] = Number(el.dataset.i); const box = el.closest(".files"); if (box) { box.querySelectorAll(".ftab").forEach((t, i) => t.classList.toggle("on", i === Number(el.dataset.i))); box.querySelectorAll(".fpane").forEach((p, i) => p.classList.toggle("on", i === Number(el.dataset.i))); } },
   answer(el) {
     const id = el.dataset.id; const m = mod(id); const p = ensure(id);
     p.answers = p.answers || {};
@@ -1123,19 +1514,23 @@ const ACTIONS = {
     saveProgress(); render();
   },
   resetQuiz(el) { const p = ensure(el.dataset.id); p.answers = {}; saveProgress(); render(); },
-  hint(el) { const id = el.dataset.id; state.ui.hints[id] = (state.ui.hints[id] || 0) + 1; keepDraft(); render(); },
-  solution(el) { const id = el.dataset.id; state.ui.showSol[id] = !state.ui.showSol[id]; keepDraft(); render(); },
+  hint(el) { keepDrafts(); const k = el.dataset.key; state.ui.hints[k] = (state.ui.hints[k] || 0) + 1; render(); },
+  solution(el) { keepDrafts(); const k = el.dataset.key; state.ui.showSol[k] = !state.ui.showSol[k]; render(); },
   check(el) {
-    const p = ensure(el.dataset.id); const i = Number(el.dataset.i);
-    p.checks = (p.checks || []).filter((x) => x !== i); if (el.checked) p.checks.push(i);
+    const p = ensure(el.dataset.id); const i = Number(el.dataset.i); const lvl = Number(el.dataset.level);
+    if (Array.isArray(p.checks)) p.checks = { 1: p.checks };
+    p.checks = p.checks || {};
+    p.checks[lvl] = (p.checks[lvl] || []).filter((x) => x !== i); if (el.checked) p.checks[lvl].push(i);
     saveProgress();
   },
-  tdDone(el) { const id = el.dataset.id; keepDraft(); const p = ensure(id); p.tdDone = true; logActivity(); checkComplete(id); saveProgress(); render(); },
-  tdUndo(el) { const p = ensure(el.dataset.id); p.tdDone = false; saveProgress(); render(); },
-  resetCode(el) { const id = el.dataset.id; delete state.drafts[id]; draftWriter.schedule(); const ed = $("#ed-" + CSS.escape(id)); if (ed) ed.value = mod(id).td.starter.code; },
-  async copyCode(el) { const ed = $("#ed-" + CSS.escape(el.dataset.id)); try { await navigator.clipboard.writeText(ed.value); toast("Code copié."); } catch (e) { ed.select(); toast("Sélectionné : copie avec Ctrl+C."); } },
+  tdDone(el) { const id = el.dataset.id; const lvl = Number(el.dataset.level); keepDrafts(); const p = ensure(id); p.levels = p.levels || {}; p.levels[lvl] = true; if (lvl === 1) p.tdDone = true; logActivity(); checkComplete(id); saveProgress(); render(); },
+  tdUndo(el) { const p = ensure(el.dataset.id); const lvl = Number(el.dataset.level); if (p.levels) delete p.levels[lvl]; if (lvl === 1) p.tdDone = false; saveProgress(); render(); },
+  resetCode(el) { const id = el.dataset.id; const lvl = Number(el.dataset.level); delete state.drafts[draftKey(id, lvl)]; if (lvl === 1) delete state.drafts[id]; draftWriter.schedule(); render(); },
+  async copyCode(el) { keepDrafts(); const eds = document.querySelectorAll(`textarea.editor[data-ed="${CSS.escape(el.dataset.key)}"]`); const txt = Array.from(eds).map((e) => (eds.length > 1 ? `// ${e.dataset.path}\n` : "") + e.value).join("\n\n"); try { await navigator.clipboard.writeText(txt); toast("Code copié."); } catch (e) { toast("Copie impossible ici : sélectionne le code et utilise Ctrl+C."); } },
+  run(el) { runTD(el.dataset.id, el.dataset.level, false); },
+  runTests(el) { runTD(el.dataset.id, el.dataset.level, true); },
   explain(el) { aiExplain(mod(el.dataset.id)); },
-  review(el) { aiReview(mod(el.dataset.id)); },
+  review(el) { aiReview(mod(el.dataset.id), Number(el.dataset.level)); },
   startReview() { startReview(dueModules().map((m) => m.id), false); },
   practice() { const ids = shuffle(allModules().filter((m) => prog(m.id)?.done).map((m) => m.id)).slice(0, 3); startReview(ids, true); },
   reveal() { state.ui.review.queue[state.ui.review.idx].revealed = true; render(); },
@@ -1170,13 +1565,12 @@ const ACTIONS = {
   delMod(el) {
     const id = el.dataset.id;
     state.custom.modules = state.custom.modules.filter((m) => m.id !== id);
-    delete state.progress.modules[id]; delete state.drafts[id];
+    delete state.progress.modules[id]; for (const k of Object.keys(state.drafts)) if (k === id || k.startsWith(id + "#")) delete state.drafts[k];
     state.ui.confirmDel = null;
     libWriter.schedule(); saveProgress(); draftWriter.schedule(); render(); toast("Module supprimé.");
   },
   delTrack(el) { state.custom.tracks = state.custom.tracks.filter((t) => t.id !== el.dataset.id); libWriter.schedule(); render(); },
 };
-function keepDraft() { const ed = document.querySelector("textarea.editor"); if (ed) saveDraftFrom(ed); }
 
 document.addEventListener("click", (e) => {
   const a = e.target.closest("[data-act]");
@@ -1201,17 +1595,16 @@ document.addEventListener("submit", (e) => {
 document.addEventListener("change", (e) => {
   if (e.target.id === "g-track") { readGenForm(); render(); }
 });
+document.addEventListener("toggle", (e) => { if (e.target.classList && e.target.classList.contains("prereq")) state.ui.prereqOpen = e.target.open; }, true);
 let draftTimer;
 document.addEventListener("input", (e) => {
-  if (e.target.classList.contains("editor")) { clearTimeout(draftTimer); const el = e.target; draftTimer = setTimeout(() => saveDraftFrom(el), 500); }
+  if (e.target.classList.contains("editor")) { clearTimeout(draftTimer); draftTimer = setTimeout(keepDrafts, 600); const tab = e.target.closest(".files"); if (tab) { const idx = Array.from(tab.querySelectorAll(".fpane")).indexOf(e.target.closest(".fpane")); const t = tab.querySelectorAll(".ftab")[idx]; if (t) t.classList.add("mod"); } }
 });
 document.addEventListener("keydown", (e) => {
   const el = e.target;
-  if (el.classList && el.classList.contains("editor") && e.key === "Tab" && !e.shiftKey) {
-    e.preventDefault();
-    const s = el.selectionStart, en = el.selectionEnd;
-    el.setRangeText("    ", s, en, "end");
-    el.dispatchEvent(new Event("input", { bubbles: true }));
+  if (el.classList && el.classList.contains("editor")) {
+    if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); el.setRangeText("    ", el.selectionStart, el.selectionEnd, "end"); el.dispatchEvent(new Event("input", { bubbles: true })); }
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { const box = el.closest(".workbench"); const b = box && box.querySelector('[data-act="run"]'); if (b) { e.preventDefault(); b.click(); } }
   }
 });
 window.addEventListener("hashchange", () => { document.body.classList.remove("menu-open"); render(); });
@@ -1219,7 +1612,8 @@ window.addEventListener("hashchange", () => { document.body.classList.remove("me
 /* ---------- Claude ---------- */
 function levelContext() { return "L'élève a un niveau intermédiaire en programmation. Il a besoin de comprendre COMMENT une chose fonctionne pour pouvoir la faire. Réponds en français, de façon simple, concise et concrète."; }
 function moduleContext(m) {
-  return `Module « ${m.title} » (parcours ${track(m.track).name}).\nObjectif : ${m.goal}\nMécanisme : ${m.flow.map((f, i) => `${i + 1}) ${f}`).join(" ")}\nPoints clés : ${m.points.join(" | ")}`;
+  const lessons = (m.lessons || []).map((l) => `## ${l.title}\n${l.body}`).join("\n").slice(0, 6000);
+  return `Module « ${m.title} » (parcours ${track(m.track).name}).\nObjectif : ${m.goal}\nMécanisme : ${m.flow.map((f, i) => `${i + 1}) ${f}`).join(" ")}\nPoints clés : ${m.points.join(" | ")}\n\nCours :\n${lessons}`;
 }
 async function runAI(outSel, prompt, intro) {
   const out = $(outSel);
@@ -1227,10 +1621,7 @@ async function runAI(outSel, prompt, intro) {
   out.style.display = "";
   out.innerHTML = `<p class="muted small"><span class="spin"></span> ${esc(intro)}</p>`;
   try {
-    const res = await sample(prompt, {
-      cache: false,
-      onText: ({ text }) => { const o = $(outSel); if (o) { o.innerHTML = md(text); } },
-    });
+    const res = await sample(prompt, { cache: false, onText: ({ text }) => { const o = $(outSel); if (o) { o.innerHTML = md(text); } } });
     const o = $(outSel);
     if (o) { o.innerHTML = md(res.text); highlight(o); }
   } catch (e) {
@@ -1247,12 +1638,14 @@ function aiExplain(m) {
 function aiAsk(m, q) {
   runAI("#ai-learn", `${levelContext()}\n\n${moduleContext(m)}\n\nQuestion de l'élève : ${q}\n\nRéponds directement à la question, en 150 mots maximum (hors code). Si un exemple aide, un bloc \`\`\` court. Pas de titre.`, "Claude réfléchit…");
 }
-function aiReview(m) {
-  const ed = $("#ed-" + CSS.escape(m.id));
-  const codeTxt = ed ? ed.value : "";
-  keepDraft();
-  if (!codeTxt.trim() || codeTxt.trim() === m.td.starter.code.trim()) { toast("Écris d'abord ton code dans l'éditeur."); return; }
-  runAI("#ai-td", `${levelContext()}\n\nTu corriges un TD.\nTD : ${m.td.title}\nÉnoncé : ${m.td.enonce}\nConsignes :\n${m.td.consignes.map((c, i) => `${i + 1}. ${c}`).join("\n")}\n\nSolution de référence (NE LA RECOPIE PAS) :\n${m.td.solution.code}\n\nCode de l'élève :\n${codeTxt}\n\nRéponds ainsi :\n- Une ligne par consigne : « OK » ou ce qui manque/est faux, en une phrase.\n- Le point le plus important à corriger et POURQUOI (lié au mécanisme du module).\n- Un indice pour corriger, sans donner le code complet.\nSi tout est bon, dis-le et propose une amélioration. 200 mots maximum.`, "Claude relit ton code…");
+function aiReview(m, level) {
+  const td = tds(m).find((x) => x.level === level) || tds(m)[0];
+  keepDrafts();
+  const files = currentFiles(m, td);
+  const codeTxt = files.map((f) => `// ${f.path}\n${f.code}`).join("\n\n");
+  if (files.every((f, i) => f.code.trim() === (td.files[i] || {}).code?.trim())) { toast("Écris d'abord ton code dans l'éditeur."); return; }
+  const sol = (td.solution || []).map((f) => `// ${f.path}\n${f.code}`).join("\n\n");
+  runAI("#ai-td", `${levelContext()}\n\nTu corriges un TD (niveau ${td.level}).\nTD : ${td.title}\nÉnoncé : ${td.enonce}\nConsignes :\n${td.consignes.map((c, i) => `${i + 1}. ${c}`).join("\n")}\n\nSolution de référence (NE LA RECOPIE PAS) :\n${sol}\n\nCode de l'élève :\n${codeTxt}\n\nRéponds ainsi :\n- Une ligne par consigne : « OK » ou ce qui manque/est faux, en une phrase.\n- Le point le plus important à corriger et POURQUOI (lié au mécanisme du module).\n- Un indice pour corriger, sans donner le code complet.\nSi tout est bon, dis-le et propose une amélioration. 220 mots maximum.`, "Claude relit ton code…");
 }
 function readGenForm() {
   const f = document.querySelector('form[data-form="gen"]');
@@ -1267,9 +1660,9 @@ async function aiGenerate() {
   if (!g.topic || !g.topic.trim()) { g.error = "Indique un sujet."; render(); return; }
   if (g.track === "__new" && !(g.tname || "").trim()) { g.error = "Donne un nom au nouveau parcours."; render(); return; }
   const trackName = g.track === "__new" ? g.tname.trim() : track(g.track).name;
-  const exemple = JSON.stringify(stripModule(DATA.modules[0]));
+  const exemple = moduleTemplate();
   g.loading = true; g.error = null; g.result = null; render();
-  const prompt = `${levelContext()}\n\nÉcris UN module d'apprentissage sur le sujet « ${g.topic.trim()} » pour le parcours « ${trackName} ».${g.notes ? `\nPrécisions de l'élève : ${g.notes}` : ""}\n\nMéthode : d'abord le problème que ça résout (why), puis le mécanisme en 4 étapes courtes (flow), 4 ou 5 points essentiels, 2 pièges, un exemple de code réaliste et commenté (15 à 40 lignes) avec 3 notes, 3 questions de quiz (4 options, answer = index de la bonne réponse, why = explication courte), et un TD pratique (énoncé, 3 à 5 consignes, code de départ, 2 ou 3 indices progressifs, solution complète, 2 ou 3 vérifications).\nContraintes : sections courtes et simples ; markdown inline seulement (\`code\`, **gras**) dans les textes ; lang parmi php, tsx, javascript, sql, bash, yaml, json, python, plaintext ; contenu exact et à jour.\n\nRéponds UNIQUEMENT avec un objet JSON valide ayant exactement cette structure (exemple d'un autre module) :\n${exemple}`;
+  const prompt = `${levelContext()}\n\nÉcris UN module d'apprentissage complet sur le sujet « ${g.topic.trim()} » pour le parcours « ${trackName} ».${g.notes ? `\nPrécisions de l'élève : ${g.notes}` : ""}\n\nMéthode : (1) why : le problème que ça résout, en 2-3 phrases concrètes ; (2) prereq : 3 à 6 mots de vocabulaire de base utilisés dans le module, avec une définition d'une phrase chacun ; (3) flow : le mécanisme en 4 étapes courtes ; (4) lessons : 3 à 4 leçons de 2 à 4 paragraphes chacune, progressives, qui expliquent vraiment (pas des listes de mots-clés), avec de petits blocs de code \`\`\`lang:chemin/fichier ; (5) points : 4 ou 5 points essentiels ; (6) pitfalls : 2 ou 3 pièges ; (7) recap : 3 à 5 phrases à retenir ; (8) example : un exemple réaliste de 20 à 60 lignes, découpé en fichiers si le projet en a plusieurs, avec 3 ou 4 notes ; (9) quiz : 4 questions à 4 options (answer = index de la bonne réponse, why = explication) ; (10) tds : 3 TD de niveaux 1 (application directe), 2 (cas à adapter), 3 (approfondissement combinant d'autres notions), chacun avec énoncé, 3 à 5 consignes, fichiers de départ, 2 ou 3 indices progressifs, solution complète, 2 ou 3 vérifications. Si le code est du PHP pur (sans framework) ou du React/TypeScript sans librairie externe, ajoute run : {kind:"php"|"react", tests:"..."} (PHP : fonctions check('desc', bool) ; React : assert(cond, 'desc') avec h.$(), h.click(), h.type(), h.text()). Sinon, ne mets pas run et donne expected (résultat attendu en texte).\nContraintes : français ; markdown inline (\`code\`, **gras**) dans les textes ; lang parmi php, tsx, ts, javascript, sql, bash, yaml, json, python, plaintext ; contenu exact et à jour.\n\nRéponds UNIQUEMENT avec un objet JSON valide ayant exactement cette structure :\n${exemple}`;
   try {
     const val = await sample.json(prompt, { modelTier: "complex" });
     const m = normalizeModule(val);
@@ -1281,26 +1674,38 @@ async function aiGenerate() {
   g.loading = false;
   if (currentRoute() === "ajouter") render();
 }
-function stripModule(m) { const { id, track, ...rest } = m; return rest; }
 function asStrArr(a) { return Array.isArray(a) ? a.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim()) : []; }
-function normCode(c) { if (!c || typeof c.code !== "string") return null; return { lang: LANGS[c.lang] !== undefined ? c.lang : "plaintext", code: c.code.replace(/\s+$/, "") }; }
+function normFile(f, i) { if (!f || typeof f.code !== "string") return null; return { path: typeof f.path === "string" ? f.path.trim() : "", lang: LANGS[f.lang] !== undefined ? f.lang : "plaintext", code: f.code.replace(/\s+$/, "") }; }
+function normFiles(v) { if (Array.isArray(v)) return v.map(normFile).filter(Boolean); const f = normFile(v); return f ? [f] : []; }
 function normalizeModule(v) {
   if (!v || typeof v !== "object") return null;
   const str = (x) => (typeof x === "string" ? x.trim() : "");
   const quiz = (Array.isArray(v.quiz) ? v.quiz : []).map((q) => ({ q: str(q && q.q), options: asStrArr(q && q.options), answer: Number(q && q.answer), why: str(q && q.why) }))
     .filter((q) => q.q && q.options.length >= 2 && Number.isInteger(q.answer) && q.answer >= 0 && q.answer < q.options.length);
-  const td = v.td || {};
   const ex = v.example || {};
+  const rawTds = Array.isArray(v.tds) && v.tds.length ? v.tds : v.td ? [{ level: 1, ...v.td, files: v.td.files || (v.td.starter ? [v.td.starter] : []), solution: v.td.solution }] : [];
+  const tdsN = rawTds.map((td, i) => {
+    if (!td) return null;
+    const files = normFiles(td.files || td.starter); const solution = normFiles(td.solution);
+    const o = { level: Number(td.level) || i + 1, title: str(td.title) || "TD", enonce: str(td.enonce), consignes: asStrArr(td.consignes), files, hints: asStrArr(td.hints), solution, checks: asStrArr(td.checks) };
+    if (td.run && typeof td.run === "object" && ["php", "react", "js"].includes(td.run.kind)) o.run = { kind: td.run.kind, tests: str(td.run.tests), entry: str(td.run.entry) || undefined, api: str(td.run.api) || undefined };
+    if (str(td.expected)) o.expected = str(td.expected);
+    if (!o.enonce || !o.consignes.length || !o.solution.length) return null;
+    if (!o.files.length) o.files = o.solution.map((f) => ({ ...f, code: "// à toi" }));
+    if (!o.hints.length) o.hints = ["Relis le mécanisme du module."];
+    if (!o.checks.length) o.checks = ["Ton code respecte toutes les consignes"];
+    return o;
+  }).filter(Boolean);
   const m = {
     title: str(v.title), minutes: Number(v.minutes) || 15, goal: str(v.goal), why: str(v.why),
-    flow: asStrArr(v.flow).slice(0, 6), points: asStrArr(v.points), pitfalls: asStrArr(v.pitfalls),
-    example: { ...(normCode(ex) || { lang: "plaintext", code: "" }), notes: asStrArr(ex.notes) },
-    quiz,
-    td: { title: str(td.title) || "TD", enonce: str(td.enonce), consignes: asStrArr(td.consignes), starter: normCode(td.starter) || { lang: "plaintext", code: "" }, hints: asStrArr(td.hints), solution: normCode(td.solution), checks: asStrArr(td.checks) },
+    prereq: (Array.isArray(v.prereq) ? v.prereq : []).map((p) => ({ term: str(p && p.term), def: str(p && p.def) })).filter((p) => p.term && p.def),
+    flow: asStrArr(v.flow).slice(0, 6), diagram: v.diagram && Array.isArray(v.diagram.nodes) ? v.diagram : null,
+    lessons: (Array.isArray(v.lessons) ? v.lessons : []).map((l) => ({ title: str(l && l.title), body: str(l && l.body) })).filter((l) => l.title && l.body),
+    points: asStrArr(v.points), pitfalls: asStrArr(v.pitfalls), recap: asStrArr(v.recap),
+    example: { files: normFiles(ex.files || (ex.code !== undefined ? { path: "", lang: ex.lang, code: ex.code } : [])), notes: asStrArr(ex.notes) },
+    quiz, tds: tdsN,
   };
-  if (!m.title || !m.goal || m.flow.length < 2 || !m.points.length || !m.example.code || !quiz.length || !m.td.enonce || !m.td.consignes.length || !m.td.solution) return null;
-  if (!m.td.hints.length) m.td.hints = ["Relis le mécanisme du module."];
-  if (!m.td.checks.length) m.td.checks = ["Ton code respecte toutes les consignes"];
+  if (!m.title || !m.goal || m.flow.length < 2 || !m.points.length || !m.example.files.length || !quiz.length || !m.tds.length) return null;
   if (!m.why) m.why = m.goal;
   return m;
 }
@@ -1337,7 +1742,7 @@ function importJSON() {
     state.custom.modules.push({ ...m, id, track: tid });
     added++; firstId = firstId || id;
   }
-  if (!added) { err.textContent = "Aucun module valide : il faut au moins title, goal, flow, points, example, quiz et td."; return; }
+  if (!added) { err.textContent = "Aucun module valide : il faut au moins title, goal, flow, points, example, quiz et tds."; return; }
   libWriter.schedule();
   toast(`${added} module(s) importé(s).`);
   location.hash = "#m-" + firstId;

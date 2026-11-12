@@ -39,9 +39,27 @@ for m in modules:
     assert len(m["flow"]) >= 3, m["id"]
     for q in m["quiz"]:
         assert 0 <= q["answer"] < len(q["options"]), (m["id"], q["q"])
-    td = m["td"]
-    for k in ["title", "enonce", "consignes", "starter", "hints", "solution", "checks"]:
-        assert td.get(k), (m["id"], k)
+    if "tds" in m:
+        assert m["tds"], (m["id"], "tds vide")
+        levels = [t["level"] for t in m["tds"]]
+        assert levels == sorted(set(levels)), (m["id"], "niveaux", levels)
+        for td in m["tds"]:
+            for k in ["title", "enonce", "consignes", "files", "hints", "solution", "checks"]:
+                assert td.get(k), (m["id"], td.get("level"), k)
+            for f in td["files"] + td["solution"]:
+                assert f.get("path"), (m["id"], td["level"], "fichier sans chemin")
+            if td.get("run"):
+                assert td["run"]["kind"] in ("php", "react", "js"), (m["id"], td["level"])
+        assert m["lessons"], (m["id"], "pas de leçon")
+        assert m["example"]["files"], (m["id"], "exemple vide")
+        if m.get("diagram"):
+            nid = {n["id"] for n in m["diagram"]["nodes"]}
+            for e in m["diagram"]["edges"]:
+                assert e["from"] in nid and e["to"] in nid, (m["id"], "arête", e)
+    else:
+        td = m["td"]
+        for k in ["title", "enonce", "consignes", "starter", "hints", "solution", "checks"]:
+            assert td.get(k), (m["id"], k)
 
 data = {"tracks": TRACKS, "modules": modules}
 js = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
@@ -49,4 +67,5 @@ tpl = open("/home/claude/atelier/template.html", encoding="utf-8").read()
 assert "/*__CONTENT__*/" in tpl
 out = tpl.replace("/*__CONTENT__*/null", js)
 open("/home/claude/atelier/index.html", "w", encoding="utf-8").write(out)
-print(len(modules), "modules,", len(out) // 1024, "KiB")
+v2 = sum(1 for m in modules if "tds" in m)
+print(len(modules), "modules (", v2, "en v2 ),", len(out) // 1024, "KiB")
