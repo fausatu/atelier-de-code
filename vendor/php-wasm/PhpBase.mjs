@@ -1,7 +1,7 @@
-import { OutputBuffer } from './OutputBuffer.mjs';
-import { _Event } from './Event.mjs';
-import { fsOps } from './fsOps.mjs';
-import { resolveDependencies } from './resolveDependencies.mjs';
+import { OutputBuffer } from './OutputBuffer.mjs?v=2';
+import { _Event } from './Event.mjs?v=2';
+import { fsOps } from './fsOps.mjs?v=2';
+import { resolveDependencies } from './resolveDependencies.mjs?v=2';
 
 const importMeta = import.meta;
 

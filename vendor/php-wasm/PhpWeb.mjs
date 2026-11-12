@@ -1,4 +1,4 @@
-import { PhpWebBase } from './PhpWebBase.mjs';
+import { PhpWebBase } from './PhpWebBase.mjs?v=2';
 
 const defaultVersion = '8.4';
 
@@ -20,30 +20,30 @@ export class PhpWeb extends PhpWebBase
 		switch(version)
 		{
 			case '8.5':
-				super(import(`./php8.5-web.mjs`), constructorArgs);
+				super(import(`./php8.5-web.mjs?v=2`), constructorArgs);
 				break;
 
 
 			case '8.4':
-				super(import(`./php8.4-web.mjs`), constructorArgs);
+				super(import(`./php8.4-web.mjs?v=2`), constructorArgs);
 				break;
 
 
 			case '8.3':
-				super(import(`./php8.3-web.mjs`), constructorArgs);
+				super(import(`./php8.3-web.mjs?v=2`), constructorArgs);
 				break;
 
 
 			case '8.2':
-				super(import(`./php8.2-web.mjs`), constructorArgs);
+				super(import(`./php8.2-web.mjs?v=2`), constructorArgs);
 				break;
 
 			case '8.1':
-				super(import(`./php8.1-web.mjs`), constructorArgs);
+				super(import(`./php8.1-web.mjs?v=2`), constructorArgs);
 				break;
 
 			case '8.0':
-				super(import(`./php8.0-web.mjs`), constructorArgs);
+				super(import(`./php8.0-web.mjs?v=2`), constructorArgs);
 				break;
 
 			default:

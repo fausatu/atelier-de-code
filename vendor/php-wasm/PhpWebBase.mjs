@@ -1,5 +1,5 @@
-import { PhpBase } from './PhpBase.mjs';
-import { commitTransaction, requestWebLock, startTransaction } from './webTransactions.mjs';
+import { PhpBase } from './PhpBase.mjs?v=2';
+import { commitTransaction, requestWebLock, startTransaction } from './webTransactions.mjs?v=2';
 
 /** Browser filesystem and queue behavior shared by ordinary and SDL runtimes. */
 export class PhpWebBase extends PhpBase

@@ -1094,7 +1094,7 @@ let phpRuntime = null, phpOut = [];
 async function getPhp(onStatus) {
   if (phpRuntime) return phpRuntime;
   onStatus && onStatus("Chargement de PHP (12 Mo la première fois)…");
-  const modUrl = BASE + "vendor/php-wasm/PhpWeb.mjs?v=2";
+  const modUrl = BASE + "vendor/php-wasm/PhpWeb.mjs?v=3";
   const { PhpWeb } = await import(modUrl);
   const php = new PhpWeb({ version: "8.4" });
   php.addEventListener("output", (e) => phpOut.push({ t: "out", s: e.detail }));
