@@ -1094,7 +1094,7 @@ let phpRuntime = null, phpOut = [];
 async function getPhp(onStatus) {
   if (phpRuntime) return phpRuntime;
   onStatus && onStatus("Chargement de PHP (12 Mo la première fois)…");
-  const modUrl = BASE + "vendor/php-wasm/PhpWeb.mjs";
+  const modUrl = BASE + "vendor/php-wasm/PhpWeb.mjs?v=2";
   const { PhpWeb } = await import(modUrl);
   const php = new PhpWeb({ version: "8.4" });
   php.addEventListener("output", (e) => phpOut.push({ t: "out", s: e.detail }));
@@ -1166,8 +1166,8 @@ async function runPhp(m, td, key, withTests) {
   }
   rs.busy = false; render();
 }
-const JS_RUNNER = (files, entry, apiCode, tests, libs, kind) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font:14px/1.5 system-ui,sans-serif;margin:12px;color:#1f2633}button{font:inherit}input,textarea,select{font:inherit}</style></head><body><div id="root"></div>
-<script src="${libs.react}"><\/script><script src="${libs.reactDom}"><\/script><script src="${libs.babel}"><\/script>${libs.tanstack ? `<script src="${libs.tanstack}"><\/script>` : ""}
+const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font:14px/1.5 system-ui,sans-serif;margin:12px;color:#1f2633}button{font:inherit}input,textarea,select{font:inherit}</style></head><body><div id="root"></div>
+<script src="${libs.react}"><\/script><script src="${libs.reactDom}"><\/script><script src="${libs.babel}"><\/script>${libs.tanstack ? `<script src="${libs.tanstack}"><\/script>` : ""}${libs.next ? `<script src="${libs.next}"><\/script>` : ""}
 <script>
 (function(){
   const files = ${JSON.stringify(files)};
@@ -1252,6 +1252,8 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind) => `<!DOCTYPE html>
     return parts.join("/");
   }
   function req(name, from) {
+    if (window.__next && window.__next.modules && window.__next.modules[name]) return window.__next.modules[name];
+    if (name.startsWith("@/")) { name = "./" + name.slice(2); from = undefined; }
     if (name === "react") return React;
     if (name === "react-dom" || name === "react-dom/client") return ReactDOM;
     if (name === "axios") return axios;
@@ -1278,6 +1280,7 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind) => `<!DOCTYPE html>
   }
   async function tick(ms) { await sleep(ms === undefined ? 60 : ms); }
   const h = {
+    get next() { return window.__next; },
     sleep, tick, root, require: req, source: (p) => files[p] || "",
     $: (s) => root.querySelector(s), $$: (s) => Array.from(root.querySelectorAll(s)),
     text: () => root.textContent,
@@ -1300,7 +1303,8 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind) => `<!DOCTYPE html>
   window.addEventListener("message", async (e) => { if (e.data && e.data.atelier === true && e.data.type === "runTests") await runTests(e.data.src); });
   try {
     const entry = ${JSON.stringify(entry)};
-    const mounted = ${JSON.stringify(kind || "react")} === "js" ? (req("./" + entry), false) : mount(entry);
+    const KIND = ${JSON.stringify(kind || "react")};
+    const mounted = KIND === "js" ? (req("./" + entry), false) : KIND === "next" ? (window.NextSim({ req, files, root, post }), window.__next.render(${JSON.stringify(start || "/")}), true) : mount(entry);
     if (!mounted) post({ type: "console", level: "info", text: "(le fichier d'entrée n'exporte pas de composant : code exécuté)" });
     setTimeout(() => post({ type: "ready", html: root.innerHTML }), 80);
     ${tests ? `setTimeout(() => runTests(${JSON.stringify(tests)}), 160);` : ""}
@@ -1316,7 +1320,8 @@ function runJs(m, td, key, withTests) {
   const entry = td.run.entry || Object.keys(files).find((p) => /^(App|index|main)\.(tsx|jsx|ts|js)$/.test(p)) || Object.keys(files)[0];
   const libs = { react: BASE + "vendor/react/react.development.js", reactDom: BASE + "vendor/react/react-dom.development.js", babel: BASE + "vendor/babel/babel.min.js" };
   if (Object.values(files).some((c) => c.includes("@tanstack/react-query"))) libs.tanstack = BASE + "vendor/tanstack/tanstack-query.js";
-  const html = JS_RUNNER(files, entry, td.run.api || "", withTests ? td.run.tests || "" : "", libs, td.run.kind);
+  if (td.run.kind === "next") libs.next = BASE + "vendor/next-sim/next-sim.js";
+  const html = JS_RUNNER(files, entry, td.run.api || "", withTests ? td.run.tests || "" : "", libs, td.run.kind, td.run.start);
   const iframe = $("#prev-" + CSS.escape(key));
   if (!iframe) { rs.busy = false; return; }
   const lines = [];

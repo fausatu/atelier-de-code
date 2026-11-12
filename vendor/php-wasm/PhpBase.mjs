@@ -1,5 +1,5 @@
 import { OutputBuffer } from './OutputBuffer.mjs';
-import { _Event } from './_Event.mjs';
+import { _Event } from './Event.mjs';
 import { fsOps } from './fsOps.mjs';
 import { resolveDependencies } from './resolveDependencies.mjs';
 
