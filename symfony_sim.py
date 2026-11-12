@@ -140,6 +140,24 @@ abstract class AbstractController {
     protected function createNotFoundException(string $message = 'Not Found'): NotFoundHttpException { return new NotFoundHttpException($message); }
 }
 
+namespace Symfony\Component\EventDispatcher\Attribute;
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
+class AsEventListener { public function __construct(public ?string $event = null, public ?string $method = null, public int $priority = 0) {} }
+
+namespace Symfony\Component\HttpKernel;
+final class KernelEvents { const EXCEPTION = 'kernel.exception'; const REQUEST = 'kernel.request'; const RESPONSE = 'kernel.response'; }
+
+namespace Symfony\Component\HttpKernel\Event;
+use Symfony\Component\HttpFoundation\JsonResponse;
+final class ExceptionEvent {
+    private ?JsonResponse $response = null;
+    public function __construct(private \Throwable $throwable) {}
+    public function getThrowable(): \Throwable { return $this->throwable; }
+    public function setResponse(JsonResponse $r): void { $this->response = $r; }
+    public function getResponse(): ?JsonResponse { return $this->response; }
+    public function hasResponse(): bool { return $this->response !== null; }
+}
+
 namespace Symfony\Component\Serializer\Exception;
 class CircularReferenceException extends \RuntimeException {}
 
@@ -163,12 +181,18 @@ final class App {
     public static bool $echo = true;
     private static array $instances = [];
 
-    public static function reset(): void { self::$services = []; self::$entities = []; self::$user = null; self::$instances = []; }
+    public static function reset(): void { self::$services = []; self::$entities = []; self::$user = null; self::$instances = []; self::$building = []; }
     public static function set(string $type, object $service): void { self::$services[$type] = $service; }
 
+    private static array $building = [];
     public static function get(string $type): object {
         if (isset(self::$services[$type])) return self::$services[$type];
         if (isset(self::$instances[$type])) return self::$instances[$type];
+        if (in_array($type, self::$building, true)) { $chain = implode(' -> ', array_merge(self::$building, [$type])); self::$building = []; throw new \LogicException("Dépendance circulaire : $chain"); }
+        self::$building[] = $type;
+        try { return self::build($type); } finally { array_pop(self::$building); }
+    }
+    private static function build(string $type): object {
         foreach (self::$services as $s) if ($s instanceof $type) return $s;
         if (!class_exists($type)) throw new \LogicException("Autowiring : aucun service pour $type (interface sans implémentation enregistrée ?).");
         $rc = new \ReflectionClass($type);
@@ -301,6 +325,17 @@ final class App {
     }
 
     private static function error(\Throwable $e): HttpResult {
+        $event = new \Symfony\Component\HttpKernel\Event\ExceptionEvent($e);
+        foreach (get_declared_classes() as $c) {
+            $rc = new \ReflectionClass($c);
+            $targets = [];
+            foreach ($rc->getAttributes(\Symfony\Component\EventDispatcher\Attribute\AsEventListener::class) as $a) { $l = $a->newInstance(); if ($l->event === 'kernel.exception') $targets[] = $l->method ?? '__invoke'; }
+            foreach ($rc->getMethods() as $m) foreach ($m->getAttributes(\Symfony\Component\EventDispatcher\Attribute\AsEventListener::class) as $a) { $l = $a->newInstance(); if ($l->event === 'kernel.exception') $targets[] = $m->getName(); }
+            foreach ($targets as $meth) {
+                self::get($c)->$meth($event);
+                if ($event->hasResponse()) { $r = $event->getResponse(); return new HttpResult($r->status, self::normalize($r->data)); }
+            }
+        }
         if ($e instanceof HttpException) return new HttpResult($e->statusCode, ['error' => $e->getMessage()]);
         foreach ((new \ReflectionClass($e))->getAttributes(\Symfony\Component\HttpKernel\Attribute\WithHttpStatus::class) as $a)
             return new HttpResult($a->newInstance()->statusCode, ['error' => $e->getMessage()]);

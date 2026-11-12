@@ -912,7 +912,7 @@ function diagram(d) {
     if (Math.abs(a.cy - b.cy) < 2) {
       const dir = b.cx > a.cx ? 1 : -1; const x1 = dir > 0 ? a.x + a.w : a.x, x2 = dir > 0 ? b.x : b.x + b.w;
       const yy = a.cy + (e.back ? 14 : 0);
-      path = `M${x1},${yy} L${x2},${yy}`; lx = (x1 + x2) / 2; ly = yy - 11;
+      path = `M${x1},${yy} L${x2},${yy}`; lx = (x1 + x2) / 2; ly = e.back ? yy + 12 : yy - 11;
     } else if (Math.abs(a.cx - b.cx) < 2) {
       const dir = b.cy > a.cy ? 1 : -1; const y1 = dir > 0 ? a.y + a.h : a.y, y2 = dir > 0 ? b.y : b.y + b.h;
       const xx = a.cx + (e.back ? 18 : 0);

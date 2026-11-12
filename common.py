@@ -150,7 +150,8 @@ def V2(v1, prereq, diagram, lessons, recap, example=None, notes=None, td1=None, 
     path = td1.get("path", "")
     files = td1.get("files") or [F(path, t["starter"]["lang"], t["starter"]["code"])]
     solution = td1.get("solution") or [F(path, t["solution"]["lang"], t["solution"]["code"])]
-    first = TD(1, t["title"], t["enonce"], t["consignes"], files, t["hints"], solution, t["checks"],
+    first = TD(1, td1.get("title", t["title"]), td1.get("enonce", t["enonce"]), td1.get("consignes", t["consignes"]), files,
+               td1.get("hints", t["hints"]), solution, td1.get("checks", t["checks"]),
                run=td1.get("run"), expected=td1.get("expected"))
     m["tds"] = [first] + list(tds)
     return m
