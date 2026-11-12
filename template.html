@@ -883,20 +883,24 @@ function dgText(x, y, text, cls, anchor = "middle", size = 13, weight = 600, fil
 }
 function diagram(d) {
   if (!d || !Array.isArray(d.nodes) || !d.nodes.length) return "";
+  const lw = (t) => Math.max(...String(t).split("\n").map((x) => x.length)) * 6.4 + 16;
+  const hLabels = (d.edges || []).filter((e) => e.label).map((e) => { const A = d.nodes.find((n) => n.id === e.from), B = d.nodes.find((n) => n.id === e.to); return A && B && A.row === B.row ? lw(e.label) : 0; });
+  const colW = Math.min(320, Math.max(DG.colW, DG.nodeW + Math.max(0, ...hLabels) + 20));
   const cols = Math.max(...d.nodes.map((n) => n.col + (n.span || 1) - 1)) + 1;
   const rows = Math.max(...d.nodes.map((n) => n.row)) + 1;
-  const W = DG.padX * 2 + cols * DG.colW, H = DG.padY * 2 + rows * DG.rowH + (d.lanes ? 26 : 0);
+  const W = DG.padX * 2 + cols * colW, H = DG.padY * 2 + rows * DG.rowH + (d.lanes ? 26 : 0);
   const top = DG.padY + (d.lanes ? 26 : 0);
   const pos = {};
   for (const n of d.nodes) {
     const span = n.span || 1;
-    const w = DG.nodeW + (span - 1) * DG.colW, h = n.sub ? DG.nodeH + 14 : DG.nodeH;
-    const x = DG.padX + n.col * DG.colW + (DG.colW - DG.nodeW) / 2, y = top + n.row * DG.rowH + (DG.rowH - h) / 2;
+    const w = DG.nodeW + (span - 1) * colW, h = n.sub ? DG.nodeH + 14 : DG.nodeH;
+    const x = DG.padX + n.col * colW + (colW - DG.nodeW) / 2, y = top + n.row * DG.rowH + (DG.rowH - h) / 2;
     pos[n.id] = { x, y, w, h, cx: x + w / 2, cy: y + h / 2 };
   }
+  let labels = "";
   let out = `<defs><marker id="dg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
   if (d.lanes) for (const l of d.lanes) {
-    const x = DG.padX + l.from * DG.colW - 6, w = (l.to - l.from + 1) * DG.colW + 12;
+    const x = DG.padX + l.from * colW - 6, w = (l.to - l.from + 1) * colW + 12;
     const col = dgColor(l.color || "muted");
     out += `<rect x="${x}" y="${DG.padY}" width="${w}" height="${H - DG.padY * 2}" rx="12" fill="${col}" fill-opacity="0.07" stroke="${col}" stroke-opacity="0.25" stroke-dasharray="4 4"/>`;
     out += dgText(x + w / 2, DG.padY + 13, l.label.toUpperCase(), "", "middle", 11, 700, col);
@@ -920,8 +924,8 @@ function diagram(d) {
     }
     out += `<path d="${path}" fill="none" stroke="${col}" stroke-width="2" ${e.dashed ? 'stroke-dasharray="5 4"' : ""} marker-end="url(#dg-arrow)"/>`;
     if (e.label) {
-      const tw = e.label.length * 6.4 + 12;
-      out += `<rect x="${lx - tw / 2}" y="${ly - 9}" width="${tw}" height="18" rx="9" fill="var(--surface)" stroke="${col}" stroke-opacity="0.35"/>` + dgText(lx, ly, e.label, "", "middle", 11, 500, "var(--ink)");
+      const tw = lw(e.label) - 4;
+      labels += `<rect x="${lx - tw / 2}" y="${ly - 9}" width="${tw}" height="18" rx="9" fill="var(--surface)" stroke="${col}" stroke-opacity="0.35"/>` + dgText(lx, ly, e.label, "", "middle", 11, 500, "var(--ink)");
     }
   }
   for (const n of d.nodes) {
@@ -937,6 +941,7 @@ function diagram(d) {
     out += dgText(p.cx, k === "actor" ? p.y + p.h + 4 : ty, n.label, "", "middle", k === "note" ? 12 : 13, k === "note" ? 500 : 600, "var(--ink)");
     if (n.sub && k !== "actor") out += dgText(p.cx, p.cy + 12, n.sub, "", "middle", 11, 400, "var(--muted)", 13);
   }
+  out += labels;
   const minw = Math.min(W, 640);
   return `<figure class="diagram" style="margin:0;--minw:${minw}px"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(d.caption || "Schéma")}">${out}</svg>${d.caption ? `<figcaption class="cap">${inl(d.caption)}</figcaption>` : ""}</figure>`;
 }
@@ -1148,8 +1153,8 @@ async function runPhp(m, td, key, withTests) {
   }
   rs.busy = false; render();
 }
-const JS_RUNNER = (files, entry, apiCode, tests, libs) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font:14px/1.5 system-ui,sans-serif;margin:12px;color:#1f2633}button{font:inherit}input,textarea,select{font:inherit}</style></head><body><div id="root"></div>
-<script src="${libs.react}"><\/script><script src="${libs.reactDom}"><\/script><script src="${libs.babel}"><\/script>
+const JS_RUNNER = (files, entry, apiCode, tests, libs, kind) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font:14px/1.5 system-ui,sans-serif;margin:12px;color:#1f2633}button{font:inherit}input,textarea,select{font:inherit}</style></head><body><div id="root"></div>
+<script src="${libs.react}"><\/script><script src="${libs.reactDom}"><\/script><script src="${libs.babel}"><\/script>${libs.tanstack ? `<script src="${libs.tanstack}"><\/script>` : ""}
 <script>
 (function(){
   const files = ${JSON.stringify(files)};
@@ -1159,6 +1164,10 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs) => `<!DOCTYPE html><html>
   window.addEventListener("error", (e) => post({ type: "error", text: String(e.message) }));
   window.addEventListener("unhandledrejection", (e) => post({ type: "error", text: "Promesse rejetée : " + String(e.reason && e.reason.message || e.reason) }));
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  try { window.localStorage.getItem("__t"); } catch (e) {
+    const mem = {}; const store = { getItem: (k) => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: (k) => { delete mem[k]; }, clear: () => { for (const k in mem) delete mem[k]; }, key: (i) => Object.keys(mem)[i] ?? null, get length() { return Object.keys(mem).length; } };
+    try { Object.defineProperty(window, "localStorage", { value: store, configurable: true }); } catch (e2) {}
+  }
   /* faux axios : répond selon window.__api = { "GET /livres": (params, body) => data | [status, data] } */
   window.__api = window.__api || {};
   ${apiCode || ""}
@@ -1171,53 +1180,78 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs) => `<!DOCTYPE html><html>
       const mm = path.match(rx); if (!mm) continue;
       const names = (pat.match(/:[a-zA-Z]+/g) || []).map((s) => s.slice(1));
       const ps = {}; names.forEach((n, i) => (ps[n] = mm[i + 1]));
-      return window.__api[k](Object.assign({}, params, ps), body);
+      return window.__api[k](Object.assign({}, params, ps), body, (config && config.headers) || {});
     }
     return [404, { error: "Route inconnue : " + method + " " + path }];
   }
   function axiosError(status, data, config) { const e = new Error("Request failed with status code " + status); e.isAxiosError = true; e.response = { status, data }; e.config = config; return e; }
   function request(method, url, body, config) {
-    return sleep(120 + Math.random() * 180).then(() => {
-      if (config && config.signal && config.signal.aborted) { const e = new Error("canceled"); e.name = "CanceledError"; e.code = "ERR_CANCELED"; throw e; }
-      let r; try { r = route(method, url, body, config); } catch (err) { throw axiosError(500, { error: String(err.message) }, config); }
+    const aborted = () => { const e = new Error("canceled"); e.name = "CanceledError"; e.code = "ERR_CANCELED"; return e; };
+    return sleep(120 + Math.random() * 180).then(async () => {
+      if (config && config.signal && config.signal.aborted) throw aborted();
+      let r; try { r = await route(method, url, body, config); } catch (err) { throw axiosError(500, { error: String(err.message) }, config); }
+      if (config && config.signal && config.signal.aborted) throw aborted();
       let status = 200, data = r;
       if (Array.isArray(r) && r.length === 2 && typeof r[0] === "number" && r[0] >= 100 && r[0] < 600) { status = r[0]; data = r[1]; }
-      if (status >= 400) throw axiosError(status, data, config);
+      if (data !== undefined && data !== null) data = JSON.parse(JSON.stringify(data));
+      if (status >= 400) { post({ type: "net", text: method + " " + url + " → " + status }); throw axiosError(status, data, config); }
       post({ type: "net", text: method + " " + url + " → " + status });
       return { data, status, headers: {}, config };
     });
   }
   function makeAxios(defaults) {
-    const base = (defaults && defaults.baseURL) || "";
-    const full = (u) => (/^https?:/.test(u) ? u : base.replace(/\\/$/, "") + "/" + u.replace(/^\\//, ""));
-    const ax = (config) => request((config.method || "get").toUpperCase(), full(config.url), config.data, config);
-    ax.get = (u, c) => request("GET", full(u), undefined, c);
-    ax.delete = (u, c) => request("DELETE", full(u), undefined, c);
-    ax.post = (u, d, c) => request("POST", full(u), d, c);
-    ax.put = (u, d, c) => request("PUT", full(u), d, c);
-    ax.patch = (u, d, c) => request("PATCH", full(u), d, c);
+    defaults = defaults || {};
+    const base = defaults.baseURL || "";
+    const reqInts = [], resInts = [];
+    const full = (u) => (/^https?:/.test(u) ? u : base.replace(/\\/$/, "") + "/" + String(u).replace(/^\\//, ""));
+    async function send(method, url, body, config) {
+      let cfg = Object.assign({}, config || {}, { method, url, data: body, headers: Object.assign({}, defaults.headers || {}, (config && config.headers) || {}) });
+      for (const f of reqInts) { const r = await f(cfg); if (r) cfg = r; }
+      try {
+        let res = await request(method, full(cfg.url), cfg.data, cfg);
+        for (const [ok] of resInts) if (ok) { const r = await ok(res); if (r) res = r; }
+        return res;
+      } catch (err) {
+        let e = err;
+        for (const [, ko] of resInts) if (ko) { try { return await ko(e); } catch (e2) { e = e2; } }
+        throw e;
+      }
+    }
+    const ax = (config) => send((config.method || "get").toUpperCase(), config.url, config.data, config);
+    ax.get = (u, c) => send("GET", u, undefined, c);
+    ax.delete = (u, c) => send("DELETE", u, undefined, c);
+    ax.post = (u, d, c) => send("POST", u, d, c);
+    ax.put = (u, d, c) => send("PUT", u, d, c);
+    ax.patch = (u, d, c) => send("PATCH", u, d, c);
     ax.create = (d) => makeAxios(d);
     ax.isAxiosError = (e) => !!(e && e.isAxiosError);
     ax.isCancel = (e) => !!(e && e.code === "ERR_CANCELED");
-    ax.defaults = defaults || {}; ax.interceptors = { request: { use() {} }, response: { use() {} } };
+    ax.defaults = defaults;
+    ax.interceptors = { request: { use(f) { reqInts.push(f); return reqInts.length - 1; } }, response: { use(ok, ko) { resInts.push([ok, ko]); return resInts.length - 1; } } };
     return ax;
   }
   const axios = makeAxios({}); axios.default = axios;
-  window.fetch = (url, init) => request(((init && init.method) || "GET").toUpperCase(), String(url), init && init.body ? JSON.parse(init.body) : undefined, init).then((r) => ({ ok: true, status: r.status, json: async () => r.data, text: async () => JSON.stringify(r.data) })).catch((e) => { if (e.response) return { ok: false, status: e.response.status, json: async () => e.response.data, text: async () => JSON.stringify(e.response.data) }; throw e; });
+  window.fetch = (url, init) => request(((init && init.method) || "GET").toUpperCase(), String(url), init && init.body ? JSON.parse(init.body) : undefined, init).then((r) => ({ ok: true, status: r.status, json: async () => r.data, text: async () => JSON.stringify(r.data) })).catch((e) => { if (e.response) return { ok: false, status: e.response.status, json: async () => e.response.data, text: async () => JSON.stringify(e.response.data) }; if (e.code === "ERR_CANCELED") { const ab = new Error("The operation was aborted."); ab.name = "AbortError"; throw ab; } throw e; });
   const cache = {};
-  function req(name) {
+  function resolvePath(name, from) {
+    const parts = from ? from.split("/").slice(0, -1) : [];
+    for (const seg of name.split("/")) { if (seg === "." || seg === "") continue; if (seg === "..") parts.pop(); else parts.push(seg); }
+    return parts.join("/");
+  }
+  function req(name, from) {
     if (name === "react") return React;
     if (name === "react-dom" || name === "react-dom/client") return ReactDOM;
     if (name === "axios") return axios;
+    if (name === "@tanstack/react-query") { if (!window.TanStackQuery) throw new Error("TanStack Query n'est pas chargé"); return window.TanStackQuery; }
     if (name === "react/jsx-runtime") return { jsx: React.createElement, jsxs: React.createElement, Fragment: React.Fragment };
-    const p = name.replace(/^\\.\\//, "").replace(/^\\.\\.\\//, "");
+    const p = resolvePath(name, from);
     const cands = [p, p + ".tsx", p + ".ts", p + ".jsx", p + ".js", p + "/index.tsx", p + "/index.ts"];
     const k = cands.find((c) => files[c] !== undefined);
     if (!k) throw new Error("Module introuvable : '" + name + "'. Fichiers disponibles : " + Object.keys(files).join(", "));
     if (cache[k]) return cache[k].exports;
     const out = Babel.transform(files[k], { filename: k, presets: [["env", { modules: "commonjs", targets: { chrome: "100" } }], "react", ["typescript", { isTSX: /x$/.test(k), allExtensions: true }]] }).code;
     const module = { exports: {} }; cache[k] = module;
-    new Function("require", "module", "exports", out)(req, module, module.exports);
+    new Function("require", "module", "exports", out)((n) => req(n, k), module, module.exports);
     return module.exports;
   }
   window.__req = req;
@@ -1231,7 +1265,7 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs) => `<!DOCTYPE html><html>
   }
   async function tick(ms) { await sleep(ms === undefined ? 60 : ms); }
   const h = {
-    sleep, tick, root, require: req,
+    sleep, tick, root, require: req, source: (p) => files[p] || "",
     $: (s) => root.querySelector(s), $$: (s) => Array.from(root.querySelectorAll(s)),
     text: () => root.textContent,
     click: async (el) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Élément introuvable pour click()"); if (typeof el.click === "function") el.click(); else el.dispatchEvent(new MouseEvent("click", { bubbles: true })); await tick(); },
@@ -1253,7 +1287,7 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs) => `<!DOCTYPE html><html>
   window.addEventListener("message", async (e) => { if (e.data && e.data.atelier === true && e.data.type === "runTests") await runTests(e.data.src); });
   try {
     const entry = ${JSON.stringify(entry)};
-    const mounted = mount(entry);
+    const mounted = ${JSON.stringify(kind || "react")} === "js" ? (req("./" + entry), false) : mount(entry);
     if (!mounted) post({ type: "console", level: "info", text: "(le fichier d'entrée n'exporte pas de composant : code exécuté)" });
     setTimeout(() => post({ type: "ready", html: root.innerHTML }), 80);
     ${tests ? `setTimeout(() => runTests(${JSON.stringify(tests)}), 160);` : ""}
@@ -1268,7 +1302,8 @@ function runJs(m, td, key, withTests) {
   if (td.run.setup) { const extra = td.run.setup; for (const line of extra.split(/^\/\/ ==== (.+?) ====$/m).slice(1).reduce((a, v, i, arr) => (i % 2 === 0 ? a.concat([[v, arr[i + 1] || ""]]) : a), [])) files[line[0].trim()] = line[1]; }
   const entry = td.run.entry || Object.keys(files).find((p) => /^(App|index|main)\.(tsx|jsx|ts|js)$/.test(p)) || Object.keys(files)[0];
   const libs = { react: BASE + "vendor/react/react.development.js", reactDom: BASE + "vendor/react/react-dom.development.js", babel: BASE + "vendor/babel/babel.min.js" };
-  const html = JS_RUNNER(files, entry, td.run.api || "", withTests ? td.run.tests || "" : "", libs);
+  if (Object.values(files).some((c) => c.includes("@tanstack/react-query"))) libs.tanstack = BASE + "vendor/tanstack/tanstack-query.js";
+  const html = JS_RUNNER(files, entry, td.run.api || "", withTests ? td.run.tests || "" : "", libs, td.run.kind);
   const iframe = $("#prev-" + CSS.escape(key));
   if (!iframe) { rs.busy = false; return; }
   const lines = [];
