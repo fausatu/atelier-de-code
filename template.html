@@ -671,13 +671,13 @@ async function initCaps() {
   refs.drafts.onSnapshot((snap) => {
     if (!snap.exists || draftWriter.pending()) return;
     const d = snap.data();
-    if (d && d.codes) { state.drafts = { ...d.codes }; saveLocal(); }
+    if (d && d.codes) { state.drafts = JSON.parse(JSON.stringify(d.codes)); saveLocal(); }
   }, () => {});
   refs.lib.onSnapshot((snap) => {
     if (!snap.exists) { if ((state.custom.modules.length || state.custom.tracks.length) && snap.metadata && !snap.metadata.fromCache) libWriter.schedule(); return; }
     if (libWriter.pending()) return;
     const d = snap.data();
-    if (d) { state.custom = { tracks: (d.tracks || []).slice(), modules: (d.modules || []).slice() }; saveLocal(); refresh(); }
+    if (d) { const c = JSON.parse(JSON.stringify(d)); state.custom = { tracks: c.tracks || [], modules: c.modules || [] }; saveLocal(); refresh(); }
   }, () => {});
 }
 
@@ -1801,8 +1801,13 @@ document.addEventListener("click", (e) => {
   if (!a) return;
   if (a.tagName === "INPUT" && a.type === "checkbox") { ACTIONS[a.dataset.act]?.(a, e); return; }
   e.preventDefault();
-  ACTIONS[a.dataset.act]?.(a, e);
+  try { const r = ACTIONS[a.dataset.act]?.(a, e); if (r && r.catch) r.catch(showError); } catch (err) { showError(err); }
 });
+function showError(err) {
+  console.error(err);
+  toast("Oups, une erreur : " + (err && err.message || err) + " (recharge la page si ça persiste)");
+}
+window.addEventListener("unhandledrejection", (e) => showError(e.reason));
 document.addEventListener("submit", (e) => {
   const f = e.target.closest("form[data-form]");
   if (!f) return;
