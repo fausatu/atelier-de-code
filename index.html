@@ -1513,8 +1513,12 @@ function mergeModule(a, b) {
   if (!a) return b; if (!b) return a;
   const best = rankStatus(b) > rankStatus(a) ? b : a, other = best === a ? b : a;
   const m = JSON.parse(JSON.stringify(best));
-  m.seen = [...new Set([...(a.seen || []), ...(b.seen || [])])];
-  m.checks = [...new Set([...(a.checks || []), ...(b.checks || [])])];
+  const arr = (x) => (Array.isArray(x) ? x : []);
+  const byLevel = (x) => (Array.isArray(x) ? { 1: x } : x && typeof x === "object" ? x : {});
+  m.seen = [...new Set([...arr(a.seen), ...arr(b.seen)])];
+  const ca = byLevel(a.checks), cb = byLevel(b.checks);
+  m.checks = {};
+  for (const lvl of new Set([...Object.keys(ca), ...Object.keys(cb)])) m.checks[lvl] = [...new Set([...arr(ca[lvl]), ...arr(cb[lvl])])];
   m.levels = Object.assign({}, other.levels || {}, best.levels || {});
   m.quizDone = !!(a.quizDone || b.quizDone); m.tdDone = !!(a.tdDone || b.tdDone);
   if (Object.keys(other.answers || {}).length > Object.keys(m.answers || {}).length) m.answers = other.answers;
