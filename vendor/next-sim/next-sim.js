@@ -171,9 +171,13 @@
           if (!serverFns.has(target) && !serverFns.has(v)) throw new Error("Functions cannot be passed directly to Client Components (prop « " + k + " » de <" + (type.name || "Composant") + ">). Seules les Server Actions ('use server') peuvent l'être.");
         }
       }
-      const props = Object.assign({}, node.props);
-      if (props.children !== undefined) props.children = await resolve(props.children);
-      return ce.call(React, type, Object.assign({ key: node.key }, props));
+      const props = Object.assign({ key: node.key }, node.props);
+      let kids = props.children;
+      delete props.children;
+      if (kids === undefined) return ce.call(React, type, props);
+      kids = await resolve(kids);
+      // tableau « statique » (plusieurs enfants JSX) : passé en arguments pour éviter l'avertissement de clés
+      return Array.isArray(kids) ? ce.call(React, type, props, ...kids) : ce.call(React, type, props, kids);
     }
 
     async function build(url) {

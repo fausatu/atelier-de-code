@@ -1323,7 +1323,7 @@ function runJs(m, td, key, withTests) {
   const entry = td.run.entry || Object.keys(files).find((p) => /^(App|index|main)\.(tsx|jsx|ts|js)$/.test(p)) || Object.keys(files)[0];
   const libs = { react: BASE + "vendor/react/react.development.js", reactDom: BASE + "vendor/react/react-dom.development.js", babel: BASE + "vendor/babel/babel.min.js" };
   if (Object.values(files).some((c) => c.includes("@tanstack/react-query"))) libs.tanstack = BASE + "vendor/tanstack/tanstack-query.js";
-  if (td.run.kind === "next") libs.next = BASE + "vendor/next-sim/next-sim.js";
+  if (td.run.kind === "next") libs.next = BASE + "vendor/next-sim/next-sim.js?v=2";
   const html = JS_RUNNER(files, entry, td.run.api || "", withTests ? td.run.tests || "" : "", libs, td.run.kind, td.run.start);
   const iframe = $("#prev-" + CSS.escape(key));
   if (!iframe) { rs.busy = false; return; }
