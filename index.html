@@ -1171,7 +1171,7 @@ async function runPhp(m, td, key, withTests) {
   rs.busy = false; render();
 }
 const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font:14px/1.5 system-ui,sans-serif;margin:12px;color:#1f2633}button{font:inherit}input,textarea,select{font:inherit}</style></head><body><div id="root"></div>
-<script src="${libs.react}"><\/script><script src="${libs.reactDom}"><\/script><script src="${libs.babel}"><\/script>${libs.tanstack ? `<script src="${libs.tanstack}"><\/script>` : ""}${libs.next ? `<script src="${libs.next}"><\/script>` : ""}${libs.git ? `<script src="${libs.git}"><\/script>` : ""}
+<script>(function () { const L = ${JSON.stringify(libs.code || []).replace(/</g, "\\u003c")}; for (const c of L) { try { (0, eval)(c); } catch (e) { parent.postMessage({ atelier: true, type: "error", text: "Bibliothèque : " + e.message }, "*"); } } })();<\/script>
 <script>
 (function(){
   const files = ${JSON.stringify(files)};
@@ -1327,6 +1327,21 @@ function runJs(m, td, key, withTests) {
   if (Object.values(files).some((c) => c.includes("@tanstack/react-query"))) libs.tanstack = BASE + "vendor/tanstack/tanstack-query.js";
   if (td.run.kind === "next") libs.next = BASE + "vendor/next-sim/next-sim.js?v=2";
   if (td.run.kind === "git") libs.git = BASE + "vendor/git-sim/git-sim.js?v=1";
+  const order = ["react", "reactDom", "babel", "tanstack", "next", "git"].filter((k) => libs[k]);
+  Promise.all(order.map((k) => libText(libs[k]))).then((code) => {
+    libs.code = code;
+    runJsFrame(m, td, key, withTests, rs, files, entry, libs);
+  }).catch((e) => {
+    rs.busy = false;
+    rs.console = `<span class="err">Impossible de charger les bibliothèques : ${esc(e.message)}</span>`;
+    render();
+  });
+}
+const LIB_CACHE = {};
+function libText(url) {
+  return LIB_CACHE[url] || (LIB_CACHE[url] = fetch(url).then((r) => { if (!r.ok) throw new Error(url + " (" + r.status + ")"); return r.text(); }).catch((e) => { delete LIB_CACHE[url]; throw e; }));
+}
+function runJsFrame(m, td, key, withTests, rs, files, entry, libs) {
   const html = JS_RUNNER(files, entry, td.run.api || "", withTests ? td.run.tests || "" : "", libs, td.run.kind, td.run.start);
   const iframe = $("#prev-" + CSS.escape(key));
   if (!iframe) { rs.busy = false; return; }
