@@ -1140,7 +1140,8 @@ async function runPhp(m, td, key, withTests) {
     const files = currentFiles(m, td);
     let code = joinPhpFiles(files);
     { const mm = code.match(/^\s*<\?php\s*(declare\s*\([^)]*\)\s*;)?/i); code = mm[0] + "\n" + PHP_POLYFILLS + "\n" + code.slice(mm[0].length); }
-    if (td.run.setup) { const mm = code.match(/^\s*<\?php\s*(declare\s*\([^)]*\)\s*;)?/i); code = mm[0] + "\n" + td.run.setup + "\n" + code.slice(mm[0].length); }
+    const setup = td.run.setup ? td.run.setup.replace(/@@SETUP:(\w+)@@/g, (_, k) => (DATA.setups || {})[k] || "") : "";
+    if (setup) { const mm = code.match(/^\s*<\?php\s*(declare\s*\([^)]*\)\s*;)?/i); code = mm[0] + "\n" + setup + "\n" + code.slice(mm[0].length); }
     if (withTests && td.run.tests) code += "\n\n// ---- tests ----\n" + PHP_TEST_PRELUDE + "\n" + td.run.tests + "\n";
     phpOut = [];
     const t0 = performance.now();

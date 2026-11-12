@@ -61,7 +61,16 @@ for m in modules:
         for k in ["title", "enonce", "consignes", "starter", "hints", "solution", "checks"]:
             assert td.get(k), (m["id"], k)
 
-data = {"tracks": TRACKS, "modules": modules}
+from doctrine_sim import DOCTRINE_SETUP
+from symfony_sim import SYMFONY_SETUP
+SETUPS = {"doctrine": DOCTRINE_SETUP.strip("\n"), "symfony": SYMFONY_SETUP.strip("\n")}
+for m in modules:
+    for td in m.get("tds", []):
+        r = td.get("run")
+        if r and r.get("setup"):
+            for k, v in SETUPS.items():
+                r["setup"] = r["setup"].replace(v, "@@SETUP:" + k + "@@")
+data = {"tracks": TRACKS, "modules": modules, "setups": SETUPS}
 js = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
 tpl = open("/home/claude/atelier/template.html", encoding="utf-8").read()
 assert "/*__CONTENT__*/" in tpl
