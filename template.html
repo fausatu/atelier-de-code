@@ -86,7 +86,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .topbar { display: none; }
 main { padding: 32px clamp(16px, 4vw, 48px) 64px; min-width: 0; }
-.wrap { max-width: 1020px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
 .eyebrow { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .lead { color: var(--muted); max-width: 70ch; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; }
@@ -293,7 +293,7 @@ a.stat-card:hover { border-color: var(--accent); }
 textarea.field { width: 100%; resize: vertical; }
 
 /* Code : fichiers à onglets */
-pre.code { margin: 0; border: 1px solid var(--code-line); background: var(--code-bg); color: var(--code-ink); border-radius: var(--r); padding: 14px 16px; overflow-x: auto; font: 13px/1.6 var(--font-mono); tab-size: 4; }
+pre.code { margin: 0; border: 1px solid var(--code-line); background: var(--code-bg); color: var(--code-ink); border-radius: var(--r); padding: 14px 16px; overflow-x: auto; font: 13.5px/1.65 var(--font-mono); tab-size: 4; }
 pre.code code { background: none; padding: 0; font-size: inherit; color: inherit; }
 .files { border: 1px solid var(--code-line); border-radius: var(--r); overflow: hidden; background: var(--code-bg); }
 .files-tabs { display: flex; gap: 2px; background: var(--surface-2); border-bottom: 1px solid var(--code-line); padding: 4px 4px 0; overflow-x: auto; }
@@ -304,7 +304,7 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .fpane { display: none; }
 .fpane.on { display: block; }
 .files pre.code { border: 0; border-radius: 0; }
-.files .editor { border: 0; border-radius: 0; min-height: 320px; }
+.files .editor { border: 0; border-radius: 0; }
 .files.explorer { display: grid; grid-template-columns: 188px minmax(0, 1fr); }
 .files.explorer.tree-off { grid-template-columns: minmax(0, 1fr); }
 .files.explorer.tree-off .tree { display: none; }
@@ -348,6 +348,13 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .hljs-attr, .hljs-attribute, .hljs-type, .hljs-title.class_, .hljs-built_in { color: #0550ae; }
 .hljs-meta, .hljs-tag, .hljs-name, .hljs-symbol { color: #116329; }
 .hljs-subst { color: var(--code-ink); }
+.hljs-property { color: #0550ae; }
+.hljs-params { color: #24292f; }
+.hljs-operator { color: #cf222e; }
+.hljs-punctuation { color: #57606a; }
+.hljs-section, .hljs-selector-class, .hljs-selector-id { color: #8250df; }
+.hljs-addition { color: #116329; background: #dafbe1; }
+.hljs-deletion { color: #82071e; background: #ffebe9; }
 .ex { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 .notes { display: flex; flex-direction: column; gap: 10px; counter-reset: n; margin: 0; padding: 0; list-style: none; }
 .notes li { counter-increment: n; display: grid; grid-template-columns: 24px 1fr; gap: 8px; font-size: 0.9rem; }
@@ -377,7 +384,12 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .lvl-tab.on { border-color: var(--tc); box-shadow: inset 0 0 0 1px var(--tc); }
 .lvl-tab.ok b::after { content: "✓"; color: var(--good); font-weight: 700; }
 .consignes { margin: 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 5px; }
-.editor { width: 100%; min-height: 300px; background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--code-line); border-radius: var(--r); padding: 14px 16px; font: 13px/1.6 var(--font-mono); tab-size: 4; resize: vertical; white-space: pre; overflow: auto; display: block; }
+.editor { width: 100%; min-height: 460px; background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--code-line); border-radius: var(--r); padding: 14px 16px; font: 13.5px/1.65 var(--font-mono); tab-size: 4; resize: vertical; white-space: pre; overflow: auto; display: block; }
+.ed-wrap { position: relative; background: var(--code-bg); }
+.ed-wrap .ed-hl { position: absolute; inset: 0; margin: 0; padding: 14px 16px; border: 0; overflow: hidden; pointer-events: none; font: 13.5px/1.65 var(--font-mono); tab-size: 4; white-space: pre; color: var(--code-ink); background: transparent; }
+.ed-wrap .ed-hl code { font: inherit; background: none; padding: 0; color: inherit; }
+.ed-wrap textarea.editor.hl { position: relative; background: transparent; color: transparent; caret-color: var(--code-ink); -webkit-text-fill-color: transparent; }
+.ed-wrap textarea.editor.hl::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); -webkit-text-fill-color: transparent; }
 .editor:focus { outline: 2px solid var(--tc); outline-offset: -2px; }
 .hint { background: var(--warn-soft); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; }
 .checks { display: flex; flex-direction: column; gap: 6px; }
@@ -387,7 +399,7 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .done-banner { display: flex; align-items: center; gap: 12px; background: var(--good-soft); border-radius: var(--r); padding: 12px 16px; }
 .done-banner b { color: var(--good); }
 .nav-steps { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
-.workbench { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); gap: 14px; align-items: start; }
+.workbench { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(300px, 1fr); gap: 14px; align-items: start; }
 .workbench.single { grid-template-columns: minmax(0, 1fr); }
 .row.fw { flex-wrap: wrap; }
 .dbg-ta { width: 100%; padding: 8px 10px; border: 1px solid var(--line, #ddd); border-radius: 8px; font: inherit; resize: vertical; box-sizing: border-box; }
@@ -516,7 +528,7 @@ body.q-open .qfab { display: none; }
 <button class="qfab" id="qfab" type="button" data-act="qToggle" aria-controls="qpanel" aria-expanded="false" aria-label="Noter une question (Alt+Q)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M10.2 9.6a2 2 0 1 1 2.8 1.8c-.6.3-1 .8-1 1.5v.3"/><circle cx="12" cy="15.8" r=".6" fill="currentColor" stroke="none"/></svg><span class="lbl">Une question · Alt+Q</span><span class="n zero" id="qfab-n">0</span></button>
 <aside class="qpanel" id="qpanel" aria-label="Mes questions" hidden></aside>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="vendor/hljs/hljs.js"></script>
 <script>
 "use strict";
 const DATA = /*__CONTENT__*/null;
@@ -666,7 +678,7 @@ function filesBlock(files, key, editable, modified, opts) {
   if (files.length === 1 && !files[0].path && !editable) return codeBlock(files[0].code, files[0].lang);
   const manage = !!(opts && opts.manage);
   const cur = Math.min(state.ui.ftab[key] || 0, files.length - 1);
-  const panes = files.map((f, i) => `<div class="fpane ${i === cur ? "on" : ""}" data-i="${i}">${editable ? `<textarea class="editor" data-ed="${esc(key)}" data-path="${esc(f.path)}" spellcheck="false" aria-label="${esc(f.path)}">${esc(f.code)}</textarea>` : codeBlock(f.code, f.lang)}</div>`).join("");
+  const panes = files.map((f, i) => `<div class="fpane ${i === cur ? "on" : ""}" data-i="${i}">${editable ? `<div class="ed-wrap"><pre class="ed-hl" aria-hidden="true"><code></code></pre><textarea class="editor hl" data-ed="${esc(key)}" data-path="${esc(f.path)}" data-lang="${esc(edLang(f))}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="${esc(f.path)}">${esc(f.code)}</textarea></div>` : codeBlock(f.code, f.lang)}</div>`).join("");
   const explorer = manage || files.length >= 3;
   if (!explorer) {
     const tabs = files.map((f, i) => { const [dir, name] = splitPath(f.path || `fichier${i + 1}`); return `<button class="ftab ${i === cur ? "on" : ""} ${modified && modified[i] ? "mod" : ""}" data-act="ftab" data-key="${esc(key)}" data-i="${i}" type="button"><span class="dir">${esc(dir)}</span>${esc(name)}</button>`; }).join("");
@@ -690,7 +702,35 @@ function filesBlock(files, key, editable, modified, opts) {
     </div>
   </div>`;
 }
+const EXT_LANG = { php: "php", tsx: "typescript", ts: "typescript", jsx: "javascript", js: "javascript", mjs: "javascript", cjs: "javascript", json: "json", yaml: "yaml", yml: "yaml", sql: "sql", sh: "bash", bash: "bash", css: "css", html: "xml", twig: "xml", xml: "xml", md: "markdown", py: "python", env: "ini", ini: "ini" };
+function edLang(f) {
+  const m = /\.([a-z0-9]+)$/i.exec(f.path || ""); const byExt = m && EXT_LANG[m[1].toLowerCase()];
+  return byExt || (LANGS[f.lang] !== undefined ? LANGS[f.lang] || "" : "") || "";
+}
+function paintEditor(ta) {
+  const wrap = ta.parentElement; if (!wrap || !wrap.classList.contains("ed-wrap")) return;
+  const code = wrap.querySelector(".ed-hl code"); const lang = ta.dataset.lang;
+  const src = ta.value + (ta.value.endsWith("\n") ? " " : "\n ");
+  if (window.hljs && lang && hljs.getLanguage(lang)) { try { code.innerHTML = hljs.highlight(src, { language: lang, ignoreIllegals: true }).value; } catch (e) { code.textContent = src; } }
+  else code.textContent = src;
+  fitEditor(ta); syncEditor(ta);
+}
+function fitEditor(ta) {
+  const max = Math.max(460, Math.round(window.innerHeight * 0.78));
+  const lines = ta.value.split("\n").length;
+  const lh = 13.5 * 1.65;
+  const want = Math.ceil(lines * lh + 28 + 16);
+  const h = Math.min(max, Math.max(460, want));
+  if (ta.dataset.userH) return;
+  ta.style.height = h + "px";
+}
+function syncEditor(ta) { const pre = ta.previousElementSibling; if (pre) { pre.scrollTop = ta.scrollTop; pre.scrollLeft = ta.scrollLeft; } }
+function paintEditors(root) { (root || document).querySelectorAll(".ed-wrap textarea.editor").forEach(paintEditor); }
+document.addEventListener("scroll", (e) => { if (e.target.classList && e.target.classList.contains("hl")) syncEditor(e.target); }, true);
+document.addEventListener("mouseup", (e) => { const ta = e.target; if (ta.classList && ta.classList.contains("hl") && ta.style.height && ta.offsetHeight !== parseInt(ta.style.height, 10)) ta.dataset.userH = "1"; });
+let paintRaf = null;
 function highlight(root) {
+  paintEditors(root);
   if (!window.hljs) return;
   root.querySelectorAll("pre.code code[data-lang]").forEach((el) => {
     const lang = el.dataset.lang;
@@ -2489,6 +2529,7 @@ document.addEventListener("input", (e) => {
   if (e.target.name === "texte" && e.target.closest("#qpanel")) { qUi().texte = e.target.value; return; }
   if (e.target.id === "q-filter") { state.ui.qFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#q-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.id === "dbg-filter") { state.ui.dbgFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#dbg-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
+  if (e.target.classList.contains("hl")) { const ta = e.target; cancelAnimationFrame(paintRaf); paintRaf = requestAnimationFrame(() => paintEditor(ta)); }
   if (e.target.classList.contains("editor")) { clearTimeout(draftTimer); draftTimer = setTimeout(keepDrafts, 600); const tab = e.target.closest(".files"); if (tab) { const idx = Array.from(tab.querySelectorAll(".fpane")).indexOf(e.target.closest(".fpane")); const t = tab.querySelector(`.ftab[data-i="${idx}"]`); if (t) t.classList.add("mod"); } }
 });
 document.addEventListener("mousedown", (e) => { if (e.target.closest && e.target.closest("#qfab")) qSelAtOpen = mainSelection(); }, true);
