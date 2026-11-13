@@ -408,9 +408,12 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .err { color: var(--bad); font-size: 0.9rem; }
 .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 0.92rem; box-shadow: 0 6px 20px rgb(0 0 0 / 0.2); z-index: 50; max-width: calc(100% - 32px); }
 .toast[hidden] { display: none; }
-.qfab { position: fixed; right: 20px; bottom: 20px; z-index: 40; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 600; cursor: pointer; box-shadow: 0 6px 18px rgb(0 0 0 / 0.18); }
-.qfab:hover { filter: brightness(1.08); }
-.qfab .n { background: var(--surface); color: var(--accent); border-radius: 999px; padding: 0 7px; font-size: 0.8rem; line-height: 1.5; }
+.qfab { position: fixed; right: 18px; bottom: 18px; z-index: 40; width: 38px; height: 38px; padding: 0; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 88%, transparent); color: var(--muted); cursor: pointer; box-shadow: 0 2px 8px rgb(0 0 0 / 0.08); backdrop-filter: blur(6px); opacity: 0.8; transition: opacity .15s, color .15s, border-color .15s, transform .15s; }
+.qfab svg { width: 18px; height: 18px; }
+.qfab:hover, .qfab:focus-visible { opacity: 1; color: var(--accent); border-color: var(--accent); transform: translateY(-1px); }
+.qfab .lbl { position: absolute; right: calc(100% + 8px); top: 50%; transform: translateY(-50%); white-space: nowrap; background: var(--ink); color: var(--surface); font-size: 0.78rem; font-weight: 500; padding: 4px 8px; border-radius: 6px; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.qfab:hover .lbl, .qfab:focus-visible .lbl { opacity: 1; }
+.qfab .n { position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 0.66rem; font-weight: 700; line-height: 16px; text-align: center; }
 .qfab .n.zero { display: none; }
 body.q-open .qfab { display: none; }
 .qpanel { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100vw); z-index: 45; background: var(--bg); border-left: 1px solid var(--line); box-shadow: -10px 0 30px rgb(0 0 0 / 0.12); display: flex; flex-direction: column; }
@@ -437,7 +440,7 @@ body.q-open .qfab { display: none; }
 .q-group { display: flex; flex-direction: column; gap: 10px; }
 .q-group h3 { font-size: 0.95rem; margin: 6px 0 0; }
 @media (min-width: 1100px) { body.q-open .app { margin-right: min(420px, 100vw); } }
-@media (max-width: 720px) { .qfab { right: 12px; bottom: 12px; padding: 9px 13px; } .qfab .lbl { display: none; } }
+@media (max-width: 720px) { .qfab { right: 12px; bottom: 12px; } .qfab .lbl { display: none; } }
 
 @media (max-width: 1280px) { .home-hero { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stat-col { grid-column: 1 / -1; grid-template-rows: none; grid-template-columns: 1fr 1fr; } }
 @media (max-width: 1000px) { .home-hero { grid-template-columns: minmax(0, 1fr); } .ex, .mech, .workbench { grid-template-columns: minmax(0, 1fr); } }
@@ -476,7 +479,7 @@ body.q-open .qfab { display: none; }
   <main id="main"></main>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
-<button class="qfab" id="qfab" type="button" data-act="qToggle" aria-controls="qpanel" aria-expanded="false" title="Noter une question (Alt+Q)"><span aria-hidden="true">?</span><span class="lbl">Une question</span><span class="n zero" id="qfab-n">0</span></button>
+<button class="qfab" id="qfab" type="button" data-act="qToggle" aria-controls="qpanel" aria-expanded="false" aria-label="Noter une question (Alt+Q)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M10.2 9.6a2 2 0 1 1 2.8 1.8c-.6.3-1 .8-1 1.5v.3"/><circle cx="12" cy="15.8" r=".6" fill="currentColor" stroke="none"/></svg><span class="lbl">Une question · Alt+Q</span><span class="n zero" id="qfab-n">0</span></button>
 <aside class="qpanel" id="qpanel" aria-label="Mes questions" hidden></aside>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
