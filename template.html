@@ -305,6 +305,40 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .fpane.on { display: block; }
 .files pre.code { border: 0; border-radius: 0; }
 .files .editor { border: 0; border-radius: 0; min-height: 320px; }
+.files.explorer { display: grid; grid-template-columns: 188px minmax(0, 1fr); }
+.files.explorer.tree-off { grid-template-columns: minmax(0, 1fr); }
+.files.explorer.tree-off .tree { display: none; }
+.tree { background: var(--surface-2); border-right: 1px solid var(--code-line); display: flex; flex-direction: column; min-width: 0; max-height: 640px; }
+.tree-head { display: flex; align-items: center; gap: 2px; padding: 6px 6px 4px 10px; font: 600 10.5px var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.tree-search { margin: 0 6px 6px; padding: 4px 8px; font: 12px var(--font-body); border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); min-width: 0; }
+.tree-list { overflow-y: auto; padding-bottom: 8px; }
+.tree-dir { display: flex; align-items: center; gap: 4px; width: 100%; border: 0; background: transparent; cursor: pointer; padding: 3px 8px 3px calc(8px + var(--d) * 10px); font: 600 12px var(--font-mono); color: var(--muted); text-align: left; }
+.tree-dir:hover { color: var(--ink); }
+.tree-dir .chev { display: inline-block; width: 0; height: 0; border-left: 4px solid currentColor; border-top: 3.5px solid transparent; border-bottom: 3.5px solid transparent; transition: transform .12s; margin-right: 2px; }
+.tree-dir .chev.open { transform: rotate(90deg); }
+.trow { display: flex; align-items: center; padding-left: calc(var(--d) * 10px); }
+.trow:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.trow.on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.trow.danger { background: var(--bad-soft); }
+.tree-file { flex: 1; min-width: 0; border-radius: 0; padding: 4px 6px 4px 10px; gap: 6px; background: transparent !important; }
+.tree-file .fname { overflow: hidden; text-overflow: ellipsis; }
+.tree-file.on { color: var(--ink); font-weight: 600; }
+.ficon { flex: none; display: inline-grid; place-items: center; min-width: 22px; height: 15px; padding: 0 2px; border-radius: 3px; font: 700 8.5px var(--font-body); letter-spacing: 0.02em; color: var(--fi); background: color-mix(in srgb, var(--fi) 14%, transparent); }
+.tact { flex: none; border: 0; background: transparent; color: var(--muted); cursor: pointer; font: 12px var(--font-body); padding: 3px 6px; border-radius: 5px; line-height: 1.2; }
+.tact:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.trow .tact { opacity: 0; }
+.trow:hover .tact, .trow:focus-within .tact, .trow.danger .tact { opacity: 1; }
+.tact.del-yes { color: var(--bad); font-weight: 600; opacity: 1; }
+.tree-edit { padding: 3px 6px 3px calc(10px + var(--d) * 10px); gap: 6px; }
+.tree-edit input { flex: 1; min-width: 0; font: 12px var(--font-mono); padding: 2px 6px; border: 1px solid var(--accent); border-radius: 4px; background: var(--surface); color: var(--ink); }
+.tree-main { min-width: 0; display: flex; flex-direction: column; }
+.files-crumbs { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--code-line); background: var(--surface-2); font: 12px var(--font-mono); color: var(--muted); min-height: 31px; }
+.files-crumbs .crumb { display: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.files-crumbs .crumb.on { display: inline; }
+.files-crumbs .crumb i { font-style: normal; margin: 0 5px; opacity: 0.6; }
+.files-crumbs .crumb b { color: var(--ink); font-weight: 600; }
+.files-crumbs .show-tree { font-size: 11.5px; }
+@media (max-width: 720px) { .files.explorer { grid-template-columns: minmax(0, 1fr); } .tree { border-right: 0; border-bottom: 1px solid var(--code-line); max-height: 180px; } .trow .tact { opacity: 1; } }
 .hljs-keyword, .hljs-selector-tag, .hljs-built_in.hljs-keyword { color: #cf222e; }
 .hljs-string, .hljs-regexp { color: #0a3069; }
 .hljs-number, .hljs-literal { color: #0550ae; }
@@ -586,14 +620,75 @@ function codeBlock(src, lang) {
   return `<pre class="code"><code data-lang="${esc(l || "")}">${esc(src)}</code></pre>`;
 }
 function splitPath(p) { const i = p.lastIndexOf("/"); return i < 0 ? ["", p] : [p.slice(0, i + 1), p.slice(i + 1)]; }
-function filesBlock(files, key, editable, modified) {
+const FILE_ICONS = { php: ["PHP", "#7a6fd0"], tsx: ["TSX", "#2f7fc1"], ts: ["TS", "#2f7fc1"], jsx: ["JSX", "#c99a0a"], js: ["JS", "#c99a0a"], mjs: ["JS", "#c99a0a"], json: ["{}", "#8a6d1f"], css: ["CSS", "#9b4dca"], html: ["<>", "#d1592a"], twig: ["TW", "#5c8a2e"], yaml: ["YML", "#b8432f"], yml: ["YML", "#b8432f"], sql: ["SQL", "#2f8a6e"], md: ["MD", "#6b7280"], sh: ["$", "#4a5263"], env: ["ENV", "#6b7280"], gitignore: ["GIT", "#b8432f"], txt: ["TXT", "#6b7280"] };
+function fileIcon(name) {
+  const ext = /\.([a-z0-9]+)$/i.exec(name); const k = ext ? ext[1].toLowerCase() : name.replace(/^\./, "").toLowerCase();
+  const [label, color] = FILE_ICONS[k] || ["•", "#8a93a3"];
+  return `<span class="ficon" style="--fi:${color}">${esc(label)}</span>`;
+}
+function fileTree(files) {
+  const root = { dirs: {}, files: [] };
+  files.forEach((f, i) => {
+    const parts = (f.path || `fichier${i + 1}`).split("/").filter(Boolean);
+    let n = root; let acc = "";
+    for (const d of parts.slice(0, -1)) { acc += d + "/"; n = n.dirs[d] || (n.dirs[d] = { dirs: {}, files: [], path: acc }); }
+    n.files.push({ i, name: parts[parts.length - 1] || `fichier${i + 1}` });
+  });
+  return root;
+}
+function treeRows(node, ctx, depth) {
+  let html = "";
+  for (const name of Object.keys(node.dirs).sort((a, b) => a.localeCompare(b))) {
+    const d = node.dirs[name]; const fk = ctx.key + "|" + d.path; const folded = !!(state.ui.fold || {})[fk];
+    html += `<button type="button" class="tree-dir" data-act="fold" data-k="${esc(fk)}" style="--d:${depth}" aria-expanded="${!folded}"><span class="chev ${folded ? "" : "open"}" aria-hidden="true"></span>${esc(name)}</button>`;
+    if (!folded) html += treeRows(d, ctx, depth + 1);
+  }
+  for (const f of node.files) {
+    const on = f.i === ctx.cur; const mod = ctx.modified && ctx.modified[f.i];
+    const path = ctx.files[f.i].path || f.name;
+    if (ctx.manage && state.ui.sbRename === f.i) {
+      html += `<form class="trow tree-edit" data-form="sbFile" data-op="rename" data-i="${f.i}" style="--d:${depth}" autocomplete="off">${fileIcon(f.name)}<input name="path" value="${esc(path)}" aria-label="Nouveau nom" data-autofocus></form>`;
+      continue;
+    }
+    const confirmDel = ctx.manage && state.ui.sbConfirmDel === f.i;
+    html += `<div class="trow ${on ? "on" : ""} ${confirmDel ? "danger" : ""}" style="--d:${depth}" data-path="${esc(path.toLowerCase())}">
+      <button type="button" class="ftab tree-file ${on ? "on" : ""} ${mod ? "mod" : ""}" data-act="ftab" data-key="${esc(ctx.key)}" data-i="${f.i}" title="${esc(path)}">${fileIcon(f.name)}<span class="fname">${esc(f.name)}</span></button>
+      ${ctx.manage ? (confirmDel
+        ? `<button type="button" class="tact del-yes" data-act="sbDelFile" data-i="${f.i}">Supprimer ?</button><button type="button" class="tact" data-act="sbDelCancel" aria-label="Annuler">✕</button>`
+        : `<button type="button" class="tact" data-act="sbRenameFile" data-i="${f.i}" title="Renommer" aria-label="Renommer ${esc(path)}">✎</button>${ctx.files.length > 1 ? `<button type="button" class="tact" data-act="sbDelFile" data-i="${f.i}" title="Fermer et supprimer" aria-label="Supprimer ${esc(path)}">✕</button>` : ""}`) : ""}
+    </div>`;
+  }
+  return html;
+}
+function filesBlock(files, key, editable, modified, opts) {
   files = (files || []).filter((f) => f && typeof f.code === "string");
   if (!files.length) return "";
   if (files.length === 1 && !files[0].path && !editable) return codeBlock(files[0].code, files[0].lang);
+  const manage = !!(opts && opts.manage);
   const cur = Math.min(state.ui.ftab[key] || 0, files.length - 1);
-  const tabs = files.map((f, i) => { const [dir, name] = splitPath(f.path || `fichier${i + 1}`); return `<button class="ftab ${i === cur ? "on" : ""} ${modified && modified[i] ? "mod" : ""}" data-act="ftab" data-key="${esc(key)}" data-i="${i}" type="button"><span class="dir">${esc(dir)}</span>${esc(name)}</button>`; }).join("");
-  const panes = files.map((f, i) => `<div class="fpane ${i === cur ? "on" : ""}">${editable ? `<textarea class="editor" data-ed="${esc(key)}" data-path="${esc(f.path)}" spellcheck="false" aria-label="${esc(f.path)}">${esc(f.code)}</textarea>` : codeBlock(f.code, f.lang)}</div>`).join("");
-  return `<div class="files" data-files="${esc(key)}"><div class="files-tabs">${tabs}</div>${panes}</div>`;
+  const panes = files.map((f, i) => `<div class="fpane ${i === cur ? "on" : ""}" data-i="${i}">${editable ? `<textarea class="editor" data-ed="${esc(key)}" data-path="${esc(f.path)}" spellcheck="false" aria-label="${esc(f.path)}">${esc(f.code)}</textarea>` : codeBlock(f.code, f.lang)}</div>`).join("");
+  const explorer = manage || files.length >= 3;
+  if (!explorer) {
+    const tabs = files.map((f, i) => { const [dir, name] = splitPath(f.path || `fichier${i + 1}`); return `<button class="ftab ${i === cur ? "on" : ""} ${modified && modified[i] ? "mod" : ""}" data-act="ftab" data-key="${esc(key)}" data-i="${i}" type="button"><span class="dir">${esc(dir)}</span>${esc(name)}</button>`; }).join("");
+    return `<div class="files" data-files="${esc(key)}"><div class="files-tabs">${tabs}</div>${panes}</div>`;
+  }
+  const hidden = !!(state.ui.treeHidden || {})[key];
+  const crumbs = files.map((f, i) => { const parts = (f.path || `fichier${i + 1}`).split("/"); return `<span class="crumb ${i === cur ? "on" : ""}" data-i="${i}">${parts.map((p, j) => j === parts.length - 1 ? `<b>${esc(p)}</b>` : `${esc(p)}<i>›</i>`).join("")}</span>`; }).join("");
+  const search = files.length >= 6 ? `<input class="tree-search" type="search" placeholder="Rechercher un fichier" data-tree="${esc(key)}" aria-label="Rechercher un fichier">` : "";
+  const add = manage ? (state.ui.sbNew
+    ? `<form class="trow tree-edit" data-form="sbFile" data-op="add" style="--d:0" autocomplete="off"><span class="ficon" style="--fi:#8a93a3">+</span><input name="path" placeholder="${esc(opts.placeholder || "dossier/fichier.ext")}" aria-label="Nom du nouveau fichier" data-autofocus></form>`
+    : "") : "";
+  return `<div class="files explorer ${hidden ? "tree-off" : ""}" data-files="${esc(key)}">
+    <div class="tree" aria-label="Fichiers">
+      <div class="tree-head"><span>Fichiers</span><span class="spacer"></span>${manage ? `<button type="button" class="tact" data-act="sbNewFile" title="Nouveau fichier" aria-label="Nouveau fichier">＋</button>` : ""}<button type="button" class="tact" data-act="treeToggle" data-key="${esc(key)}" title="Masquer l'explorateur" aria-label="Masquer l'explorateur">«</button></div>
+      ${search}
+      <div class="tree-list">${add}${treeRows(fileTree(files), { key, cur, files, modified, manage }, 0)}</div>
+    </div>
+    <div class="tree-main">
+      <div class="files-crumbs">${hidden ? `<button type="button" class="tact show-tree" data-act="treeToggle" data-key="${esc(key)}" title="Afficher l'explorateur" aria-label="Afficher l'explorateur">☰ ${files.length}</button>` : ""}${crumbs}</div>
+      ${panes}
+    </div>
+  </div>`;
 }
 function highlight(root) {
   if (!window.hljs) return;
@@ -1536,13 +1631,8 @@ function viewSandbox() {
     <div class="workbench">
       <div class="stack">
         <div class="row"><h3>Mes fichiers</h3><span class="spacer"></span><button class="btn sm ghost" data-act="copyCode" data-key="${key}">Copier</button><button class="btn sm ghost" data-act="sbReset" data-e="${e}">${state.ui.sbConfirmReset === e ? "Sûr ? Tout remplacer par l'exemple" : "Repartir de l'exemple"}</button></div>
-        ${filesBlock(files, key, true)}
-        <form class="row sb-file" data-form="sbFile" autocomplete="off">
-          <input name="path" placeholder="${esc(E.placeholder)}" aria-label="Nom du fichier">
-          <button class="btn sm" name="op" value="add">Ajouter un fichier</button>
-          <button class="btn sm ghost" name="op" value="rename">Renommer l'onglet</button>
-          ${files.length > 1 ? `<button class="btn sm ghost" name="op" value="del">Supprimer l'onglet</button>` : ""}
-        </form>
+        ${filesBlock(files, key, true, null, { manage: true, placeholder: E.placeholder })}
+        <p class="small muted">Dans l'explorateur : <b>＋</b> pour créer un fichier (un chemin comme <code>${esc(E.placeholder)}</code> crée les dossiers), ✎ pour renommer, ✕ pour supprimer.</p>
         ${run === "next" ? `<label class="row small">URL à afficher <input id="sb-start" value="${esc(state.ui.sbStart || "/")}" style="max-width:240px"></label>` : ""}
       </div>
       <div class="runout">
@@ -1557,19 +1647,18 @@ function viewSandbox() {
 function sbFileForm(f, submitter) {
   keepDrafts();
   const e = sbEngine(); const key = "sb-" + e; const arr = sbFiles(e);
-  const op = (submitter && submitter.value) || "add";
-  const cur = Math.min(state.ui.ftab[key] || 0, arr.length - 1);
-  if (op === "del") {
-    if (arr.length > 1) { arr.splice(cur, 1); state.ui.ftab[key] = Math.max(0, cur - 1); }
-  } else {
-    const p = f.path.value.trim().replace(/^\/+/, "");
-    if (!/^[\w.\-\/()\[\]]+$/.test(p) || p.endsWith("/")) { toast("Donne un nom de fichier, par exemple " + SB_ENGINES[e].placeholder); return; }
-    if (arr.some((x, i) => x.path === p && !(op === "rename" && i === cur))) { toast("Ce fichier existe déjà."); return; }
-    if (op === "rename") arr[cur].path = p;
-    else { arr.push({ path: p, code: p.endsWith(".php") ? "<?php\n\n" : "" }); state.ui.ftab[key] = arr.length - 1; }
-  }
+  const op = f.dataset.op || (submitter && submitter.value) || "add";
+  const i = f.dataset.i !== undefined ? Number(f.dataset.i) : Math.min(state.ui.ftab[key] || 0, arr.length - 1);
+  const p = f.path.value.trim().replace(/^\/+/, "");
+  if (op === "rename" && p === arr[i].path) { state.ui.sbRename = null; render(); return; }
+  if (!/^[\w.\-\/()\[\]]+$/.test(p) || p.endsWith("/") || p.includes("//")) { toast("Donne un nom de fichier, par exemple " + SB_ENGINES[e].placeholder); return; }
+  if (arr.some((x, k) => x.path === p && !(op === "rename" && k === i))) { toast("Ce fichier existe déjà."); return; }
+  if (op === "rename") { arr[i].path = p; state.ui.sbRename = null; }
+  else { arr.push({ path: p, code: p.endsWith(".php") ? "<?php\n\n" : "" }); state.ui.ftab[key] = arr.length - 1; state.ui.sbNew = false; }
   draftWriter.schedule(); render();
+  const ed = document.querySelector(`.files[data-files="${key}"] .fpane.on textarea.editor`); if (ed && op === "add") ed.focus();
 }
+function focusAuto(select) { const i = document.querySelector("[data-autofocus]"); if (!i) return; i.focus(); if (select) { const v = i.value; const dot = v.lastIndexOf("."); const slash = v.lastIndexOf("/"); i.setSelectionRange(slash + 1, dot > slash ? dot : v.length); } }
 
 /* ---------- débogueur personnel ---------- */
 const DBG_CTX = ["Je ne sais pas", "PHP", "Doctrine", "Symfony", "React", "Données & API", "Next.js", "Git", "Autre"];
@@ -2205,7 +2294,31 @@ const ACTIONS = {
     const tabs = $(".steps"); if (tabs) tabs.scrollIntoView({ block: "nearest" });
   },
   level(el) { keepDrafts(); state.ui.level[el.dataset.id] = Number(el.dataset.level); render(); },
-  ftab(el) { keepDrafts(); state.ui.ftab[el.dataset.key] = Number(el.dataset.i); const box = el.closest(".files"); if (box) { box.querySelectorAll(".ftab").forEach((t, i) => t.classList.toggle("on", i === Number(el.dataset.i))); box.querySelectorAll(".fpane").forEach((p, i) => p.classList.toggle("on", i === Number(el.dataset.i))); } },
+  ftab(el) {
+    keepDrafts(); const i = Number(el.dataset.i); state.ui.ftab[el.dataset.key] = i; state.ui.sbConfirmDel = null;
+    const box = el.closest(".files"); if (!box) return;
+    box.querySelectorAll(".ftab").forEach((t) => t.classList.toggle("on", Number(t.dataset.i) === i));
+    box.querySelectorAll(".trow").forEach((r) => { const t = r.querySelector(".ftab"); r.classList.toggle("on", !!t && Number(t.dataset.i) === i); });
+    box.querySelectorAll(".fpane").forEach((p, k) => p.classList.toggle("on", k === i));
+    box.querySelectorAll(".files-crumbs .crumb").forEach((c) => c.classList.toggle("on", Number(c.dataset.i) === i));
+    const ed = box.querySelector(".fpane.on textarea.editor"); if (ed && window.matchMedia("(min-width: 721px)").matches) ed.focus({ preventScroll: true });
+  },
+  fold(el) { keepDrafts(); const f = (state.ui.fold = state.ui.fold || {}); f[el.dataset.k] = !f[el.dataset.k]; render(); },
+  treeToggle(el) { keepDrafts(); const t = (state.ui.treeHidden = state.ui.treeHidden || {}); t[el.dataset.key] = !t[el.dataset.key]; render(); },
+  sbNewFile() { keepDrafts(); state.ui.sbNew = !state.ui.sbNew; state.ui.sbRename = null; state.ui.sbConfirmDel = null; render(); focusAuto(); },
+  sbRenameFile(el) { keepDrafts(); state.ui.sbRename = Number(el.dataset.i); state.ui.sbNew = false; state.ui.sbConfirmDel = null; render(); focusAuto(true); },
+  sbDelCancel() { state.ui.sbConfirmDel = null; render(); },
+  sbDelFile(el) {
+    keepDrafts(); const i = Number(el.dataset.i);
+    if (state.ui.sbConfirmDel !== i) { state.ui.sbConfirmDel = i; render(); return; }
+    const e = sbEngine(); const key = "sb-" + e; const arr = sbFiles(e);
+    state.ui.sbConfirmDel = null;
+    if (arr.length <= 1) return;
+    const removed = arr.splice(i, 1)[0];
+    const cur = state.ui.ftab[key] || 0;
+    state.ui.ftab[key] = cur > i ? cur - 1 : Math.min(cur, arr.length - 1);
+    draftWriter.schedule(); render(); toast("« " + removed.path + " » supprimé.");
+  },
   answer(el) {
     const id = el.dataset.id; const m = mod(id); const p = ensure(id);
     p.answers = p.answers || {};
@@ -2366,14 +2479,23 @@ document.addEventListener("toggle", (e) => {
 }, true);
 let draftTimer;
 document.addEventListener("input", (e) => {
+  if (e.target.classList && e.target.classList.contains("tree-search")) {
+    const q = e.target.value.trim().toLowerCase(); const box = e.target.closest(".tree");
+    box.querySelectorAll(".trow[data-path]").forEach((r) => { r.style.display = !q || r.dataset.path.includes(q) ? "" : "none"; });
+    box.querySelectorAll(".tree-dir").forEach((d) => { d.style.display = q ? "none" : ""; });
+    box.querySelectorAll(".trow[data-path]").forEach((r) => { r.style.paddingLeft = q ? "0" : ""; });
+    return;
+  }
   if (e.target.name === "texte" && e.target.closest("#qpanel")) { qUi().texte = e.target.value; return; }
   if (e.target.id === "q-filter") { state.ui.qFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#q-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.id === "dbg-filter") { state.ui.dbgFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#dbg-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
-  if (e.target.classList.contains("editor")) { clearTimeout(draftTimer); draftTimer = setTimeout(keepDrafts, 600); const tab = e.target.closest(".files"); if (tab) { const idx = Array.from(tab.querySelectorAll(".fpane")).indexOf(e.target.closest(".fpane")); const t = tab.querySelectorAll(".ftab")[idx]; if (t) t.classList.add("mod"); } }
+  if (e.target.classList.contains("editor")) { clearTimeout(draftTimer); draftTimer = setTimeout(keepDrafts, 600); const tab = e.target.closest(".files"); if (tab) { const idx = Array.from(tab.querySelectorAll(".fpane")).indexOf(e.target.closest(".fpane")); const t = tab.querySelector(`.ftab[data-i="${idx}"]`); if (t) t.classList.add("mod"); } }
 });
 document.addEventListener("mousedown", (e) => { if (e.target.closest && e.target.closest("#qfab")) qSelAtOpen = mainSelection(); }, true);
 document.addEventListener("keydown", (e) => {
   const el = e.target;
+  if (el.classList && el.classList.contains("tree-search") && e.key === "Enter") { e.preventDefault(); const r = Array.from(el.closest(".tree").querySelectorAll(".trow[data-path]")).find((x) => x.style.display !== "none"); const b = r && r.querySelector(".ftab"); if (b) b.click(); return; }
+  if (el.closest && el.closest(".tree-edit") && e.key === "Escape") { e.preventDefault(); state.ui.sbNew = false; state.ui.sbRename = null; render(); return; }
   if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyQ") { e.preventDefault(); qSelAtOpen = mainSelection(); qSetOpen(!qUi().open); return; }
   if (e.key === "Escape" && qUi().open && (!el.closest || el.closest("#qpanel") || el === document.body)) { e.preventDefault(); qSetOpen(false); return; }
   if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && el.closest && el.closest("#qpanel form[data-form=q]")) { e.preventDefault(); qSave(el.value, false); return; }
@@ -2381,6 +2503,14 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); el.setRangeText("    ", el.selectionStart, el.selectionEnd, "end"); el.dispatchEvent(new Event("input", { bubbles: true })); }
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { const box = el.closest(".workbench"); const b = box && box.querySelector('[data-act="run"]'); if (b) { e.preventDefault(); b.click(); } }
   }
+});
+document.addEventListener("focusout", (e) => {
+  const f = e.target.closest && e.target.closest("form.tree-edit"); if (!f) return;
+  setTimeout(() => {
+    if (!f.isConnected || f.contains(document.activeElement)) return;
+    const v = f.path.value.trim(); const orig = f.path.defaultValue.trim();
+    if (v && v !== orig) f.requestSubmit(); else { state.ui.sbNew = false; state.ui.sbRename = null; render(); }
+  }, 120);
 });
 window.addEventListener("hashchange", () => { document.body.classList.remove("menu-open"); render(); });
 
