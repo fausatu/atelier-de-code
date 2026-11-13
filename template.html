@@ -1449,12 +1449,16 @@ function runJsFrame(m, td, key, withTests, rs, files, entry, libs) {
     if (d.type === "net") lines.push(`<span class="dim">${esc(d.text)}</span>`);
     if (d.type === "error") lines.push(`<span class="err">Erreur : ${esc(d.text)}</span>`);
     if (d.type === "ready") { rs.busy = false; rs.html = d.html || ""; const b = document.querySelector(`[data-act="run"][data-id="${CSS.escape(m.id)}"]`); if (b) { b.disabled = false; b.innerHTML = td.run.kind === "php" ? "▶ Exécuter le PHP" : td.run.kind === "git" ? "▶ Lancer les commandes" : "▶ Exécuter"; } const tb = document.querySelector(`[data-act="runTests"][data-id="${CSS.escape(m.id)}"]`); if (tb) tb.disabled = false; }
-    if (d.type === "tests") { rs.tests = { cases: d.cases || [], error: d.error }; if (!d.error && d.cases.length && d.cases.every((c) => c.ok)) logActivity(); const box = iframe.closest(".runout"); const old = box && box.querySelector(".tests"); if (old) old.remove(); if (box) box.insertAdjacentHTML("beforeend", renderTests(rs.tests)); }
+    if (d.type === "tests") { rs.tests = { cases: d.cases || [], error: d.error }; if (!d.error && d.cases.length && d.cases.every((c) => c.ok)) logActivity(); const box = (document.getElementById("prev-" + key) || iframe).closest(".runout"); const old = box && box.querySelector(".tests"); if (old) old.remove(); if (box) box.insertAdjacentHTML("beforeend", renderTests(rs.tests)); }
     rs.console = lines.join("\n") || '<span class="dim">(aucune sortie console)</span>';
     const c = $("#con-" + CSS.escape(key)); if (c) c.innerHTML = rs.console;
   } };
-  iframe.dataset.key = key;
-  iframe.srcdoc = html;
+  // un iframe neuf à chaque exécution : réaffecter srcdoc à un iframe déjà déplacé dans le DOM laisse parfois l'aperçu vide
+  const fresh = iframe.cloneNode(false);
+  fresh.removeAttribute("srcdoc");
+  fresh.dataset.key = key;
+  fresh.srcdoc = html;
+  iframe.replaceWith(fresh);
   setTimeout(() => { if (rs.busy) { rs.busy = false; const c = $("#con-" + CSS.escape(key)); if (c && !lines.length) c.innerHTML = '<span class="err">Le code n\'a pas répondu (boucle infinie ou chargement bloqué ?).</span>'; render(); } }, 12000);
 }
 window.addEventListener("message", (e) => {

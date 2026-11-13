@@ -977,7 +977,7 @@ export default function Profil() {
        run=FRUN("Profil.tsx", api=r"""
 window.__profil = { prenom: 'Ana', email: 'ana@exemple.fr', ville: 'Lyon' };
 window.__puts = 0;
-__api["GET /api/profil"] = () => window.__profil;
+__api["GET /api/profil"] = async () => { await new Promise((r) => setTimeout(r, 400)); return window.__profil; };
 __api["PUT /api/profil"] = (p, b) => {
   window.__puts++;
   const errors = [];
