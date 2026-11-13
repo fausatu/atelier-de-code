@@ -122,21 +122,63 @@ namespace Symfony\Component\Security\Http\Attribute;
 #[\Attribute(\Attribute::TARGET_PARAMETER)] class CurrentUser { public function __construct() {} }
 
 namespace Symfony\Component\HttpKernel\Exception;
-class HttpException extends \RuntimeException { public function __construct(public int $statusCode = 500, string $message = '') { parent::__construct($message); } }
+class HttpException extends \RuntimeException { public function __construct(public int $statusCode = 500, string $message = '', public array $headers = []) { parent::__construct($message); } public function getStatusCode(): int { return $this->statusCode; } public function getHeaders(): array { return $this->headers; } }
+class BadRequestHttpException extends HttpException { public function __construct(string $message = 'Bad Request') { parent::__construct(400, $message); } }
+class UnauthorizedHttpException extends HttpException { public function __construct(string $challenge = 'Bearer', string $message = 'Unauthorized') { parent::__construct(401, $message, ['WWW-Authenticate' => $challenge]); } }
+class TooManyRequestsHttpException extends HttpException { public function __construct(int|string|null $retryAfter = null, string $message = 'Too Many Requests') { parent::__construct(429, $message, $retryAfter !== null ? ['Retry-After' => (string) $retryAfter] : []); } }
+class PreconditionFailedHttpException extends HttpException { public function __construct(string $message = 'Precondition Failed') { parent::__construct(412, $message); } }
 class NotFoundHttpException extends HttpException { public function __construct(string $message = 'Not Found') { parent::__construct(404, $message); } }
 class AccessDeniedHttpException extends HttpException { public function __construct(string $message = 'Access Denied') { parent::__construct(403, $message); } }
 class ConflictHttpException extends HttpException { public function __construct(string $message = 'Conflict') { parent::__construct(409, $message); } }
 class UnprocessableEntityHttpException extends HttpException { public function __construct(string $message = 'Unprocessable Entity') { parent::__construct(422, $message); } }
 
 namespace Symfony\Component\HttpFoundation;
-class JsonResponse { public function __construct(public mixed $data = null, public int $status = 200) {} public function getStatusCode(): int { return $this->status; } }
-class Response extends JsonResponse {}
+class HeaderBag {
+    private array $h = [];
+    public function __construct(array $headers = []) { foreach ($headers as $k => $v) $this->set($k, $v); }
+    public function get(string $k, ?string $default = null): ?string { return $this->h[strtolower($k)][1] ?? $default; }
+    public function set(string $k, string|int|null $v): void { if ($v === null) { $this->remove($k); return; } $this->h[strtolower($k)] = [$k, (string) $v]; }
+    public function has(string $k): bool { return isset($this->h[strtolower($k)]); }
+    public function remove(string $k): void { unset($this->h[strtolower($k)]); }
+    public function all(): array { $o = []; foreach ($this->h as [$k, $v]) $o[$k] = $v; return $o; }
+}
+class ParameterBag {
+    public function __construct(private array $p = []) {}
+    public function get(string $k, mixed $default = null): mixed { return $this->p[$k] ?? $default; }
+    public function getInt(string $k, int $default = 0): int { return isset($this->p[$k]) ? (int) $this->p[$k] : $default; }
+    public function has(string $k): bool { return array_key_exists($k, $this->p); }
+    public function all(): array { return $this->p; }
+    public function set(string $k, mixed $v): void { $this->p[$k] = $v; }
+    public function remove(string $k): void { unset($this->p[$k]); }
+}
+class Request {
+    public HeaderBag $headers; public ParameterBag $query; public ParameterBag $attributes;
+    public function __construct(private string $method = 'GET', private string $path = '/', array $query = [], private ?array $body = null, array $headers = []) {
+        $this->headers = new HeaderBag($headers); $this->query = new ParameterBag($query); $this->attributes = new ParameterBag([]);
+    }
+    public function getMethod(): string { return $this->method; }
+    public function getPathInfo(): string { return $this->path; }
+    public function toArray(): array { return $this->body ?? []; }
+    public function getContent(): string { return $this->body === null ? '' : json_encode($this->body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); }
+    public function getClientIp(): string { return $this->headers->get('X-Client-Ip', '127.0.0.1'); }
+}
+class JsonResponse {
+    public HeaderBag $headers;
+    public function __construct(public mixed $data = null, public int $status = 200, array $headers = []) { $this->headers = new HeaderBag($headers); }
+    public function getStatusCode(): int { return $this->status; }
+    public function setStatusCode(int $s): static { $this->status = $s; return $this; }
+}
+class Response extends JsonResponse {
+    public const HTTP_OK = 200; public const HTTP_CREATED = 201; public const HTTP_NO_CONTENT = 204; public const HTTP_NOT_MODIFIED = 304;
+    public const HTTP_BAD_REQUEST = 400; public const HTTP_UNAUTHORIZED = 401; public const HTTP_FORBIDDEN = 403; public const HTTP_NOT_FOUND = 404;
+    public const HTTP_CONFLICT = 409; public const HTTP_PRECONDITION_FAILED = 412; public const HTTP_UNPROCESSABLE_ENTITY = 422; public const HTTP_TOO_MANY_REQUESTS = 429;
+}
 
 namespace Symfony\Bundle\FrameworkBundle\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 abstract class AbstractController {
-    protected function json(mixed $data, int $status = 200): JsonResponse { return new JsonResponse($data, $status); }
+    protected function json(mixed $data, int $status = 200, array $headers = []): JsonResponse { return new JsonResponse($data, $status, $headers); }
     protected function createNotFoundException(string $message = 'Not Found'): NotFoundHttpException { return new NotFoundHttpException($message); }
 }
 
@@ -149,10 +191,27 @@ final class KernelEvents { const EXCEPTION = 'kernel.exception'; const REQUEST =
 
 namespace Symfony\Component\HttpKernel\Event;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+final class RequestEvent {
+    private ?JsonResponse $response = null;
+    public function __construct(private Request $request) {}
+    public function getRequest(): Request { return $this->request; }
+    public function setResponse(JsonResponse $r): void { $this->response = $r; }
+    public function getResponse(): ?JsonResponse { return $this->response; }
+    public function hasResponse(): bool { return $this->response !== null; }
+    public function isMainRequest(): bool { return true; }
+}
+final class ResponseEvent {
+    public function __construct(private Request $request, private JsonResponse $response) {}
+    public function getRequest(): Request { return $this->request; }
+    public function getResponse(): JsonResponse { return $this->response; }
+    public function setResponse(JsonResponse $r): void { $this->response = $r; }
+}
 final class ExceptionEvent {
     private ?JsonResponse $response = null;
     public function __construct(private \Throwable $throwable) {}
     public function getThrowable(): \Throwable { return $this->throwable; }
+    public function getRequest(): \Symfony\Component\HttpFoundation\Request { return \Atelier\App::$current ?? new \Symfony\Component\HttpFoundation\Request(); }
     public function setResponse(JsonResponse $r): void { $this->response = $r; }
     public function getResponse(): ?JsonResponse { return $this->response; }
     public function hasResponse(): bool { return $this->response !== null; }
@@ -168,9 +227,13 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Validator\Validator;
 
 final class HttpResult {
-    public function __construct(public int $status, public mixed $json) {}
+    public function __construct(public int $status, public mixed $json, public array $headers = []) {}
     public function json(): mixed { return $this->json; }
-    public function __toString(): string { return $this->status . ' ' . json_encode($this->json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); }
+    public function header(string $name): ?string { foreach ($this->headers as $k => $v) if (strcasecmp($k, $name) === 0) return $v; return null; }
+    public function __toString(): string {
+        $h = ''; foreach ($this->headers as $k => $v) $h .= " [$k: $v]";
+        return $this->status . $h . ($this->json === null ? '' : ' ' . json_encode($this->json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
 }
 
 final class App {
@@ -207,18 +270,43 @@ final class App {
         return self::$instances[$type] = $rc->newInstanceArgs($args);
     }
 
-    public static function request(string $method, string $uri, ?array $body = null): HttpResult {
+    public static ?\Symfony\Component\HttpFoundation\Request $current = null;
+    public static function request(string $method, string $uri, ?array $body = null, array $headers = []): HttpResult {
         $parts = parse_url($uri);
         $path = rtrim($parts['path'] ?? '/', '/') ?: '/';
         parse_str($parts['query'] ?? '', $query);
+        $req = self::$current = new \Symfony\Component\HttpFoundation\Request($method, $path, $query, $body, $headers);
         try {
             [$class, $action, $params] = self::route($method, $path);
-            $res = self::call($class, $action, $params, $body, $query);
+            $req->attributes = new \Symfony\Component\HttpFoundation\ParameterBag($params + ['_route' => "$class::$action"]);
+            $res = null;
+            $ev = new \Symfony\Component\HttpKernel\Event\RequestEvent($req);
+            foreach (self::listeners('kernel.request') as [$c, $meth]) { self::get($c)->$meth($ev); if ($ev->hasResponse()) { $res = self::result($ev->getResponse()); break; } }
+            $res ??= self::call($class, $action, $params, $body, $query);
         } catch (\Throwable $e) {
             $res = self::error($e);
         }
-        if (self::$echo) echo 'HTTP> ', $method, ' ', $uri, ($body !== null ? ' ' . json_encode($body, JSON_UNESCAPED_UNICODE) : ''), "\n     ", $res, "\n";
+        if (self::$echo) echo 'HTTP> ', $method, ' ', $uri, ($headers ? ' ' . json_encode($headers, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : ''), ($body !== null ? ' ' . json_encode($body, JSON_UNESCAPED_UNICODE) : ''), "\n     ", $res, "\n";
         return $res;
+    }
+    /** @return list<array{0: string, 1: string}> classe + méthode des listeners d'un évènement, par priorité décroissante */
+    private static function listeners(string $event): array {
+        $out = [];
+        foreach (get_declared_classes() as $c) {
+            $rc = new \ReflectionClass($c);
+            foreach ($rc->getAttributes(\Symfony\Component\EventDispatcher\Attribute\AsEventListener::class) as $a) { $l = $a->newInstance(); if ($l->event === $event) $out[] = [$c, $l->method ?? '__invoke', $l->priority]; }
+            foreach ($rc->getMethods() as $m) foreach ($m->getAttributes(\Symfony\Component\EventDispatcher\Attribute\AsEventListener::class) as $a) { $l = $a->newInstance(); if ($l->event === $event) $out[] = [$c, $m->getName(), $l->priority]; }
+        }
+        usort($out, fn($x, $y) => $y[2] <=> $x[2]);
+        return $out;
+    }
+    private static function result(JsonResponse $r): HttpResult {
+        if (self::$current) {
+            $ev = new \Symfony\Component\HttpKernel\Event\ResponseEvent(self::$current, $r);
+            foreach (self::listeners('kernel.response') as [$c, $meth]) self::get($c)->$meth($ev);
+            $r = $ev->getResponse();
+        }
+        return new HttpResult($r->status, $r->status === 204 || $r->status === 304 ? null : self::normalize($r->data), $r->headers->all());
     }
 
     private static function route(string $method, string $path): array {
@@ -261,6 +349,7 @@ final class App {
                 if (!self::$user && !$p->allowsNull()) return new HttpResult(401, ['error' => 'Non connecté']);
                 $args[] = self::$user; continue;
             }
+            if ($tn === \Symfony\Component\HttpFoundation\Request::class) { $args[] = self::$current; continue; }
             if (array_key_exists($p->getName(), $params)) {
                 $raw = $params[$p->getName()];
                 $args[] = $tn === 'int' ? (int) $raw : $raw; continue;
@@ -276,7 +365,7 @@ final class App {
         }
         $res = $ctrl->$action(...$args);
         if (!$res instanceof JsonResponse) throw new \LogicException("$class::$action() doit renvoyer une réponse (\$this->json(...)).");
-        return new HttpResult($res->status, self::normalize($res->data));
+        return self::result($res);
     }
 
     public static function denormalize(string $class, array $data, bool $fromQuery = false): object {
@@ -333,10 +422,10 @@ final class App {
             foreach ($rc->getMethods() as $m) foreach ($m->getAttributes(\Symfony\Component\EventDispatcher\Attribute\AsEventListener::class) as $a) { $l = $a->newInstance(); if ($l->event === 'kernel.exception') $targets[] = $m->getName(); }
             foreach ($targets as $meth) {
                 self::get($c)->$meth($event);
-                if ($event->hasResponse()) { $r = $event->getResponse(); return new HttpResult($r->status, self::normalize($r->data)); }
+                if ($event->hasResponse()) return self::result($event->getResponse());
             }
         }
-        if ($e instanceof HttpException) return new HttpResult($e->statusCode, ['error' => $e->getMessage()]);
+        if ($e instanceof HttpException) return new HttpResult($e->statusCode, ['error' => $e->getMessage()], $e->headers);
         foreach ((new \ReflectionClass($e))->getAttributes(\Symfony\Component\HttpKernel\Attribute\WithHttpStatus::class) as $a)
             return new HttpResult($a->newInstance()->statusCode, ['error' => $e->getMessage()]);
         $p = get_parent_class($e);

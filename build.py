@@ -10,6 +10,7 @@ from c_data import MODULES as DATA_
 from c_arch import MODULES as ARCH
 from c_git import MODULES as GIT
 from c_debug import MODULES as DEBUG
+from c_api import MODULES as API
 
 TRACKS = [
     {"id": "php", "name": "PHP orienté objet", "short": "PHP POO", "color": "violet",
@@ -32,9 +33,11 @@ TRACKS = [
      "desc": "Le modèle de Git, merge, rebase, revenir en arrière, Conventional Commits, Pull Requests, outils."},
     {"id": "debug", "name": "Déboguer", "short": "Débogage", "color": "amber",
      "desc": "Lire les erreurs et corriger de vrais bugs : PHP, Doctrine, Symfony, React, API, Next.js, Git."},
+    {"id": "api", "name": "API REST", "short": "API", "color": "teal",
+     "desc": "Créer une API (REST, erreurs, auth, cache, idempotence, limites) et la consommer en PHP et en JS."},
 ]
 
-modules = PHP + DOC + DTO + ARCH + DDD + REACT + DATA_ + NEXT + GIT + DEBUG
+modules = PHP + DOC + DTO + ARCH + DDD + REACT + DATA_ + NEXT + GIT + API + DEBUG
 ids = set()
 for m in modules:
     assert m["id"] not in ids, m["id"]
@@ -66,7 +69,8 @@ for m in modules:
 
 from doctrine_sim import DOCTRINE_SETUP
 from symfony_sim import SYMFONY_SETUP
-SETUPS = {"doctrine": DOCTRINE_SETUP.strip("\n"), "symfony": SYMFONY_SETUP.strip("\n")}
+from httpclient_sim import HTTPCLIENT_SETUP
+SETUPS = {"doctrine": DOCTRINE_SETUP.strip("\n"), "symfony": SYMFONY_SETUP.strip("\n"), "httpclient": HTTPCLIENT_SETUP.strip("\n")}
 for m in modules:
     for td in m.get("tds", []):
         r = td.get("run")

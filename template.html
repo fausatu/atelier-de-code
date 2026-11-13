@@ -23,7 +23,7 @@
   --warn: #a96d00; --warn-soft: #fbf0d9;
   --bad: #c83c3c;  --bad-soft: #fbe5e5;
   --t-violet: #6b55cc; --t-orange: #cf6a1d; --t-green: #18865f; --t-cyan: #13809f; --t-graphite: #4a5263;
-  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f; --t-amber: #b7791f;
+  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f; --t-amber: #b7791f; --t-teal: #0f8a7e;
   --code-bg: #f4f7fb; --code-ink: #24292f; --code-line: #d6dfea;
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
@@ -442,7 +442,7 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 "use strict";
 const DATA = /*__CONTENT__*/null;
 const INTERVALS = [1, 3, 7, 16, 35];
-const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick", "amber"];
+const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick", "amber", "teal"];
 const LANGS = { php: "php", tsx: "typescript", ts: "typescript", typescript: "typescript", js: "javascript", jsx: "javascript", javascript: "javascript", sql: "sql", bash: "bash", shell: "bash", yaml: "yaml", json: "json", python: "python", css: "css", html: "xml", xml: "xml", twig: "xml", plaintext: null };
 const STEPS = ["Comprendre", "Exemple", "Quiz", "TD"];
 const LEVEL_NAMES = { 1: "Niveau 1 · Appliquer", 2: "Niveau 2 · Adapter", 3: "Niveau 3 · Approfondir" };
@@ -1210,24 +1210,29 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start) => `<!DOCTYP
       const mm = path.match(rx); if (!mm) continue;
       const names = (pat.match(/:[a-zA-Z]+/g) || []).map((s) => s.slice(1));
       const ps = {}; names.forEach((n, i) => (ps[n] = mm[i + 1]));
-      return window.__api[k](Object.assign({}, params, ps), body, (config && config.headers) || {});
+      const hd = Object.assign({}, (config && config.headers) || {}); for (const [hk, hv] of Object.entries(hd)) hd[hk.toLowerCase()] = hv;
+      return window.__api[k](Object.assign({}, params, ps), body, hd);
     }
     return [404, { error: "Route inconnue : " + method + " " + path }];
   }
   function axiosError(status, data, config) { const e = new Error("Request failed with status code " + status); e.isAxiosError = true; e.response = { status, data }; e.config = config; return e; }
   function request(method, url, body, config) {
-    const aborted = () => { const e = new Error("canceled"); e.name = "CanceledError"; e.code = "ERR_CANCELED"; return e; };
-    return sleep(120 + Math.random() * 180).then(async () => {
-      if (config && config.signal && config.signal.aborted) throw aborted();
+    const sig = config && config.signal;
+    const aborted = () => { if (sig && sig.reason && sig.reason.name === "TimeoutError") return sig.reason; const e = new Error("canceled"); e.name = "CanceledError"; e.code = "ERR_CANCELED"; return e; };
+    const work = sleep(120 + Math.random() * 180).then(async () => {
+      if (sig && sig.aborted) throw aborted();
       let r; try { r = await route(method, url, body, config); } catch (err) { throw axiosError(500, { error: String(err.message) }, config); }
-      if (config && config.signal && config.signal.aborted) throw aborted();
-      let status = 200, data = r;
-      if (Array.isArray(r) && r.length === 2 && typeof r[0] === "number" && r[0] >= 100 && r[0] < 600) { status = r[0]; data = r[1]; }
+      if (sig && sig.aborted) throw aborted();
+      let status = 200, data = r, headers = {};
+      if (Array.isArray(r) && (r.length === 2 || r.length === 3) && typeof r[0] === "number" && r[0] >= 100 && r[0] < 600) { status = r[0]; data = r[1]; headers = r[2] || {}; }
+      const hs = {}; for (const [k, v] of Object.entries(headers)) hs[k.toLowerCase()] = String(v);
       if (data !== undefined && data !== null) data = JSON.parse(JSON.stringify(data));
-      if (status >= 400) { post({ type: "net", text: method + " " + url + " → " + status }); throw axiosError(status, data, config); }
+      if (status >= 400) { post({ type: "net", text: method + " " + url + " → " + status }); const e = axiosError(status, data, config); e.response.headers = hs; throw e; }
       post({ type: "net", text: method + " " + url + " → " + status });
-      return { data, status, headers: {}, config };
+      return { data, status, headers: hs, config };
     });
+    if (!sig) return work;
+    return Promise.race([work, new Promise((_, rej) => { if (sig.aborted) rej(aborted()); else sig.addEventListener("abort", () => { post({ type: "net", text: method + " " + url + " → annulée" }); rej(aborted()); }, { once: true }); })]);
   }
   function makeAxios(defaults) {
     defaults = defaults || {};
@@ -1261,7 +1266,8 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start) => `<!DOCTYP
     return ax;
   }
   const axios = makeAxios({}); axios.default = axios;
-  window.fetch = (url, init) => request(((init && init.method) || "GET").toUpperCase(), String(url), init && init.body ? JSON.parse(init.body) : undefined, init).then((r) => ({ ok: true, status: r.status, json: async () => r.data, text: async () => JSON.stringify(r.data) })).catch((e) => { if (e.response) return { ok: false, status: e.response.status, json: async () => e.response.data, text: async () => JSON.stringify(e.response.data) }; if (e.code === "ERR_CANCELED") { const ab = new Error("The operation was aborted."); ab.name = "AbortError"; throw ab; } throw e; });
+  const fakeRes = (status, data, hs) => ({ ok: status >= 200 && status < 300, status, headers: { get: (n) => (hs || {})[String(n).toLowerCase()] ?? null, has: (n) => String(n).toLowerCase() in (hs || {}) }, json: async () => { if (data === undefined || data === null) throw new SyntaxError("Unexpected end of JSON input"); return data; }, text: async () => (data === undefined || data === null ? "" : JSON.stringify(data)) });
+  window.fetch = (url, init) => { const h = init && init.headers ? (typeof init.headers.forEach === "function" && !Array.isArray(init.headers) ? Object.fromEntries(Array.from(init.headers.entries ? init.headers.entries() : [])) : init.headers) : {}; return request(((init && init.method) || "GET").toUpperCase(), String(url), init && init.body ? JSON.parse(init.body) : undefined, Object.assign({}, init, { headers: h })).then((r) => fakeRes(r.status, r.data, r.headers)).catch((e) => { if (e.response) return fakeRes(e.response.status, e.response.data, e.response.headers); if (e.code === "ERR_CANCELED") { const ab = new Error("The operation was aborted."); ab.name = "AbortError"; throw ab; } throw e; }); };
   const cache = {};
   function resolvePath(name, from) {
     const parts = from ? from.split("/").slice(0, -1) : [];

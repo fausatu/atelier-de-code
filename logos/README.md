@@ -14,6 +14,7 @@ Dépose ici un fichier par parcours, nommé avec l'identifiant du parcours :
 | Next.js | `next.svg` |
 | Git & GitHub | `git.svg` |
 | Déboguer | `debug.svg` |
+| API REST | `api.svg` |
 
 - SVG de préférence (net à toutes les tailles), sinon PNG carré d'au moins 128 px.
 - Si le fichier manque, le dashboard affiche un badge texte à la place.
