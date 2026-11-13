@@ -100,6 +100,16 @@ main { padding: 32px clamp(16px, 4vw, 48px) 64px; min-width: 0; }
 .prose pre.code { max-width: none; }
 .prose ul.points { margin: 2px 0; }
 .prose h4 { margin-top: 6px; }
+.tbl { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.tbl table { border-collapse: collapse; width: 100%; font-size: 0.92rem; line-height: 1.5; }
+.tbl th, .tbl td { padding: 8px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.tbl th { background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+.tbl tbody tr:last-child td { border-bottom: 0; }
+.tbl tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
+.tbl td:first-child { font-weight: 500; }
+.tbl td code, .tbl th code { white-space: normal; overflow-wrap: anywhere; }
+.tbl td:first-child { min-width: 9em; }
+.tbl .c { text-align: center; } .tbl .r { text-align: right; }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 500; cursor: pointer; text-decoration: none; line-height: 1.3; }
 .btn:hover { border-color: var(--muted); }
@@ -481,6 +491,26 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 function inl(s) {
   return String(s ?? "").split("`").map((part, i) => i % 2 ? `<code>${esc(part)}</code>` : esc(part).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,;:!?]|$)/g, "$1<em>$2</em>")).join("");
 }
+function mdCells(line) {
+  const cells = []; let cur = ""; let tick = false;
+  const src = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  for (let k = 0; k < src.length; k++) {
+    const c = src[k];
+    if (c === "\\" && src[k + 1] === "|") { cur += "|"; k++; continue; }
+    if (c === "`") tick = !tick;
+    if (c === "|" && !tick) { cells.push(cur.trim()); cur = ""; continue; }
+    cur += c;
+  }
+  cells.push(cur.trim());
+  return cells;
+}
+function mdTable(rows) {
+  const head = mdCells(rows[0]);
+  const align = mdCells(rows[1]).map((a) => (/^:-+:$/.test(a) ? "c" : /^-+:$/.test(a) ? "r" : ""));
+  const cls = (j) => (align[j] ? ` class="${align[j]}"` : "");
+  const body = rows.slice(2).map((r) => { const c = mdCells(r); return `<tr>${head.map((_, j) => `<td${cls(j)}>${inl(c[j] || "")}</td>`).join("")}</tr>`; }).join("");
+  return `<div class="tbl"><table><thead><tr>${head.map((h, j) => `<th${cls(j)}>${inl(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
 function md(text) {
   const out = []; const lines = String(text || "").split("\n"); let i = 0; let list = null; let para = [];
   const flushPara = () => { if (para.length) { out.push(`<p>${inl(para.join(" "))}</p>`); para = []; } };
@@ -495,6 +525,13 @@ function md(text) {
       i++;
       const spec = fence[1] || "plaintext"; const [lang, ...rest] = spec.split(":");
       out.push(rest.length ? filesBlock([{ path: rest.join(":"), lang, code: buf.join("\n") }], "md" + out.length) : codeBlock(buf.join("\n"), lang));
+      continue;
+    }
+    if (/^\s*\|/.test(line) && i + 1 < lines.length && /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(lines[i + 1])) {
+      flushPara(); flushList();
+      const rows = [line, lines[i + 1]]; i += 2;
+      while (i < lines.length && /^\s*\|/.test(lines[i])) { rows.push(lines[i]); i++; }
+      out.push(mdTable(rows));
       continue;
     }
     const li = line.match(/^\s*([-*]|\d+\.)\s+(.*)$/);
