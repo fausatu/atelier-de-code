@@ -23,7 +23,7 @@
   --warn: #a96d00; --warn-soft: #fbf0d9;
   --bad: #c83c3c;  --bad-soft: #fbe5e5;
   --t-violet: #6b55cc; --t-orange: #cf6a1d; --t-green: #18865f; --t-cyan: #13809f; --t-graphite: #4a5263;
-  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f; --t-amber: #b7791f; --t-teal: #0f8a7e;
+  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f; --t-amber: #b7791f; --t-teal: #0f8a7e; --t-indigo: #4a4fc4;
   --code-bg: #f4f7fb; --code-ink: #24292f; --code-line: #d6dfea;
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
@@ -442,7 +442,7 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 "use strict";
 const DATA = /*__CONTENT__*/null;
 const INTERVALS = [1, 3, 7, 16, 35];
-const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick", "amber", "teal"];
+const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick", "amber", "teal", "indigo"];
 const LANGS = { php: "php", tsx: "typescript", ts: "typescript", typescript: "typescript", js: "javascript", jsx: "javascript", javascript: "javascript", sql: "sql", bash: "bash", shell: "bash", yaml: "yaml", json: "json", python: "python", css: "css", html: "xml", xml: "xml", twig: "xml", plaintext: null };
 const STEPS = ["Comprendre", "Exemple", "Quiz", "TD"];
 const LEVEL_NAMES = { 1: "Niveau 1 · Appliquer", 2: "Niveau 2 · Adapter", 3: "Niveau 3 · Approfondir" };
@@ -1281,6 +1281,10 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start) => `<!DOCTYP
     if (name === "react-dom" || name === "react-dom/client") return ReactDOM;
     if (name === "axios") return axios;
     if (name === "@tanstack/react-query") { if (!window.TanStackQuery) throw new Error("TanStack Query n'est pas chargé"); return window.TanStackQuery; }
+    if (["react-hook-form", "@hookform/resolvers/zod", "@tanstack/react-form", "zod"].includes(name)) {
+      if (!window.Formulaires) throw new Error("Les bibliothèques de formulaires ne sont pas chargées");
+      return { "react-hook-form": Formulaires.rhf, "@hookform/resolvers/zod": Formulaires.zodResolver, "@tanstack/react-form": Formulaires.tanstackForm, "zod": Formulaires.zod }[name];
+    }
     if (name === "react/jsx-runtime") return { jsx: React.createElement, jsxs: React.createElement, Fragment: React.Fragment };
     const p = resolvePath(name, from);
     const cands = [p, p + ".tsx", p + ".ts", p + ".jsx", p + ".js", p + "/index.tsx", p + "/index.ts"];
@@ -1311,6 +1315,7 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start) => `<!DOCTYP
     click: async (el) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Élément introuvable pour click()"); if (typeof el.click === "function") el.click(); else el.dispatchEvent(new MouseEvent("click", { bubbles: true })); await tick(); },
     blur: async (el) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Champ introuvable pour blur()"); el.dispatchEvent(new FocusEvent("focusout", { bubbles: true })); el.dispatchEvent(new FocusEvent("blur")); await tick(); },
     type: async (el, v) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Champ introuvable pour type()"); const proto = el.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, "value").set.call(el, v); el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true })); await tick(); },
+    choose: async (el, v) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Liste introuvable pour choose()"); Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set.call(el, v); el.dispatchEvent(new Event("change", { bubbles: true })); await tick(); },
     submit: async (el) => { if (typeof el === "string") el = root.querySelector(el); if (!el) throw new Error("Formulaire introuvable"); el.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })); await tick(); },
     byText: (t) => Array.from(root.querySelectorAll("*")).find((e) => e.children.length === 0 && e.textContent.trim() === t) || Array.from(root.querySelectorAll("button,a,li,p,span,h1,h2,h3,td,label")).find((e) => e.textContent.includes(t)),
     waitFor: async (fn, ms) => { const end = Date.now() + (ms || 2000); while (Date.now() < end) { try { const r = await fn(); if (r) return r; } catch (e) {} await sleep(40); } throw new Error("Condition non remplie après " + (ms || 2000) + " ms"); },
@@ -1344,9 +1349,10 @@ function runJs(m, td, key, withTests) {
   const entry = td.run.entry || Object.keys(files).find((p) => /^(App|index|main)\.(tsx|jsx|ts|js)$/.test(p)) || Object.keys(files)[0];
   const libs = { react: BASE + "vendor/react/react.development.js", reactDom: BASE + "vendor/react/react-dom.development.js", babel: BASE + "vendor/babel/babel.min.js" };
   if (Object.values(files).some((c) => c.includes("@tanstack/react-query"))) libs.tanstack = BASE + "vendor/tanstack/tanstack-query.js";
+  if (Object.values(files).some((c) => /from ['"](react-hook-form|@tanstack\/react-form|zod|@hookform\/resolvers\/zod)['"]/.test(c))) libs.forms = BASE + "vendor/forms/forms.js?v=1";
   if (td.run.kind === "next") libs.next = BASE + "vendor/next-sim/next-sim.js?v=4";
   if (td.run.kind === "git") libs.git = BASE + "vendor/git-sim/git-sim.js?v=1";
-  const order = ["react", "reactDom", "babel", "tanstack", "next", "git"].filter((k) => libs[k]);
+  const order = ["react", "reactDom", "babel", "tanstack", "forms", "next", "git"].filter((k) => libs[k]);
   Promise.all(order.map((k) => libText(libs[k]))).then((code) => {
     libs.code = code;
     runJsFrame(m, td, key, withTests, rs, files, entry, libs);

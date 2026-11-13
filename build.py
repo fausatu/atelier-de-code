@@ -11,6 +11,7 @@ from c_arch import MODULES as ARCH
 from c_git import MODULES as GIT
 from c_debug import MODULES as DEBUG
 from c_api import MODULES as API
+from c_forms import MODULES as FORMS
 
 TRACKS = [
     {"id": "php", "name": "PHP orienté objet", "short": "PHP POO", "color": "violet",
@@ -27,6 +28,8 @@ TRACKS = [
      "desc": "Composants, state, formulaires, effets, hooks personnalisés."},
     {"id": "data", "name": "React : données & API", "short": "Données & API", "color": "rose",
      "desc": "Requêtes HTTP, fetch et axios, mutations, couche API, TanStack Query."},
+    {"id": "forms", "name": "Formulaires React", "short": "Formulaires", "color": "indigo",
+     "desc": "Du formulaire fait main à React Hook Form et TanStack Form : validation zod, listes, composants de champ, migration."},
     {"id": "next", "name": "Next.js (App Router)", "short": "Next.js", "color": "graphite",
      "desc": "Routes, Server/Client Components, cache, Server Actions, API."},
     {"id": "git", "name": "Git & GitHub", "short": "Git & GitHub", "color": "brick",
@@ -37,7 +40,7 @@ TRACKS = [
      "desc": "Créer une API (REST, erreurs, auth, cache, idempotence, limites) et la consommer en PHP et en JS."},
 ]
 
-modules = PHP + DOC + DTO + ARCH + DDD + REACT + DATA_ + NEXT + GIT + API + DEBUG
+modules = PHP + DOC + DTO + ARCH + DDD + REACT + DATA_ + FORMS + NEXT + GIT + API + DEBUG
 ids = set()
 for m in modules:
     assert m["id"] not in ids, m["id"]
