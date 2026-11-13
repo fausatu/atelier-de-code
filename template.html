@@ -23,7 +23,7 @@
   --warn: #a96d00; --warn-soft: #fbf0d9;
   --bad: #c83c3c;  --bad-soft: #fbe5e5;
   --t-violet: #6b55cc; --t-orange: #cf6a1d; --t-green: #18865f; --t-cyan: #13809f; --t-graphite: #4a5263;
-  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f;
+  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f; --t-amber: #b7791f;
   --code-bg: #f4f7fb; --code-ink: #24292f; --code-line: #d6dfea;
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
@@ -345,6 +345,17 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .nav-steps { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
 .workbench { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); gap: 14px; align-items: start; }
 .workbench.single { grid-template-columns: minmax(0, 1fr); }
+.row.fw { flex-wrap: wrap; }
+.dbg-ta { width: 100%; padding: 8px 10px; border: 1px solid var(--line, #ddd); border-radius: 8px; font: inherit; resize: vertical; box-sizing: border-box; }
+.dbg-ta.mono, .dbg-err { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+.dbg-form select, .dbg-form input, .dbg-filter { padding: 7px 10px; border: 1px solid var(--line, #ddd); border-radius: 8px; font: inherit; }
+.dbg-card summary { cursor: pointer; list-style: none; gap: 8px; }
+.dbg-card summary::-webkit-details-marker { display: none; }
+.dbg-body { margin-top: 12px; }
+.dbg-causes .pill { font-size: 11px; margin-right: 4px; }
+.dbg-err { white-space: pre-wrap; max-height: 220px; overflow: auto; }
+.sb-file input { flex: 1; min-width: 160px; padding: 6px 10px; border: 1px solid var(--line, #ddd); border-radius: 8px; font: inherit; }
+#sb-start { padding: 4px 8px; border: 1px solid var(--line, #ddd); border-radius: 6px; font: inherit; }
 .runout { display: flex; flex-direction: column; gap: 10px; }
 .console { background: #1b1f27; color: #d7dce8; border-radius: var(--r); padding: 12px 14px; font: 12.5px/1.55 var(--font-mono); white-space: pre-wrap; word-break: break-word; min-height: 60px; max-height: 320px; overflow: auto; margin: 0; }
 .console .err { color: #ff8585; }
@@ -431,7 +442,7 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 "use strict";
 const DATA = /*__CONTENT__*/null;
 const INTERVALS = [1, 3, 7, 16, 35];
-const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick"];
+const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick", "amber"];
 const LANGS = { php: "php", tsx: "typescript", ts: "typescript", typescript: "typescript", js: "javascript", jsx: "javascript", javascript: "javascript", sql: "sql", bash: "bash", shell: "bash", yaml: "yaml", json: "json", python: "python", css: "css", html: "xml", xml: "xml", twig: "xml", plaintext: null };
 const STEPS = ["Comprendre", "Exemple", "Quiz", "TD"];
 const LEVEL_NAMES = { 1: "Niveau 1 · Appliquer", 2: "Niveau 2 · Adapter", 3: "Niveau 3 · Approfondir" };
@@ -705,6 +716,8 @@ function renderSide() {
     <nav class="nav-main">
       <a class="nav-link ${r === "accueil" ? "on" : ""}" href="#accueil">Tableau de bord</a>
       <a class="nav-link ${r === "revision" ? "on" : ""}" href="#revision">Révisions <span class="count ${due ? "" : "zero"}">${due}</span></a>
+      <a class="nav-link ${r === "essayer" ? "on" : ""}" href="#essayer">Bac à sable</a>
+      <a class="nav-link ${r === "debogueur" ? "on" : ""}" href="#debogueur">Mon débogueur</a>
       <a class="nav-link ${r === "ajouter" ? "on" : ""}" href="#ajouter">Ajouter un module</a>
     </nav>
     <div class="side-label">Parcours</div>
@@ -1325,7 +1338,7 @@ function runJs(m, td, key, withTests) {
   const entry = td.run.entry || Object.keys(files).find((p) => /^(App|index|main)\.(tsx|jsx|ts|js)$/.test(p)) || Object.keys(files)[0];
   const libs = { react: BASE + "vendor/react/react.development.js", reactDom: BASE + "vendor/react/react-dom.development.js", babel: BASE + "vendor/babel/babel.min.js" };
   if (Object.values(files).some((c) => c.includes("@tanstack/react-query"))) libs.tanstack = BASE + "vendor/tanstack/tanstack-query.js";
-  if (td.run.kind === "next") libs.next = BASE + "vendor/next-sim/next-sim.js?v=2";
+  if (td.run.kind === "next") libs.next = BASE + "vendor/next-sim/next-sim.js?v=4";
   if (td.run.kind === "git") libs.git = BASE + "vendor/git-sim/git-sim.js?v=1";
   const order = ["react", "reactDom", "babel", "tanstack", "next", "git"].filter((k) => libs[k]);
   Promise.all(order.map((k) => libText(libs[k]))).then((code) => {
@@ -1365,10 +1378,209 @@ window.addEventListener("message", (e) => {
   for (const f of iframes) if (f.contentWindow === e.source) { const r = pendingRuns[f.dataset.key]; if (r) r.onMsg(d); }
 });
 function runTD(id, level, withTests) {
+  if (String(id).startsWith("sb-")) return runSandbox(String(id).slice(3));
   const m = mod(id); const td = tds(m).find((x) => x.level === Number(level)); if (!m || !td || !td.run) return;
   keepDrafts();
   const key = `td-${id}-${td.level}`;
   if (td.run.kind === "php") runPhp(m, td, key, withTests); else runJs(m, td, key, withTests);
+}
+
+/* ---------- bac à sable ---------- */
+const SB_ENGINES = {
+  php: {
+    name: "PHP", kind: "php", placeholder: "src/Panier.php",
+    tip: "PHP 8.4 dans ton navigateur. Les fichiers sont réunis dans l'ordre des onglets, comme si chacun était inclus avec `require`.",
+    files: [{ path: "index.php", lang: "php", code: "<?php\ndeclare(strict_types=1);\n\nfinal class Salut\n{\n    public function __construct(private string $nom) {}\n\n    public function dire(): string\n    {\n        return \"Bonjour {$this->nom} !\";\n    }\n}\n\necho (new Salut('toi'))->dire(), PHP_EOL;\nvar_dump(array_map(fn($x) => $x * 2, [1, 2, 3]));\n" }],
+  },
+  react: {
+    name: "React", kind: "react", entry: "App.jsx", placeholder: "components/Carte.jsx",
+    tip: "React 18 + une fausse API : les clés de `api.js` (`\"GET /api/taches\"`) répondent à `fetch` et à axios. `App.jsx` est affiché dans l'aperçu ; TanStack Query est disponible.",
+    files: [
+      { path: "App.jsx", lang: "jsx", code: "import { useEffect, useState } from 'react';\n\nexport default function App() {\n  const [compteur, setCompteur] = useState(0);\n  const [taches, setTaches] = useState([]);\n\n  useEffect(() => {\n    fetch('/api/taches').then((r) => r.json()).then(setTaches);\n  }, []);\n\n  return (\n    <div>\n      <h1>Bac à sable React</h1>\n      <button onClick={() => setCompteur((c) => c + 1)}>Cliqué {compteur} fois</button>\n      <ul>{taches.map((t) => <li key={t.id}>{t.titre}</li>)}</ul>\n    </div>\n  );\n}\n" },
+      { path: "api.js", lang: "js", code: "// Fausse API : chaque clé « MÉTHODE /chemin » répond aux fetch / axios du bac à sable.\n// Une fonction renvoie les données, ou [statut, données].\nlet taches = [{ id: 1, titre: 'Apprendre les hooks' }, { id: 2, titre: 'Essayer le bac à sable' }];\n\n__api['GET /api/taches'] = () => taches;\n__api['POST /api/taches'] = (params, body) => {\n  const t = { id: Date.now(), ...body };\n  taches = [...taches, t];\n  return [201, t];\n};\n__api['DELETE /api/taches/:id'] = (params) => {\n  taches = taches.filter((t) => String(t.id) !== params.id);\n  return [204, null];\n};\n" },
+    ],
+  },
+  next: {
+    name: "Next.js", kind: "next", entry: "app/page.tsx", placeholder: "app/produits/[id]/page.tsx",
+    tip: "Next.js simulé : routage par dossiers, layouts, Server et Client Components (`'use client'`), Server Actions, Route Handlers. Choisis l'URL à afficher sous les fichiers.",
+    files: [
+      { path: "app/layout.tsx", lang: "tsx", code: "import Link from 'next/link';\n\nexport default function RootLayout({ children }: { children: React.ReactNode }) {\n  return (\n    <div>\n      <nav><Link href=\"/\">Accueil</Link> · <Link href=\"/compteur\">Compteur</Link></nav>\n      {children}\n    </div>\n  );\n}\n" },
+      { path: "app/page.tsx", lang: "tsx", code: "async function getHeure() {\n  return new Date().toLocaleTimeString('fr-FR');\n}\n\nexport default async function Accueil() {\n  const heure = await getHeure();   // Server Component : async, sans useEffect\n  return <h1>Rendu côté serveur à {heure}</h1>;\n}\n" },
+      { path: "app/compteur/page.tsx", lang: "tsx", code: "import Compteur from './Compteur';\n\nexport default function Page() {\n  return <Compteur depart={5} />;\n}\n" },
+      { path: "app/compteur/Compteur.tsx", lang: "tsx", code: "'use client';\nimport { useState } from 'react';\n\nexport default function Compteur({ depart }: { depart: number }) {\n  const [n, setN] = useState(depart);\n  return <button onClick={() => setN(n + 1)}>{n}</button>;\n}\n" },
+    ],
+  },
+  git: {
+    name: "Git", kind: "git", entry: "commandes.sh", placeholder: "autre-scenario.sh",
+    tip: "Git simulé : le dépôt est recréé à chaque lancement à partir de zéro, puis le script s'exécute ligne par ligne. Fichiers : `echo \"x\" > f`, `>> f`, `printf`, `cat`. `rebase -i` s'écrit avec un bloc `<<EOF … EOF`.",
+    files: [{ path: "commandes.sh", lang: "bash", code: "git init\necho \"# Projet\" > README.md\ngit add .\ngit commit -m \"chore: initialise le projet\"\n\ngit switch -c feat/idee\necho \"une idée\" >> README.md\ngit commit -am \"feat: ajoute une idée\"\n\ngit switch main\ngit merge feat/idee\ngit log --oneline --graph --all\n" }],
+  },
+};
+function sbEngine() { return SB_ENGINES[state.ui.sbEngine] ? state.ui.sbEngine : "php"; }
+function sbFiles(e) {
+  const k = "sb:" + e; const v = state.drafts[k];
+  if (Array.isArray(v) && v.length && v.every((f) => f && typeof f.path === "string" && typeof f.code === "string")) return v;
+  return (state.drafts[k] = JSON.parse(JSON.stringify(SB_ENGINES[e].files)));
+}
+function sbTd(e) {
+  const E = SB_ENGINES[e]; const all = sbFiles(e);
+  const apiFile = E.kind === "react" || E.kind === "next" ? all.find((f) => f.path === "api.js") : null;
+  const files = all.filter((f) => f !== apiFile).map((f) => ({ ...f }));
+  let entry = E.entry && files.some((f) => f.path === E.entry) ? E.entry : undefined;
+  if (E.kind === "git") entry = (files.find((f) => f.path.endsWith(".sh")) || files[0] || {}).path;
+  return { level: 1, files, run: { kind: E.kind, entry, api: apiFile ? apiFile.code : "", start: E.kind === "next" ? (state.ui.sbStart || "/") : undefined } };
+}
+function runSandbox(e) {
+  if (!SB_ENGINES[e]) return;
+  keepDrafts();
+  const td = sbTd(e); const m = { id: "sb-" + e }; const key = "sb-" + e;
+  if (td.run.kind === "php") runPhp(m, td, key, false); else runJs(m, td, key, false);
+}
+function viewSandbox() {
+  const e = sbEngine(); const E = SB_ENGINES[e]; const key = "sb-" + e;
+  const files = sbFiles(e); const rs = state.ui.runs[key] || {}; const run = E.kind;
+  return `
+  <div class="wrap">
+    <div class="stack"><h1>Bac à sable</h1><p class="lead">Essaie ce que tu veux, sans énoncé ni tests : une idée du cours, un bout de code du travail, une situation Git. Ton code est sauvegardé.</p></div>
+    <div class="row sb-engines">${Object.entries(SB_ENGINES).map(([k, x]) => `<button class="btn ${k === e ? "primary" : ""}" data-act="sbEngine" data-e="${k}">${x.name}</button>`).join("")}</div>
+    <p class="small muted">${inl(E.tip)}</p>
+    <div class="workbench">
+      <div class="stack">
+        <div class="row"><h3>Mes fichiers</h3><span class="spacer"></span><button class="btn sm ghost" data-act="copyCode" data-key="${key}">Copier</button><button class="btn sm ghost" data-act="sbReset" data-e="${e}">${state.ui.sbConfirmReset === e ? "Sûr ? Tout remplacer par l'exemple" : "Repartir de l'exemple"}</button></div>
+        ${filesBlock(files, key, true)}
+        <form class="row sb-file" data-form="sbFile" autocomplete="off">
+          <input name="path" placeholder="${esc(E.placeholder)}" aria-label="Nom du fichier">
+          <button class="btn sm" name="op" value="add">Ajouter un fichier</button>
+          <button class="btn sm ghost" name="op" value="rename">Renommer l'onglet</button>
+          ${files.length > 1 ? `<button class="btn sm ghost" name="op" value="del">Supprimer l'onglet</button>` : ""}
+        </form>
+        ${run === "next" ? `<label class="row small">URL à afficher <input id="sb-start" value="${esc(state.ui.sbStart || "/")}" style="max-width:240px"></label>` : ""}
+      </div>
+      <div class="runout">
+        <div class="row"><button class="btn run" data-act="run" data-id="${key}" data-level="1" ${rs.busy ? "disabled" : ""}>${rs.busy ? '<span class="spin"></span> Exécution…' : run === "php" ? "▶ Exécuter le PHP" : run === "git" ? "▶ Lancer les commandes" : "▶ Exécuter"}</button></div>
+        ${run !== "php" ? `<div class="preview${run === "git" ? " tall" : ""}" ${rs.html === undefined && !rs.frame ? 'style="display:none"' : ""}><iframe id="prev-${key}" sandbox="allow-scripts allow-forms" title="Aperçu"></iframe></div>` : ""}
+        <div class="out-head">Sortie</div>
+        <pre class="console" id="con-${key}">${rs.console !== undefined ? rs.console : '<span class="dim">Clique sur Exécuter pour voir le résultat ici.</span>'}</pre>
+      </div>
+    </div>
+  </div>`;
+}
+function sbFileForm(f, submitter) {
+  keepDrafts();
+  const e = sbEngine(); const key = "sb-" + e; const arr = sbFiles(e);
+  const op = (submitter && submitter.value) || "add";
+  const cur = Math.min(state.ui.ftab[key] || 0, arr.length - 1);
+  if (op === "del") {
+    if (arr.length > 1) { arr.splice(cur, 1); state.ui.ftab[key] = Math.max(0, cur - 1); }
+  } else {
+    const p = f.path.value.trim().replace(/^\/+/, "");
+    if (!/^[\w.\-\/()\[\]]+$/.test(p) || p.endsWith("/")) { toast("Donne un nom de fichier, par exemple " + SB_ENGINES[e].placeholder); return; }
+    if (arr.some((x, i) => x.path === p && !(op === "rename" && i === cur))) { toast("Ce fichier existe déjà."); return; }
+    if (op === "rename") arr[cur].path = p;
+    else { arr.push({ path: p, code: p.endsWith(".php") ? "<?php\n\n" : "" }); state.ui.ftab[key] = arr.length - 1; }
+  }
+  draftWriter.schedule(); render();
+}
+
+/* ---------- débogueur personnel ---------- */
+const DBG_CTX = ["Je ne sais pas", "PHP", "Doctrine", "Symfony", "React", "Données & API", "Next.js", "Git", "Autre"];
+const SECRET_RE = /(sk-[a-z0-9_-]{10,}|ghp_[a-z0-9]{20,}|AKIA[0-9A-Z]{12,}|-----BEGIN [A-Z ]*PRIVATE KEY|(?:password|passwd|secret|api[_-]?key|token)\s*[=:]\s*["']?[^\s"']{6,})/i;
+function bugs() { const p = state.progress; if (!Array.isArray(p.bugs)) p.bugs = []; return p.bugs; }
+function readDbgForm() {
+  const f = document.querySelector('form[data-form="dbg"]'); if (!f) return state.ui.dbg || {};
+  const d = state.ui.dbg || (state.ui.dbg = {});
+  d.ctx = f.ctx.value; d.err = f.err.value; d.code = f.code.value; d.goal = f.goal.value;
+  return d;
+}
+function viewDebugger() {
+  const d = state.ui.dbg || {}; const list = bugs();
+  const q = (state.ui.dbgFilter || "").toLowerCase();
+  const shown = list.filter((b) => !q || (b.titre + " " + b.erreur + " " + b.techno).toLowerCase().includes(q));
+  const freq = {}; for (const b of list) if (b.module && mod(b.module)) freq[b.module] = (freq[b.module] || 0) + 1;
+  const often = Object.entries(freq).filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const noAI = !sample ? `<div class="card"><p>${standalone ? `Le débogueur utilise Claude : <a href="#claude">active les boutons Claude</a> avec ta clé API pour l'utiliser ici.` : "Claude n'est pas disponible dans cette vue pour le moment."} Ton carnet de bugs reste consultable.</p></div>` : "";
+  return `
+  <div class="wrap">
+    <div class="stack"><h1>Mon débogueur</h1><p class="lead">Colle une vraie erreur rencontrée dans ton projet. Claude t'explique ce qu'elle veut dire, les causes probables, comment vérifier et comment corriger, puis le bug est rangé dans ton carnet.</p></div>
+    ${noAI}
+    <form class="card stack dbg-form" data-form="dbg" autocomplete="off">
+      <label class="stack"><b>Message d'erreur</b><textarea name="err" rows="6" class="dbg-ta" placeholder="Copie l'erreur complète (avec la pile d'appels si tu l'as)" required>${esc(d.err || "")}</textarea></label>
+      <label class="stack"><b>Code concerné</b> <span class="muted small">(facultatif, mais ça aide beaucoup)</span><textarea name="code" rows="8" class="dbg-ta mono" placeholder="Le fichier ou la fonction où ça plante">${esc(d.code || "")}</textarea></label>
+      <div class="row fw">
+        <label class="stack" style="flex:1;min-width:180px"><b>Technologie</b><select name="ctx">${DBG_CTX.map((c) => `<option ${c === (d.ctx || DBG_CTX[0]) ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>
+        <label class="stack" style="flex:3;min-width:240px"><b>Ce que tu essayais de faire</b><input name="goal" value="${esc(d.goal || "")}" placeholder="ex. enregistrer un livre avec son auteur"></label>
+      </div>
+      <p class="small muted">Ne colle jamais de mot de passe, de clé API ni le contenu d'un fichier <code>.env</code> : remplace-les par <code>***</code>.</p>
+      ${d.secretWarn ? `<p class="err">Ton texte semble contenir un secret (mot de passe, clé, jeton). Remplace-le par <code>***</code>, ou clique à nouveau pour envoyer quand même.</p>` : ""}
+      ${d.error ? `<p class="err">${esc(d.error)}</p>` : ""}
+      <div class="row"><button class="btn primary" ${!sample || d.loading ? "disabled" : ""}>${d.loading ? '<span class="spin"></span> Analyse en cours…' : "Analyser l'erreur"}</button>${d.err || d.code ? `<button class="btn ghost" type="button" data-act="dbgClear">Vider le formulaire</button>` : ""}</div>
+    </form>
+    ${d.current ? bugCard(d.current, true, true) : ""}
+    <div class="stack">
+      <div class="row fw"><h2>Mon carnet de bugs</h2><span class="muted small">${list.length} bug${list.length > 1 ? "s" : ""}${list.length ? ` · ${list.filter((b) => b.resolu).length} résolu${list.filter((b) => b.resolu).length > 1 ? "s" : ""}` : ""}</span><span class="spacer"></span>${list.length ? `<input id="dbg-filter" class="dbg-filter" placeholder="Rechercher dans le carnet" value="${esc(state.ui.dbgFilter || "")}">` : ""}</div>
+      ${often.length ? `<div class="card stack"><b>Ça revient souvent</b><p class="small muted">Ces notions apparaissent dans plusieurs de tes bugs : une révision ciblée peut t'éviter les prochains.</p><div class="row fw">${often.map(([id, n]) => `<a class="btn sm" href="#m-${esc(id)}">${esc(mod(id).title)} · ${n} bugs</a>`).join("")}</div></div>` : ""}
+      ${shown.length ? shown.map((b) => bugCard(b, false, false)).join("") : `<p class="muted">${list.length ? "Aucun bug ne correspond à ta recherche." : "Ton carnet est vide pour l'instant. Chaque erreur analysée y sera rangée, pour retrouver la solution la prochaine fois."}</p>`}
+    </div>
+  </div>`;
+}
+function bugCard(b, open, fresh) {
+  const m = b.module && mod(b.module);
+  const body = `
+    <div class="stack dbg-body">
+      ${fresh ? "" : `<div class="stack"><div class="out-head">Erreur</div><pre class="code dbg-err">${esc(b.erreur)}</pre></div>`}
+      <div class="stack"><h3>Ce que dit l'erreur</h3><div class="prose">${md(b.sens)}</div></div>
+      ${b.causes.length ? `<div class="stack"><h3>Causes probables</h3><ol class="dbg-causes">${b.causes.map((c) => `<li><span class="pill">${esc(c.frequence || "")}</span> ${inl(c.cause)}</li>`).join("")}</ol></div>` : ""}
+      ${b.verifier.length ? `<div class="stack"><h3>Comment vérifier</h3><ol>${b.verifier.map((v) => `<li>${inl(v)}</li>`).join("")}</ol></div>` : ""}
+      ${b.correction && (b.correction.explication || b.correction.code) ? `<div class="stack"><h3>Corriger</h3>${b.correction.explication ? `<div class="prose">${md(b.correction.explication)}</div>` : ""}${b.correction.code ? codeBlock(b.correction.code, b.correction.langage || "plaintext") : ""}</div>` : ""}
+      ${b.prevenir ? `<div class="hint"><b>Pour la prochaine fois.</b> ${inl(b.prevenir)}</div>` : ""}
+      ${m ? `<div class="row"><a class="btn" href="#m-${esc(m.id)}">Revoir le module « ${esc(m.title)} »</a></div>` : ""}
+      <div class="row fw">
+        <button class="btn sm ${b.resolu ? "" : "primary"}" data-act="dbgSolved" data-id="${esc(b.id)}">${b.resolu ? "Marquer comme non résolu" : "C'est résolu"}</button>
+        <button class="btn sm ghost" data-act="dbgFollow" data-id="${esc(b.id)}">Ça ne marche toujours pas</button>
+        <span class="spacer"></span>
+        <button class="btn sm ghost" data-act="dbgDel" data-id="${esc(b.id)}">${state.ui.dbgConfirmDel === b.id ? "Sûr ? Supprimer" : "Supprimer"}</button>
+      </div>
+      ${state.ui.dbgFollow === b.id ? `<form class="stack" data-form="dbgFollow" data-id="${esc(b.id)}"><label class="stack"><b>Qu'est-ce qui se passe maintenant ?</b><textarea name="q" rows="3" class="dbg-ta" placeholder="ex. j'ai ajouté cascade: persist, maintenant j'ai une autre erreur : …"></textarea></label><div class="row"><button class="btn primary" ${sample ? "" : "disabled"}>Demander à Claude</button></div></form><div class="ai-out card" id="dbg-follow-${esc(b.id)}" style="display:none"></div>` : ""}
+    </div>`;
+  const head = `<span class="pill ${b.resolu ? "done" : ""}">${b.resolu ? "Résolu" : "À résoudre"}</span> <b>${esc(b.titre)}</b> <span class="muted small">${esc(b.techno || "")} · ${esc(frDate(b.date))}</span>`;
+  if (fresh) return `<div class="card stack dbg-card"><div class="row fw">${head}</div>${body}</div>`;
+  return `<details class="card dbg-card" ${open || state.ui.dbgOpen === b.id ? "open" : ""} data-bug="${esc(b.id)}"><summary class="row fw">${head}</summary>${body}</details>`;
+}
+async function dbgAnalyse(f) {
+  const d = readDbgForm();
+  if (!sample) return;
+  if (!d.err.trim()) { d.error = "Colle d'abord le message d'erreur."; render(); return; }
+  if (SECRET_RE.test(d.err + "\n" + d.code + "\n" + d.goal) && !d.secretWarn) { d.secretWarn = true; render(); return; }
+  d.secretWarn = false; d.loading = true; d.error = null; d.current = null; render();
+  const modules = allModules().map((m) => `${m.id} : ${m.title} (${track(m.track).name})`).join("\n");
+  const prompt = `${levelContext()}\n\nTu es le débogueur personnel de l'élève. Il colle une vraie erreur rencontrée dans son projet.\nTechnologie indiquée : ${d.ctx}\nCe qu'il essayait de faire : ${d.goal.trim() || "(non précisé)"}\n\nMessage d'erreur :\n"""\n${d.err.slice(0, 8000)}\n"""\n\nCode concerné :\n"""\n${(d.code || "(aucun)").slice(0, 12000)}\n"""\n\nModules de l'atelier (id : titre) :\n${modules}\n\nRéponds avec ce JSON :\n{"titre": "le problème en 8 mots maximum", "techno": "une valeur parmi ${DBG_CTX.slice(1).join(", ")}", "sens": "ce que dit l'erreur, en français simple, 2 ou 3 phrases (traduis les termes anglais)", "causes": [{"cause": "…", "frequence": "très fréquent | fréquent | plus rare"}], "verifier": ["étape concrète : commande à lancer, endroit où regarder, dump() ou console.log à ajouter…"], "correction": {"explication": "ce qu'il faut changer et pourquoi", "code": "le code corrigé ou l'extrait à modifier (chaîne vide si on ne peut pas conclure)", "langage": "php | tsx | ts | js | bash | yaml | json | sql | plaintext"}, "module": "l'id du module de l'atelier le plus utile pour comprendre, ou null", "prevenir": "une habitude qui évite ce bug, en une phrase"}\nRègles : 1 à 4 causes, de la plus probable à la moins probable, en tenant compte du code fourni ; 2 à 5 étapes de vérification. S'il manque des informations pour conclure, dis-le dans "sens" et insiste sur "verifier". Si tu vois un secret (mot de passe, clé API, jeton) dans le texte, ne le répète pas et ajoute dans "prevenir" qu'il faut le révoquer.`;
+  try {
+    const v = await sample.json(prompt, { modelTier: "complex" });
+    const str = (x) => (typeof x === "string" ? x.trim() : "");
+    const b = {
+      id: rid(), date: today(), resolu: false,
+      erreur: d.err.trim().slice(0, 4000), code: (d.code || "").slice(0, 4000), but: d.goal.trim(),
+      titre: str(v.titre) || "Erreur sans titre", techno: str(v.techno) || (d.ctx === DBG_CTX[0] ? "" : d.ctx), sens: str(v.sens),
+      causes: (Array.isArray(v.causes) ? v.causes : []).map((c) => ({ cause: str(c && c.cause), frequence: str(c && c.frequence) })).filter((c) => c.cause).slice(0, 4),
+      verifier: asStrArr(v.verifier).slice(0, 6),
+      correction: { explication: str(v.correction && v.correction.explication), code: str(v.correction && v.correction.code), langage: str(v.correction && v.correction.langage) || "plaintext" },
+      module: typeof v.module === "string" && mod(v.module) ? v.module : null,
+      prevenir: str(v.prevenir),
+    };
+    if (!b.sens) throw new Error("format");
+    bugs().unshift(b); if (bugs().length > 100) bugs().length = 100;
+    d.current = b; d.err = ""; d.code = ""; d.goal = "";
+    saveProgress();
+  } catch (e) {
+    d.error = e && e.code === "rate_limited" ? "Trop de demandes d'un coup. Réessaie dans une minute." : e && e.code === "not_granted" ? (standalone ? "Clé API refusée : vérifie-la dans « Activer les boutons Claude »." : "Claude n'est pas autorisé dans cette vue.") : "L'analyse n'a pas abouti. Réessaie.";
+  }
+  d.loading = false;
+  if (currentRoute() === "debogueur") render();
+}
+function dbgFollowUp(f) {
+  const b = bugs().find((x) => x.id === f.dataset.id); const q = f.q.value.trim();
+  if (!b || !q || !sample) return;
+  runAI("#dbg-follow-" + CSS.escape(b.id), `${levelContext()}\n\nTu aides l'élève à déboguer. Premier diagnostic que tu lui as donné :\nProblème : ${b.titre}\nErreur : ${b.erreur}\nCode : ${b.code || "(aucun)"}\nExplication : ${b.sens}\nCorrection proposée : ${b.correction.explication}\n${b.correction.code}\n\nIl revient avec : ${q}\n\nRéponds directement : ce que ça change dans le diagnostic, quoi vérifier, quoi corriger. 200 mots maximum hors code.`, "Claude réfléchit…");
 }
 
 /* ---------- rendu : révision ---------- */
@@ -1549,6 +1761,7 @@ function mergeData(inc) {
   for (const [id, p] of Object.entries(inc.progress.modules || {})) pm[id] = mergeModule(pm[id], p);
   const act = (state.progress.activity = state.progress.activity || {});
   for (const [d, n] of Object.entries(inc.progress.activity || {})) act[d] = Math.max(act[d] || 0, n);
+  if (Array.isArray(inc.progress.bugs)) { const mine = bugs(); for (const b of inc.progress.bugs) { const cur = mine.find((x) => x.id === b.id); if (!cur) mine.push(b); else if (b.resolu) cur.resolu = true; } mine.sort((a, b) => (b.date || "").localeCompare(a.date || "")); }
   for (const [k, v] of Object.entries(inc.drafts || {})) if (state.drafts[k] === undefined) state.drafts[k] = v;
   const c = inc.custom || {};
   for (const t of c.tracks || []) if (!state.custom.tracks.some((x) => x.id === t.id)) state.custom.tracks.push(t);
@@ -1662,6 +1875,8 @@ function render() {
   else if (r === "ajouter") html = viewAdd();
   else if (r === "claude") html = viewClaude();
   else if (r === "synchro") html = viewSynchro();
+  else if (r === "essayer") html = viewSandbox();
+  else if (r === "debogueur") html = viewDebugger();
   else if (r.startsWith("t-")) html = viewTrack(r.slice(2));
   else if (r.startsWith("m-")) html = viewModule(r.slice(2));
   else html = viewHome();
@@ -1693,7 +1908,10 @@ function checkComplete(id) {
 }
 function keepDrafts() {
   document.querySelectorAll("textarea.editor[data-ed]").forEach((ed) => {
-    const key = ed.dataset.ed; const mm = key.match(/^td-(.+)-(\d+)$/); if (!mm) return;
+    const key = ed.dataset.ed;
+    const sb = key.match(/^sb-(\w+)$/);
+    if (sb && SB_ENGINES[sb[1]]) { const f = sbFiles(sb[1]).find((x) => x.path === ed.dataset.path); if (f) f.code = ed.value; return; }
+    const mm = key.match(/^td-(.+)-(\d+)$/); if (!mm) return;
     const dk = draftKey(mm[1], Number(mm[2]));
     const d = (state.drafts[dk] && typeof state.drafts[dk] === "object") ? state.drafts[dk] : (state.drafts[dk] = {});
     d[ed.dataset.path] = ed.value;
@@ -1792,6 +2010,23 @@ const ACTIONS = {
     state.ui.confirmDel = null;
     libWriter.schedule(); saveProgress(); draftWriter.schedule(); render(); toast("Module supprimé.");
   },
+  dbgClear() { state.ui.dbg = {}; render(); },
+  dbgSolved(el) { const b = bugs().find((x) => x.id === el.dataset.id); if (!b) return; readDbgForm(); b.resolu = !b.resolu; if (b.resolu) logActivity(); state.ui.dbgOpen = b.id; saveProgress(); render(); },
+  dbgFollow(el) { readDbgForm(); state.ui.dbgFollow = state.ui.dbgFollow === el.dataset.id ? null : el.dataset.id; state.ui.dbgOpen = el.dataset.id; render(); },
+  dbgDel(el) {
+    const id = el.dataset.id; readDbgForm();
+    if (state.ui.dbgConfirmDel !== id) { state.ui.dbgConfirmDel = id; state.ui.dbgOpen = id; render(); return; }
+    state.progress.bugs = bugs().filter((x) => x.id !== id); state.ui.dbgConfirmDel = null;
+    const d = state.ui.dbg; if (d && d.current && d.current.id === id) d.current = null;
+    saveProgress(); render();
+  },
+  sbEngine(el) { keepDrafts(); state.ui.sbEngine = el.dataset.e; state.ui.sbConfirmReset = null; render(); },
+  sbReset(el) {
+    const e = el.dataset.e;
+    if (state.ui.sbConfirmReset !== e) { state.ui.sbConfirmReset = e; render(); return; }
+    state.ui.sbConfirmReset = null; delete state.drafts["sb:" + e]; delete state.ui.runs["sb-" + e]; state.ui.ftab["sb-" + e] = 0;
+    draftWriter.schedule(); render();
+  },
   delTrack(el) { state.custom.tracks = state.custom.tracks.filter((t) => t.id !== el.dataset.id); libWriter.schedule(); render(); },
 };
 
@@ -1812,6 +2047,9 @@ document.addEventListener("submit", (e) => {
   const f = e.target.closest("form[data-form]");
   if (!f) return;
   e.preventDefault();
+  if (f.dataset.form === "sbFile") { sbFileForm(f, e.submitter); return; }
+  if (f.dataset.form === "dbg") { dbgAnalyse(f); return; }
+  if (f.dataset.form === "dbgFollow") { dbgFollowUp(f); return; }
   if (f.dataset.form === "ask") { const q = f.q.value.trim(); if (q) aiAsk(mod(f.dataset.id), q); }
   if (f.dataset.form === "gen") { readGenForm(); aiGenerate(); }
   if (f.dataset.form === "gist") {
@@ -1827,10 +2065,15 @@ document.addEventListener("submit", (e) => {
 });
 document.addEventListener("change", (e) => {
   if (e.target.id === "g-track") { readGenForm(); render(); }
+  if (e.target.id === "sb-start") { state.ui.sbStart = e.target.value.trim() || "/"; }
 });
-document.addEventListener("toggle", (e) => { if (e.target.classList && e.target.classList.contains("prereq")) state.ui.prereqOpen = e.target.open; }, true);
+document.addEventListener("toggle", (e) => {
+  if (e.target.classList && e.target.classList.contains("prereq")) state.ui.prereqOpen = e.target.open;
+  if (e.target.dataset && e.target.dataset.bug) { if (e.target.open) state.ui.dbgOpen = e.target.dataset.bug; else if (state.ui.dbgOpen === e.target.dataset.bug) state.ui.dbgOpen = null; }
+}, true);
 let draftTimer;
 document.addEventListener("input", (e) => {
+  if (e.target.id === "dbg-filter") { state.ui.dbgFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#dbg-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.classList.contains("editor")) { clearTimeout(draftTimer); draftTimer = setTimeout(keepDrafts, 600); const tab = e.target.closest(".files"); if (tab) { const idx = Array.from(tab.querySelectorAll(".fpane")).indexOf(e.target.closest(".fpane")); const t = tab.querySelectorAll(".ftab")[idx]; if (t) t.classList.add("mod"); } }
 });
 document.addEventListener("keydown", (e) => {

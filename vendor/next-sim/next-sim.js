@@ -161,7 +161,15 @@
       if (!React.isValidElement(node)) return node;
       const type = node.type;
       if (typeof type === "function" && !clientFns.has(type) && !(type.prototype && type.prototype.isReactComponent)) {
-        return resolve(await type(node.props));
+        let out;
+        try { out = await type(node.props); }
+        catch (e) {
+          if (e && /Invalid hook call|reading 'use|hooks can only be called/i.test(String(e.message))) {
+            throw new Error("<" + (type.name || "Composant") + "> utilise un hook React (useState, useEffect…) alors que c'est un Server Component. Les hooks ne marchent que dans un Client Component : mets la partie interactive dans un fichier qui commence par 'use client'.");
+          }
+          throw e;
+        }
+        return resolve(out);
       }
       if (type === React.Suspense) return resolve(node.props.children);
       if (typeof type === "function" && clientFns.has(type) && !sim.allowFunctions) {
@@ -171,7 +179,7 @@
           if (!serverFns.has(target) && !serverFns.has(v)) throw new Error("Functions cannot be passed directly to Client Components (prop « " + k + " » de <" + (type.name || "Composant") + ">). Seules les Server Actions ('use server') peuvent l'être.");
         }
       }
-      const props = Object.assign({ key: node.key }, node.props);
+      const props = Object.assign(node.key != null ? { key: node.key } : {}, node.props);
       let kids = props.children;
       delete props.children;
       if (kids === undefined) return ce.call(React, type, props);

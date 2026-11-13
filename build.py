@@ -9,6 +9,7 @@ from c_dto import MODULES as DTO
 from c_data import MODULES as DATA_
 from c_arch import MODULES as ARCH
 from c_git import MODULES as GIT
+from c_debug import MODULES as DEBUG
 
 TRACKS = [
     {"id": "php", "name": "PHP orienté objet", "short": "PHP POO", "color": "violet",
@@ -29,9 +30,11 @@ TRACKS = [
      "desc": "Routes, Server/Client Components, cache, Server Actions, API."},
     {"id": "git", "name": "Git & GitHub", "short": "Git & GitHub", "color": "brick",
      "desc": "Le modèle de Git, merge, rebase, revenir en arrière, Conventional Commits, Pull Requests, outils."},
+    {"id": "debug", "name": "Déboguer", "short": "Débogage", "color": "amber",
+     "desc": "Lire les erreurs et corriger de vrais bugs : PHP, Doctrine, Symfony, React, API, Next.js, Git."},
 ]
 
-modules = PHP + DOC + DTO + ARCH + DDD + REACT + DATA_ + NEXT + GIT
+modules = PHP + DOC + DTO + ARCH + DDD + REACT + DATA_ + NEXT + GIT + DEBUG
 ids = set()
 for m in modules:
     assert m["id"] not in ids, m["id"]

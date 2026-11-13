@@ -1,5 +1,6 @@
 """Vérifie que la solution de chaque TD exécutable passe ses propres tests, dans le vrai moteur de la page."""
-import asyncio, json, sys
+import asyncio, json, os, sys
+STARTER = os.environ.get("STARTER") == "1"   # vérifie que le code de DÉPART échoue bien
 from playwright.async_api import async_playwright
 
 ONLY = sys.argv[1] if len(sys.argv) > 1 else None
@@ -18,20 +19,19 @@ async def main():
         fails = 0
         for it in items:
             key = f"td-{it['id']}-{it['level']}"
-            await pg.evaluate("""([id, level, key]) => {
+            await pg.evaluate("""([id, level, key, starter]) => {
                 const m = mod(id); const td = tds(m).find(t => t.level === level);
-                const d = {}; for (const f of td.solution) d[f.path] = f.code;
+                const d = {}; for (const f of (starter ? [] : td.solution)) d[f.path] = f.code;
                 // les fichiers de départ absents de la solution gardent leur contenu
                 for (const f of td.files) if (d[f.path] === undefined) d[f.path] = f.code;
                 state.drafts[draftKey(id, level)] = d;
                 state.ui.level[id] = level;
                 location.hash = '#m-' + id;
-            }""", [it["id"], it["level"], key])
+            }""", [it["id"], it["level"], key, STARTER])
             await pg.wait_for_timeout(150)
             await pg.evaluate("([id]) => { state.ui.step[id] = 3; render(); }", [it["id"]])
             await pg.wait_for_timeout(150)
             head = await pg.evaluate("([id, level]) => { const m = mod(id); const td = tds(m).find(t => t.level === level); const ed = document.querySelector('textarea.editor'); return [currentFiles(m, td)[0].code.slice(0, 60), ed && ed.value.slice(0, 60), location.hash, state.ui.step[id]]; }", [it["id"], it["level"]])
-            if ONLY == "debug": print(head)
             await pg.evaluate("([id, level]) => runTD(id, level, true)", [it["id"], it["level"]])
             res = None
             for _ in range(200):
@@ -40,7 +40,15 @@ async def main():
                 if res and (res.get("tests") or (res.get("console") and "Impossible" in res["console"])):
                     break
             t = (res or {}).get("tests")
-            if not t or t.get("error") or any(not c["ok"] for c in t["cases"]):
+            failed = not t or t.get("error") or any(not c["ok"] for c in t["cases"])
+            if STARTER:
+                if failed:
+                    print(f"ok   {it['id']} L{it['level']} : le code de départ échoue bien")
+                else:
+                    fails += 1
+                    print(f"FAIL {it['id']} L{it['level']} : le code de départ passe déjà les tests !")
+                continue
+            if failed:
                 fails += 1
                 print(f"FAIL {it['id']} L{it['level']} ({it['kind']})")
                 if res:
