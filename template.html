@@ -88,22 +88,22 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .cal-title { margin: 0; min-width: 170px; text-align: center; text-transform: capitalize; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .cal-dow { font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; text-align: center; padding-bottom: 2px; }
-.cal-cell { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-height: 78px; padding: 5px 6px; border-radius: 8px; border: 1px solid var(--line); background: color-mix(in srgb, var(--kc) 18%, var(--surface)); border-left: 4px solid var(--kc); text-align: left; cursor: pointer; font: inherit; color: var(--ink); overflow: hidden; }
-.cal-cell.k-weekend, .cal-cell.k-libre { background: var(--surface-2); border-left-color: var(--line); }
+.cal-cell { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-height: 78px; padding: 5px 6px; border-radius: 8px; border: 1px solid var(--line); background: color-mix(in srgb, var(--kc) 18%, var(--surface)); text-align: left; cursor: pointer; font: inherit; color: var(--ink); overflow: hidden; }
+.cal-cell.k-weekend, .cal-cell.k-libre { background: var(--surface-2); }
 .cal-cell.out { border: 0; background: none; cursor: default; }
 .cal-cell:hover { border-color: var(--accent); }
 .cal-cell.sel { outline: 2px solid var(--accent); outline-offset: 1px; }
 .cal-cell.today .cal-num { background: var(--accent); color: #fff; border-radius: 999px; padding: 0 6px; }
 .cal-num { font-weight: 600; font-size: 0.85rem; align-self: flex-start; }
 .cal-kind { font-size: 0.68rem; color: var(--muted); font-weight: 600; }
-.cal-ev { font-size: 0.7rem; line-height: 1.25; padding: 1px 4px; border-radius: 4px; background: var(--surface); border-left: 3px solid var(--evc, var(--accent)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-ev { font-size: 0.7rem; line-height: 1.25; padding: 1px 4px; border-radius: 4px; background: var(--surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-ev.done, .cal-evlist li.done .grow, .cal-up li.done { text-decoration: line-through; opacity: 0.6; }
 .cal-more { font-size: 0.68rem; color: var(--muted); }
 .t-rendu { --evc: var(--warn); } .t-examen { --evc: #3fa34d; } .t-ecole { --evc: #d4a800; } .t-rdv { --evc: var(--accent); } .t-perso { --evc: #8a5cf6; } .t-info { --evc: var(--muted); }
 .cal-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.8rem; color: var(--muted); }
 .cal-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--kc); margin-right: 5px; vertical-align: -1px; }
 .cal-evlist, .cal-up { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; }
-.cal-evlist li { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); border-left: 3px solid var(--evc, var(--accent)); }
+.cal-evlist li { display: flex; align-items: flex-start; gap: 8px; padding: 9px 12px; border-radius: 10px; background: var(--surface-2); }
 .cal-evlist .grow { flex: 1; min-width: 0; }
 .cal-tag { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--evc, var(--muted)); }
 .cal-form { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
@@ -120,8 +120,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .side-more:hover { color: var(--accent); background: var(--surface-2); }
 .side-empty { margin: 4px 0 0; padding: 0 10px; font-size: 0.82rem; color: var(--muted); }
 .tcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
-.tcard { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--line); border-left: 3px solid var(--tc); border-radius: var(--r); text-decoration: none; color: var(--ink); transition: border-color .12s, transform .12s; }
-.tcard:hover { border-color: var(--tc); transform: translateY(-1px); }
+.tcard { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; text-decoration: none; color: var(--ink); background: var(--surface); transition: border-color .14s, transform .14s, box-shadow .14s; }
+.tcard:hover { border-color: color-mix(in srgb, var(--tc) 40%, var(--line)); transform: translateY(-2px); box-shadow: 0 8px 22px rgb(31 38 51 / 0.07); }
 .tcard-name { font-size: 0.98rem; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tcard .row { flex-wrap: nowrap; }
 .tcard-desc { margin: 0; }
@@ -243,7 +243,7 @@ body.has-ai .no-ai { display: none !important; }
 .kpis span { color: var(--muted); font-size: 0.86rem; white-space: nowrap; }
 .kpis div:nth-child(1) b { color: var(--good); }
 .kpis div:nth-child(2) b { color: var(--accent); }
-.next-card { display: flex; flex-direction: column; gap: 8px; justify-content: center; border-left: 4px solid var(--tc, var(--accent)); }
+.next-card { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
 .next-card h2 { font-size: 1.25rem; }
 .next-card .btn { align-self: flex-start; }
 .stat-card { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center; padding: 14px 16px; text-decoration: none; color: var(--ink); }
@@ -337,7 +337,7 @@ a.stat-card:hover { border-color: var(--accent); }
 .step-tab.on .n { background: var(--tc); color: #fff; }
 .step-tab.ok.on .n { background: var(--good); }
 .panel { display: flex; flex-direction: column; gap: 22px; }
-.why { border-left: 3px solid var(--tc); padding: 4px 0 4px 14px; max-width: 75ch; }
+.why { background: color-mix(in srgb, var(--tc) 7%, var(--surface)); border-radius: 12px; padding: 14px 18px; max-width: 75ch; }
 .prereq { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
 .prereq summary { cursor: pointer; padding: 12px 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; list-style: none; }
 .prereq summary::-webkit-details-marker { display: none; }
@@ -585,6 +585,69 @@ body.q-open .qfab { display: none; }
 .q-ans .who { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .q-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 /* Mes cours */
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--tc, var(--muted)); margin-right: 6px; vertical-align: 1px; }
+.cal-ev::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--evc, var(--accent)); margin-right: 4px; vertical-align: 1px; }
+.cal-evlist li .cal-tag { min-width: 58px; }
+.wrap.home { gap: 44px; max-width: 1120px; }
+.home-head { display: flex; flex-direction: column; gap: 6px; }
+.home-head h1 { font-size: 2.1rem; }
+.home-head .lead { font-size: 1.02rem; max-width: none; }
+.home-head .lead b { color: var(--ink); font-weight: 600; }
+.home-sec { display: flex; flex-direction: column; gap: 16px; }
+.sec-head { display: flex; align-items: baseline; gap: 12px; }
+.sec-head h2 { font-size: 1.2rem; }
+.sub-h { font-size: 0.95rem; color: var(--muted); font-weight: 600; }
+.home-grid2 { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.home-card { padding: 24px 26px; border-radius: 16px; }
+.ag-day + .ag-day { margin-top: 20px; }
+.ag-dh { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 4px; }
+.ag-dh span { font-weight: 500; text-transform: none; letter-spacing: 0; }
+.ag-item { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 12px 6px; margin: 0 -6px; border-radius: 10px; text-decoration: none; color: var(--ink); }
+.ag-item + .ag-item { border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; }
+.ag-item:hover { background: var(--surface-2); }
+.ag-time { font-size: 0.92rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ag-tag { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); }
+.ag-tag.late { background: var(--bad-soft); color: var(--bad); }
+.ag-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ag-main b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-main small { color: var(--muted); font-size: 0.84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-go { color: var(--muted); opacity: 0; transition: opacity .12s; }
+.ag-item:hover .ag-go { opacity: 1; }
+.ag-empty { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.wk-card { display: flex; flex-direction: column; gap: 16px; }
+.wk-head { display: flex; flex-direction: column; gap: 2px; }
+.wk-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.wk-day { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 4px; border-radius: 12px; border: 1px solid transparent; background: color-mix(in srgb, var(--kc, var(--line)) 22%, var(--surface)); cursor: pointer; font: inherit; color: var(--ink); }
+.wk-day.k-entreprise { background: var(--surface-2); }
+.wk-day:hover { border-color: color-mix(in srgb, var(--kc, var(--muted)) 70%, transparent); }
+.wk-day.today { border-color: var(--ink); }
+.wk-d { font-size: 0.74rem; color: var(--muted); text-transform: capitalize; }
+.wk-n2 { font: 700 1.25rem var(--font-display); }
+.wk-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82rem; color: var(--muted); }
+.wk-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: color-mix(in srgb, var(--kc) 45%, var(--surface)); margin-right: 6px; vertical-align: -1px; }
+.wk-legend i.k-entreprise { background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.wk-next { display: flex; flex-direction: column; gap: 6px; }
+.wk-blk { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: baseline; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font: inherit; font-size: 0.9rem; color: var(--ink); text-align: left; }
+.wk-blk:hover { background: var(--surface-2); }
+.wk-blk b { font-weight: 600; }
+.wk-blk span:not(.muted) { color: var(--muted); }
+.wk-foot { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.wk-foot div { display: flex; flex-direction: column; gap: 1px; }
+.wk-foot b { font-weight: 600; }
+.next-title { font-size: 1.35rem; line-height: 1.25; }
+.next-card .btn { align-self: flex-start; margin-top: 6px; }
+.prog-card { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
+.prog-list { display: flex; flex-direction: column; gap: 14px; flex: 1; min-width: 200px; }
+.prog-list > * { display: flex; align-items: baseline; gap: 10px; color: var(--ink); text-decoration: none; }
+.prog-list b { font: 700 1.35rem var(--font-display); min-width: 2ch; font-variant-numeric: tabular-nums; }
+.prog-list span { color: var(--muted); font-size: 0.9rem; }
+.prog-list a:hover span { color: var(--accent); }
+.prog-list a.warn b { color: var(--warn); }
+.home .tcards { gap: 16px; }
+.home .tcard { padding: 18px; }
+.home .act-card .act-row { align-items: center; }
+@media (max-width: 980px) { .home-grid2 { grid-template-columns: minmax(0, 1fr); } .wrap.home { gap: 34px; } .home-card { padding: 20px; } }
+
 .file-list { display: flex; flex-direction: column; gap: 6px; }
 .file-row { display: flex; align-items: center; gap: 8px; }
 .file-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); cursor: pointer; text-align: left; color: var(--ink); }
@@ -604,26 +667,6 @@ body.q-open .qfab { display: none; }
 .viewer-img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .viewer-text { align-self: stretch; max-width: 80ch; margin: 0 auto; background: var(--surface); padding: 20px 24px; border-radius: 10px; }
 body.viewer-open { overflow: hidden; }
-.week-card { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 0; padding: 0; }
-.wk-col { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; min-width: 0; }
-.wk-col + .wk-col { border-left: 1px solid var(--line); }
-.wk-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
-.wk-day { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 7px 8px; border-radius: 9px; border: 1px solid var(--line); border-top: 4px solid var(--kc, var(--line)); background: color-mix(in srgb, var(--kc, transparent) 14%, var(--surface)); cursor: pointer; text-align: left; min-width: 0; }
-.wk-day:hover { border-color: var(--kc, var(--muted)); }
-.wk-day.today { box-shadow: 0 0 0 2px var(--accent); }
-.wk-d { font-size: 0.74rem; color: var(--muted); font-weight: 600; text-transform: capitalize; }
-.wk-k { font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.wk-n { font-style: normal; font-size: 0.68rem; padding: 0 5px; border-radius: 999px; background: var(--ink); color: var(--surface); vertical-align: 1px; }
-.wk-list { display: flex; flex-direction: column; gap: 6px; }
-.wk-item { display: flex; gap: 10px; align-items: center; padding: 7px 9px; border-radius: 9px; border: 1px solid var(--line); border-left: 4px solid var(--tc); background: var(--surface); text-decoration: none; color: var(--ink); }
-.wk-item:hover { border-color: var(--tc); }
-.wk-when { flex: none; width: 82px; font-size: 0.78rem; font-weight: 600; display: flex; flex-direction: column; line-height: 1.25; }
-.wk-when small { font-weight: 400; color: var(--muted); }
-.wk-when.soon { color: var(--warn); } .wk-when.late { color: var(--bad); }
-.wk-what { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
-.wk-what b { font-size: 0.88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wk-what small { font-size: 0.76rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 1100px) { .week-card { grid-template-columns: minmax(0, 1fr); } .wk-col + .wk-col { border-left: 0; border-top: 1px solid var(--line); } }
 .t-cours { --evc: var(--t-teal); }
 .c-day > span { display: flex; flex-direction: column; align-items: center; }
 .c-row.past { opacity: .72; }
@@ -635,7 +678,6 @@ body.viewer-open { overflow: hidden; }
 .edt-card > summary { cursor: pointer; }
 .mat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
 .mat-card { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 14px 14px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; transition: transform .14s, box-shadow .14s, border-color .14s; min-height: 150px; }
-.mat-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; border-radius: 14px 14px 0 0; background: var(--tc); opacity: .85; }
 .mat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgb(31 38 51 / 0.09); border-color: color-mix(in srgb, var(--tc) 45%, var(--line)); }
 .mat-card:focus-visible { outline: 2px solid var(--tc); outline-offset: 2px; }
 .mat-top { display: flex; align-items: center; gap: 9px; }
@@ -658,7 +700,6 @@ body.viewer-open { overflow: hidden; }
 .c-day b { font: 700 1.05rem var(--font-display); display: block; }
 .c-day small { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 .c-day.none { background: var(--surface-2); color: var(--muted); font-size: 0.66rem; font-weight: 600; }
-.c-row { border-left-width: 1px !important; }
 .c-row:hover { transform: translateX(2px); }
 .c-row .c-meta { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .c-pill { font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
@@ -674,8 +715,8 @@ body.viewer-open { overflow: hidden; }
 .seg button.on { background: var(--tc, var(--accent)); color: #fff; }
 .warn-t { color: var(--warn); font-weight: 600; }
 .r-list, .c-list { display: flex; flex-direction: column; gap: 6px; }
-.r-row, .c-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border: 1px solid var(--line); border-left: 4px solid var(--tc); border-radius: 8px; background: var(--surface); color: var(--ink); text-decoration: none; }
-.r-row:hover, .c-row:hover { border-color: var(--tc); }
+.r-row, .c-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); text-decoration: none; }
+.r-row:hover, .c-row:hover { border-color: color-mix(in srgb, var(--tc) 40%, var(--line)); box-shadow: 0 4px 14px rgb(31 38 51 / 0.05); }
 .r-row.closed { opacity: 0.65; }
 .r-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .r-main b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
@@ -688,7 +729,7 @@ body.viewer-open { overflow: hidden; }
 .r-date.late { color: var(--bad); font-weight: 600; }
 .c-date { flex: none; width: 92px; font-size: 0.82rem; color: var(--muted); }
 .setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px; }
-.setup-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-left: 4px solid var(--tc); border-radius: 8px; background: var(--surface); cursor: pointer; }
+.setup-item { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); cursor: pointer; }
 .setup-item input { margin-top: 4px; }
 .setup-item span { display: flex; flex-direction: column; }
 .setup-item small { color: var(--muted); font-size: 0.78rem; }
@@ -1379,46 +1420,50 @@ function viewHome() {
     ? `<div class="row"><h3>En cours</h3><span class="spacer"></span><a class="small" href="#parcours">Explorer tous les parcours →</a></div><div class="tcards">${mine.map((t) => card(t)).join("")}</div>`
     : `<div class="row"><h3>Pour démarrer</h3><span class="spacer"></span><a class="small" href="#parcours">Explorer tous les parcours →</a></div><p class="muted small" style="margin:0">Tu n'as pas encore commencé de parcours. Trois bons points de départ :</p><div class="tcards">${starters.map((t) => card(t, true)).join("")}</div>`;
   const doneLine = finished.length ? `<div class="done-line"><span class="muted small">Terminés (${finished.length})</span>${finished.map((t) => `<a class="chip" style="${tc(t)}" href="#t-${esc(t.id)}">${esc(t.short || t.name)} ✓</a>`).join("")}</div>` : "";
-  return `<div class="wrap">
-    <div class="stack" style="gap:4px"><div class="eyebrow">${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div><h1>Mon atelier de code</h1></div>
-    <div class="home-hero">
-      <div class="card hero-ring">
-        ${ring(pct, 150, 14, "var(--accent)", `${Math.round(pct * 100)}%`, "acquis")}
-        <div class="kpis">
-          <div><b>${doneCount}</b><span>acquis</span></div>
-          <div><b>${startedCount}</b><span>en cours</span></div>
-          <div><b>${all.length - doneCount - startedCount}</b><span>à faire</span></div>
+  const cs = calSummary(); const soon = (state.ecole && state.ecole.setup) ? rendus().filter((r) => renduOpen(r) && r.date && r.date >= cs.t && r.date <= dPlus(cs.t, 7)).length : 0;
+  const todayLine = `Aujourd'hui tu es <b>${cs.kind === "ecole" ? "à l'école" : cs.kind === "entreprise" ? "en entreprise" : cs.kind === "examens" ? "en examens" : cs.kind === "ferie" ? "en jour férié" : "en week-end"}</b>${soon ? ` · <b>${soon} rendu${soon > 1 ? "s" : ""}</b> cette semaine` : ""}${due.length ? ` · <b>${due.length} révision${due.length > 1 ? "s" : ""}</b> à faire` : ""}.`;
+  return `<div class="wrap home">
+    <header class="home-head"><div class="eyebrow">${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div><h1>Mon atelier</h1><p class="lead">${todayLine}</p></header>
+    <section class="home-sec">
+      <div class="sec-head"><h2>À venir</h2><span class="spacer"></span><a class="small" href="#cours">Mes cours →</a></div>
+      <div class="home-grid2">
+        <div class="card home-card">${homeAgenda()}</div>
+        <div class="card home-card wk-card">${homeWeek()}</div>
+      </div>
+    </section>
+    <section class="home-sec">
+      <div class="sec-head"><h2>Apprentissage</h2><span class="spacer"></span><a class="small" href="#parcours">Tous les parcours →</a></div>
+      <div class="home-grid2">
+        <div class="card home-card next-card" style="${nt ? tc(nt) : ""}">
+          ${nxt ? `<div class="row">${logo(nt, 22)}<span class="muted small">${esc(nt.name)} · ${nxt.minutes || 15} min</span></div>
+            <div class="eyebrow">${status(nxt.id) === "started" ? "Reprendre" : "Prochain module"}</div>
+            <h3 class="next-title">${esc(nxt.title)}</h3>
+            <a class="btn primary" href="#m-${esc(nxt.id)}">${status(nxt.id) === "started" ? "Continuer" : "Commencer"} →</a>`
+          : `<div class="eyebrow">Parcours</div><h3 class="next-title">Tout est acquis</h3><a class="btn primary" href="#ajouter">Ajouter un module</a>`}
+        </div>
+        <div class="card home-card prog-card">
+          ${ring(pct, 116, 11, "var(--accent)", `${Math.round(pct * 100)}%`, "acquis")}
+          <div class="prog-list">
+            <div><b>${doneCount}</b><span>modules acquis sur ${all.length}</span></div>
+            <a href="#revision" class="${due.length ? "warn" : ""}"><b>${due.length}</b><span>${due.length > 1 ? "révisions" : "révision"} aujourd'hui${due.length ? " →" : ""}</span></a>
+            <div><b>${act.streak}</b><span>jour${act.streak > 1 ? "s" : ""} d'affilée · ${act.week} action${act.week > 1 ? "s" : ""} cette semaine</span></div>
+          </div>
         </div>
       </div>
-      <div class="card next-card" style="${nt ? tc(nt) : ""}">
-        ${nxt ? `<div class="row">${logo(nt, 20)}<span class="chip">${esc(nt.short || nt.name)}</span><span class="muted small">${nxt.minutes || 15} min</span></div>
-          <div class="eyebrow">${status(nxt.id) === "started" ? "Reprendre" : "Prochain module"}</div>
-          <h2>${esc(nxt.title)}</h2>
-          <a class="btn primary" href="#m-${esc(nxt.id)}">${status(nxt.id) === "started" ? "Continuer" : "Commencer"} →</a>`
-        : `<div class="eyebrow">Parcours</div><h2>Tout est acquis</h2><a class="btn primary" href="#ajouter">Ajouter un module</a>`}
-      </div>
-      <div class="stat-col">
-      <a class="card stat-card ${due.length ? "warn" : ""}" href="#revision">
-        <span class="stat-num">${due.length}</span><span class="stat-lbl">${due.length > 1 ? "révisions" : "révision"} aujourd'hui</span>
-        <span class="stat-link">${due.length ? "Réviser →" : "Voir le planning →"}</span>
-      </a>
-      <div class="card stat-card">
-        <span class="stat-num">${act.streak}<small> j</small></span><span class="stat-lbl">jours d'affilée</span>
-        <span class="stat-link muted">${act.week} action${act.week > 1 ? "s" : ""} cette semaine</span>
-      </div>
-      </div>
-    </div>
-    ${weekCard()}
-    <div class="card stack">${mineBlock}${doneLine}</div>
-    <div class="card stack act-card"><div class="row"><h3>Activité</h3><span class="spacer"></span><span class="muted small">quiz, TD, étapes et révisions</span></div>
-      <div class="act-row">${heatmap(16)}
+      <div class="stack" style="gap:12px">${mineBlock.replace(/<h3>/g, '<h3 class="sub-h">').replace(/<a class="small" href="#parcours">Explorer tous les parcours →<\/a>/, "")}${doneLine}</div>
+    </section>
+    <section class="home-sec">
+      <div class="sec-head"><h2>Activité</h2><span class="spacer"></span><span class="muted small">quiz, TD, étapes et révisions</span></div>
+      <div class="card home-card act-card"><div class="act-row">${heatmap(16)}
         <div class="act-stats">
           <div><b>${Object.keys(state.progress.activity || {}).length}</b><span>jours actifs</span></div>
           <div><b>${Object.values(state.progress.activity || {}).reduce((a, b) => a + b, 0)}</b><span>actions au total</span></div>
           <div><b>${Object.values(state.progress.activity || {}).reduce((a, b) => Math.max(a, b), 0)}</b><span>record sur une journée</span></div>
         </div>
       </div></div>
+    </section>
   </div>`;
+
 }
 
 function viewCatalog() {
@@ -1474,43 +1519,34 @@ function calStrip() {
     ${c.exams ? `<span class="muted">${esc(c.exams.titre)} ${relDays(c.exams.date)}</span>` : ""}
     <span class="spacer"></span><span class="stat-link">Calendrier →</span></a>`;
 }
-function weekCard() {
-  const t = today(); const [y, mo, d] = t.split("-").map(Number); const now = new Date(y, mo - 1, d);
-  const dow = (now.getDay() + 6) % 7; const nextWeek = dow >= 5;
-  const mon = dPlus(t, -dow + (nextWeek ? 7 : 0));
-  const days = [0, 1, 2, 3, 4].map((i) => dPlus(mon, i));
-  const e = state.ecole || {}; const setup = !!e.setup;
-  const coursOn = (k) => (Array.isArray(e.cours) ? e.cours : []).filter((c) => c.date === k && !c.annule);
-  const nE = days.filter((k) => dayKind(k) === "ecole").length;
-  const c = calSummary();
-  const label = nE === 0 ? (days.some((k) => dayKind(k) === "examens") ? "Semaine d'examens" : "Semaine en entreprise") : nE === 5 ? "Semaine à l'école" : `${nE} jour${nE > 1 ? "s" : ""} d'école, ${5 - nE - days.filter((k) => ["ferie", "examens", "rattrapages"].includes(dayKind(k))).length} en entreprise`;
-  const strip = days.map((k) => { const kind = dayKind(k); const [, , dd] = k.split("-").map(Number); const n = coursOn(k).length;
-    return `<button class="wk-day k-${kind} ${k === t ? "today" : ""}" data-act="wkDay" data-day="${k}" title="${esc(frDate(k))} : ${KIND_LABEL[kind]}${n ? ` · ${n} cours` : ""}"><span class="wk-d">${["lun", "mar", "mer", "jeu", "ven"][days.indexOf(k)]} ${dd}</span><span class="wk-k">${({ ecole: "École", entreprise: "Entr.", examens: "Exam.", rattrapages: "Ratt.", ferie: "Férié" })[kind] || "—"}${n ? ` <i class="wk-n">${n}</i>` : ""}</span></button>`; }).join("");
-  const nx = setup ? upcomingCours(3) : [];
-  const open = setup ? sortRendus(rendus().filter((r) => renduOpen(r))) : [];
-  const dated = open.filter((r) => r.date).slice(0, 3); const undated = open.filter((r) => !r.date).length;
-  const soonRendu = myEvents().filter((r) => r.type === "rendu" && !r.statut && !r.fait && r.date >= t).sort((a, b) => a.date.localeCompare(b.date))[0];
-  return `<div class="card week-card">
-    <div class="wk-col">
-      <div class="row"><h3 style="margin:0">${nextWeek ? "Semaine prochaine" : "Cette semaine"}</h3><span class="spacer"></span><span class="cal-pill k-${c.kind}">Aujourd'hui : ${KIND_LABEL[c.kind]}</span></div>
-      <div class="wk-strip">${strip}</div>
-      <p class="small" style="margin:0"><b>${esc(label)}</b>${nE === 0 && c.school ? ` · prochaine école ${esc(frDate(c.school.start))}` : ""}${c.exams ? ` <span class="muted">· ${esc(c.exams.titre)} ${relDays(c.exams.date)}</span>` : ""}</p>
-      <a class="small" href="#calendrier">Calendrier →</a>
-    </div>
-    <div class="wk-col">
-      <div class="row"><h3 style="margin:0">Prochains cours</h3><span class="spacer"></span><a class="small" href="#cours">Mes cours →</a></div>
-      ${!setup ? `<p class="muted small" style="margin:0">Prépare tes matières pour voir ici tes cours et tes rendus.</p><a class="btn sm primary" href="#cours" style="align-self:flex-start">Préparer mes cours</a>`
-        : nx.length ? `<div class="wk-list">${nx.map((x) => { const m = matiere(x.matiere); return `<a class="wk-item" href="#c-${esc(x.id)}" style="${mtc(m)}"><span class="wk-when">${esc(frDate(x.date))}<small>${esc((x.creneaux || [])[0] ? hh(x.creneaux[0][0]) : "")}</small></span><span class="wk-what"><b>${esc(m ? m.nom : x.titre)}</b><small>${esc([(x.salles || []).join(", "), (x.profs || []).join(", ")].filter(Boolean).join(" · "))}</small></span></a>`; }).join("")}</div>`
-        : `<p class="muted small" style="margin:0">Aucun cours à venir connu. Mets ton emploi du temps à jour dans Mes cours.</p>`}
-    </div>
-    <div class="wk-col">
-      <div class="row"><h3 style="margin:0">Échéances</h3><span class="spacer"></span>${setup ? `<a class="small" href="#cours">Rendus →</a>` : ""}</div>
-      ${dated.length ? `<div class="wk-list">${dated.map((r) => { const m = matiere(r.matiere); const late = r.date < t; return `<a class="wk-item" href="#r-${esc(r.id)}" style="${mtc(m)}"><span class="wk-when ${late ? "late" : daysBetween(t, r.date) <= 7 ? "soon" : ""}">${late ? "en retard" : esc(relDays(r.date))}<small>${esc(frDate(r.date))}</small></span><span class="wk-what"><b>${esc(r.titre)}</b><small>${esc(m ? m.nom : "")}${(r.checklist || []).length ? ` · ${r.checklist.filter((x) => x.ok).length}/${r.checklist.length}` : ""}</small></span></a>`; }).join("")}</div>`
-        : soonRendu ? `<p class="small" style="margin:0"><span class="cal-warn">À rendre ${relDays(soonRendu.date)} :</span> ${esc(soonRendu.titre)}</p>` : `<p class="muted small" style="margin:0">Aucun rendu daté.</p>`}
-      ${undated ? `<p class="muted small" style="margin:0">+ ${undated} rendu${undated > 1 ? "s" : ""} sans date</p>` : ""}
-    </div>
-  </div>`;
+function homeAgenda() {
+  const e = state.ecole || {}; const t = today();
+  if (!e.setup) return `<div class="ag-empty"><p class="muted" style="margin:0">Prépare tes matières pour voir ici tes prochains cours et tes rendus.</p><a class="btn primary" href="#cours">Préparer mes cours</a></div>`;
+  const items = upcomingCours(4).map((c) => { const m = matiere(c.matiere); return { d: c.date, h: (c.creneaux || [])[0] ? c.creneaux[0][0] : "", href: "#c-" + c.id, titre: m ? m.nom : c.titre, sub: [(c.salles || []).join(", "), (c.profs || []).join(", ")].filter(Boolean).join(" · "), m }; })
+    .concat(rendus().filter((r) => renduOpen(r) && r.date && r.date <= dPlus(t, 21)).map((r) => { const m = matiere(r.matiere); return { d: r.date < t ? t : r.date, late: r.date < t, h: "", href: "#r-" + r.id, titre: r.titre, sub: m ? m.nom : "", m, rendu: true }; }))
+    .sort((a, b) => (a.d + (a.rendu ? "00" : a.h)).localeCompare(b.d + (b.rendu ? "00" : b.h))).slice(0, 6);
+  if (!items.length) return `<p class="muted" style="margin:0">Rien de prévu dans ton emploi du temps pour l'instant.</p>`;
+  const days = []; for (const it of items) { const last = days[days.length - 1]; if (last && last.d === it.d) last.items.push(it); else days.push({ d: it.d, items: [it] }); }
+  const dayName = (d) => { const n = daysBetween(t, d); return n === 0 ? "Aujourd'hui" : n === 1 ? "Demain" : frDate(d); };
+  const undated = rendus().filter((r) => renduOpen(r) && !r.date).length;
+  return days.map((g) => `<div class="ag-day"><div class="ag-dh">${esc(dayName(g.d))}${daysBetween(t, g.d) > 1 ? ` <span>· dans ${daysBetween(t, g.d)} jours</span>` : ""}</div>
+    ${g.items.map((it) => `<a class="ag-item" href="${it.href}" style="${mtc(it.m)}"><span class="ag-time">${it.rendu ? `<span class="ag-tag ${it.late ? "late" : ""}">${it.late ? "En retard" : "À rendre"}</span>` : esc(hh(it.h))}</span><span class="ag-main"><b>${esc(it.titre)}</b>${it.sub ? `<small><i class="dot"></i>${esc(it.sub)}</small>` : ""}</span><span class="ag-go" aria-hidden="true">→</span></a>`).join("")}</div>`).join("")
+    + (undated ? `<p class="muted small" style="margin:4px 0 0">+ ${undated} rendu${undated > 1 ? "s" : ""} sans date · <a href="#cours">Mes cours</a></p>` : "");
 }
+function homeWeek() {
+  const t = today(); const [y, mo, d] = t.split("-").map(Number); const dow = (new Date(y, mo - 1, d).getDay() + 6) % 7; const nextWeek = dow >= 5;
+  const mon = dPlus(t, -dow + (nextWeek ? 7 : 0)); const days = [0, 1, 2, 3, 4].map((i) => dPlus(mon, i));
+  const nE = days.filter((k) => dayKind(k) === "ecole").length; const c = calSummary();
+  const sentence = nE === 0 ? (days.some((k) => dayKind(k) === "examens") ? "Semaine d'examens." : "Toute la semaine en entreprise.") : nE === 5 ? "Toute la semaine à l'école." : `${nE} jour${nE > 1 ? "s" : ""} à l'école, le reste en entreprise.`;
+  const kinds = [...new Set(days.map(dayKind))].filter((k) => k !== "weekend" && k !== "libre");
+  return `<div class="wk-head"><b>${nextWeek ? "Semaine prochaine" : "Cette semaine"}</b><span class="muted small">${esc(sentence)}</span></div>
+    <div class="wk-strip">${days.map((k, i) => { const kind = dayKind(k); const dd = +k.slice(8); return `<button class="wk-day k-${kind} ${k === t ? "today" : ""}" data-act="wkDay" data-day="${k}" title="${esc(frDate(k))} : ${KIND_LABEL[kind]}"><span class="wk-d">${["lun", "mar", "mer", "jeu", "ven"][i]}</span><span class="wk-n2">${dd}</span></button>`; }).join("")}</div>
+    <div class="wk-legend">${kinds.map((k) => `<span><i class="k-${k}"></i>${KIND_LABEL[k]}</span>`).join("")}</div>
+    ${(() => { const out = []; let k = dPlus(mon, 7); for (let i = 0; i < 3; i++) { const bl = nextBlock("ecole", k); if (!bl) break; out.push(bl); k = dPlus(bl.end, 1); }
+      return out.length ? `<div class="wk-next"><span class="muted small">Prochaines semaines d'école</span>${out.map((bl) => `<button class="wk-blk" data-act="wkDay" data-day="${bl.start}"><b>${esc(frDate(bl.start))}</b><span>→ ${esc(frDate(bl.end))}</span><span class="muted">${bl.n} j</span></button>`).join("")}</div>` : ""; })()}
+    <div class="wk-foot">${c.kind !== "ecole" && c.school ? `<div><span class="muted small">Prochaine école</span><b>${esc(frDate(c.school.start))}</b><span class="muted small">${esc(relDays(c.school.start))}, ${c.school.n} j</span></div>` : ""}${c.exams ? `<div><span class="muted small">${esc(c.exams.titre)}</span><b>${esc(frDate(c.exams.date))}</b><span class="muted small">${esc(relDays(c.exams.date))}</span></div>` : ""}</div>`;
+}
+
 function relDays(k) { const n = daysBetween(today(), k); return n === 0 ? "aujourd'hui" : n === 1 ? "demain" : `dans ${n} jours`; }
 function calUi() { return state.ui.cal || (state.ui.cal = { month: today().slice(0, 7), day: today() }); }
 function viewCalendar() {
@@ -3120,7 +3156,7 @@ function renduRow(r, opts = {}) {
   const ck = (r.checklist || []); const ckDone = ck.filter((x) => x.ok).length;
   return `<a class="r-row ${renduOpen(r) ? "" : "closed"}" href="#r-${esc(r.id)}" style="${mtc(m)}">
     <span class="r-st st-${s}">${R_STATUTS[s]}</span>
-    <span class="r-main"><b>${esc(r.titre)}</b>${!opts.noMat && m ? `<small>${esc(m.nom)}</small>` : ""}</span>
+    <span class="r-main"><b>${esc(r.titre)}</b>${!opts.noMat && m ? `<small><i class="dot"></i>${esc(m.nom)}</small>` : ""}</span>
     ${ck.length ? `<span class="muted small">${ckDone}/${ck.length}</span>` : ""}
     <span class="r-date ${late ? "late" : ""}">${r.date ? `${frDate(r.date)}${renduOpen(r) ? ` · ${late ? "en retard" : relDays(r.date)}` : ""}` : "date à définir"}</span>
   </a>`;

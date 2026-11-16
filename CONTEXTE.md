@@ -69,8 +69,7 @@ Idée pour plus tard : les cartes mémo (point 3) pourront être générées dep
 ## Barre latérale repliable + « Ma semaine » (fait le 16/11)
 - Bouton dans l'en-tête de la barre latérale (et Alt+S) → `body.side-off` (mémorisé dans localStorage `atelier-side-off`),
   bouton flottant en haut à gauche pour la rouvrir ; sur mobile le même bouton ferme le menu.
-- Tableau de bord : `weekCard()` remplace `calStrip()` : semaine lun-ven école/entreprise (clic → jour du calendrier),
-  3 prochains cours, échéances (rendus datés, en retard en rouge, nombre sans date).
+- Tableau de bord : refait le 16/11, voir « Style » ci-dessous.
 
 ## Fichiers du prof (fait le 16/11)
 - Capacité `assets` déclarée (`{db, sample, user, assets}`). `assetsApi` (null hors claude.ai → message). Carte « Fichiers » sur
@@ -85,6 +84,13 @@ Idée pour plus tard : les cartes mémo (point 3) pourront être générées dep
   sur #synchro (carte « Fichiers de cours sur GitHub », localStorage `atelier-fichiers-gh`, `ghfConnect` refuse un dépôt public).
   Chemins `fichiers/AAAA-MM/<id>-<nom>` ; PPTX/DOCX gardés en original + texte extrait en `-texte.md` (`f.texte`).
   Chaque fichier a `src` ("claude" | "github") : chaque version n'affiche que les siens (`fileReachable`), l'autre est indiqué.
+
+## Style (retour d'Ana du 16/11)
+- **Pas de bordure de couleur sur le côté (ou en haut) des cartes** : elle trouve que « ça fait très IA ». La couleur passe par de petits
+  éléments (point `.dot`, icône teintée, pastille de date, fond légèrement teinté), cartes neutres avec bordure 1 px et ombre au survol.
+- Tableau de bord **aéré** : sections titrées (« À venir », « Apprentissage », « Activité ») avec beaucoup d'espace (`.wrap.home`,
+  `.home-sec`, `.home-grid2`, `.home-card` 24 px de marge) ; « À venir » = agenda par jour (cours + rendus, `homeAgenda`) et
+  « Cette semaine » (`homeWeek` : 5 jours, légende, prochaines semaines d'école, prochaine école / examens).
 
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
