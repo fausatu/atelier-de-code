@@ -20,7 +20,7 @@
 - Commits : terminer par les lignes d'attribution Co-Authored-By / Claude-Session données par le système.
 
 ## État actuel (16/11/2026)
-15 parcours, 83 modules. Récemment : Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
+16 parcours, 86 modules. Récemment : Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
 tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barre latérale allégée (outils en icônes, « Mes parcours »).
 
 ## Calendrier (fait le 16/11)
@@ -107,6 +107,19 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   extraits, PDF via pdf.js `getTextContent`). Carte « Cartes mémo » sur chaque cours ; compteur Révisions = modules + cartes.
 - Attention : un ACTIONS `genSave` existait déjà (génération de modules) → les actions des cartes s'appellent `cg*` / `c*`.
 
+## Projet fil rouge « Bobine » (commencé le 16/11)
+- Choix d'Ana : PAS My Digital Start-up (en groupe, pas pour maintenant) → un **site de streaming**, « Bobine » (nom provisoire),
+  avec de courts films libres de droits (films d'animation de la Blender Foundation).
+- Parcours `fil` (groupe « Projet », couleur `coral`, badge ▶), fichier `c_fil.py`. Fait : modules 1 à 3 (9 TD, 9/9 + départs qui échouent) :
+  1. `fil-decoupe` Du cahier des charges aux tranches (TD js : scénarios de reprise, `peutVoir` contrôle parental, `etatVisionnage`)
+  2. `fil-modele` Le modèle de données (Doctrine simulé : Film + enum Genre, Série/Épisode cascade+orphelins, Compte/Profil/enum Forfait)
+  3. `fil-api` L'API du catalogue (Symfony simulé : `CatalogueFiltres` + `FilmCard`, fiche + contrôle parental 403/404, `/api/accueil` en rangées)
+- Le Doctrine simulé ne gère pas ManyToMany (genre = enum ; Ma liste devra être une entité `ElementListe` ManyToOne×2).
+- **Suite (modules 4 à 9)** : 4. règles métier en écriture (créer un profil : DTO d'entrée + validation + forfait),
+  5. reprise de lecture (`PUT /api/visionnages`, idempotence, « Continuer à regarder »), 6. front React + TS (catalogue TanStack Query,
+  fiche, lecteur `<video>` qui sauvegarde la position), 7. formulaires (profil avec React Hook Form + zod, erreurs de l'API),
+  8. Git (une branche par tranche, PR), 9. terminal (lancer back + front, .env, ports).
+
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
 2. **Espace « Mes cours » (école)** — étape 1 faite (voir ci-dessus). Étape 2 faite aussi (fichiers, Ma semaine, emploi du temps ; réimporter l'emploi du temps après le 02/01/2027). Idée suivante possible : TD / cartes générés par Claude depuis les fichiers et notes d'un cours. — PAS seulement du code : management de projet, anglais, UX/UI, etc.
@@ -130,5 +143,5 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
    Ancienne description : **Cartes mémo** génériques (pas que code : vocabulaire d'anglais, définitions de management…) : cartes par parcours,
    cartes générées depuis une fiche de cours ou un PDF (capacité `sample`), cartes créées à la main ; intégrées aux révisions
    (même rythme espacé).
-4. **Projet fil rouge** : parcours qui relie découpage → PHP/API → React/formulaire → Git → terminal. À discuter avec Ana :
+4. **Projet fil rouge** : commencé (voir « Projet fil rouge Bobine »). Ancienne note : parcours qui relie découpage → PHP/API → React/formulaire → Git → terminal. À discuter avec Ana :
    le caler sur son vrai projet d'école **My Digital Start-up** plutôt qu'une boutique fictive.

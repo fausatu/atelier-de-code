@@ -16,6 +16,7 @@ Un tableau de bord pour apprendre le développement web en comprenant comment le
 - **Back** : PHP orienté objet → Doctrine → DTO → Architecture → DDD
 - **Front** : React → Données & API → Next.js
 - **Outils** : Git & GitHub
+- **Projet fil rouge** : Bobine, un site de streaming construit de A à Z (découpage → Doctrine → API → React → Git → terminal)
 
 ## Architecture
 

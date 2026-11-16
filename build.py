@@ -16,6 +16,7 @@ from c_forms import MODULES as FORMS
 from c_decoupe import MODULES as DECOUPE
 from c_term import MODULES as TERM
 from c_ts import MODULES as TSM
+from c_fil import MODULES as FIL
 
 TRACKS = [
     {"id": "php", "group": "back", "name": "PHP orienté objet", "short": "PHP POO", "color": "violet",
@@ -46,11 +47,13 @@ TRACKS = [
      "desc": "Du ticket au code : scénarios, variables (comment je le sais ?), étapes, tranches."},
     {"id": "debug", "group": "methode", "name": "Déboguer", "short": "Débogage", "color": "amber",
      "desc": "Lire les erreurs et corriger de vrais bugs : PHP, Doctrine, Symfony, React, API, Next.js, Git."},
+    {"id": "fil", "group": "projet", "name": "Projet fil rouge : Bobine", "short": "Fil rouge", "color": "coral", "badge": "▶",
+     "desc": "Un vrai site de streaming de A à Z, sur un seul projet : découpage, modèle Doctrine, API, front React, Git, terminal."},
     {"id": "api", "group": "back", "name": "API REST", "short": "API", "color": "teal",
      "desc": "Créer une API (REST, erreurs, auth, cache, idempotence, limites) et la consommer en PHP et en JS."},
 ]
 
-modules = PHP + DOC + DTO + ARCH + DDD + TSM + REACT + DATA_ + FORMS + NEXT + GIT + TERM + API + DECOUPE + DEBUG
+modules = PHP + DOC + DTO + ARCH + DDD + TSM + REACT + DATA_ + FORMS + NEXT + GIT + TERM + API + DECOUPE + DEBUG + FIL
 ids = set()
 for m in modules:
     assert m["id"] not in ids, m["id"]
@@ -95,6 +98,7 @@ GROUPS = [
     {"id": "back", "name": "Web · Back-end", "desc": "PHP → Doctrine → DTO → Architecture → API, DDD en bonus."},
     {"id": "front", "name": "Web · Front-end", "desc": "TypeScript → React → Données & API → Formulaires → Next.js."},
     {"id": "outils", "name": "Outils", "desc": "Les outils du quotidien : Git, le terminal."},
+    {"id": "projet", "name": "Projet", "desc": "Tout relier sur un vrai projet : Bobine, un site de streaming."},
 ]
 _gids = {g["id"] for g in GROUPS}
 for t in TRACKS:
