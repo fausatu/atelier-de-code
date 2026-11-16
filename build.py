@@ -117,7 +117,8 @@ CAL = {"jours": {k: {"formation": "e", "rentree": "r", "entreprise": "n", "exame
        ]}
 _prog = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ecole", "programme.json"), encoding="utf-8"))
 PROGRAMME = {k: _prog[k] for k in ("ecole", "formation", "promo", "ue", "types", "modules")}
-data = {"groups": GROUPS, "tracks": TRACKS, "modules": modules, "setups": SETUPS, "cal": CAL, "programme": PROGRAMME}
+EDT = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ecole", "edt.json"), encoding="utf-8"))
+data = {"groups": GROUPS, "tracks": TRACKS, "modules": modules, "setups": SETUPS, "cal": CAL, "programme": PROGRAMME, "edt": EDT}
 js = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
 tpl = open("/home/claude/atelier/template.html", encoding="utf-8").read()
 assert "/*__CONTENT__*/" in tpl

@@ -572,6 +572,15 @@ body.q-open .qfab { display: none; }
 .q-ans .who { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .q-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 /* Mes cours */
+.t-cours { --evc: var(--t-teal); }
+.c-day > span { display: flex; flex-direction: column; align-items: center; }
+.c-row.past { opacity: .72; }
+.c-row.annule b { text-decoration: line-through; }
+.c-mat { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--tc); }
+.c-pill.warn { background: var(--warn-soft); color: var(--warn); }
+.c-info { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; padding: 10px 14px; border-radius: 10px; background: color-mix(in srgb, var(--tc) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--tc) 20%, var(--line)); font-size: 0.9rem; }
+.c-info b { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--tc); margin-right: 4px; }
+.edt-card > summary { cursor: pointer; }
 .mat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
 .mat-card { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 14px 14px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; transition: transform .14s, box-shadow .14s, border-color .14s; min-height: 150px; }
 .mat-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; border-radius: 14px 14px 0 0; background: var(--tc); opacity: .85; }
@@ -593,7 +602,7 @@ body.q-open .qfab { display: none; }
 .mat-hero .mat-ic svg { width: 26px; height: 26px; }
 .mat-hero h1 { font-size: 1.7rem; }
 .mat-hero .chip { background: var(--surface); border: 1px solid color-mix(in srgb, var(--tc) 30%, var(--line)); }
-.c-row .c-day { flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 10px; background: color-mix(in srgb, var(--tc) 11%, var(--surface)); color: var(--tc); line-height: 1; text-align: center; }
+.c-row .c-day { flex: none; display: grid; place-items: center; width: 48px; height: 54px; border-radius: 10px; background: color-mix(in srgb, var(--tc) 11%, var(--surface)); color: var(--tc); line-height: 1; text-align: center; }
 .c-day b { font: 700 1.05rem var(--font-display); display: block; }
 .c-day small { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 .c-day.none { background: var(--surface-2); color: var(--muted); font-size: 0.66rem; font-weight: 600; }
@@ -1367,10 +1376,14 @@ function viewCatalog() {
 const CAL = DATA.cal || { jours: {}, evenements: [] };
 const DAY_KIND = { e: "ecole", r: "ecole", n: "entreprise", x: "examens", t: "rattrapages", f: "ferie" };
 const KIND_LABEL = { ecole: "École", entreprise: "Entreprise", examens: "Examens", rattrapages: "Rattrapages", ferie: "Férié", weekend: "Week-end", libre: "—" };
-const EV_TYPES = { rendu: "Rendu", examen: "Examen", ecole: "École", rdv: "Rendez-vous", perso: "Perso", info: "Info" };
+const EV_TYPES = { cours: "Cours", rendu: "Rendu", examen: "Examen", ecole: "École", rdv: "Rendez-vous", perso: "Perso", info: "Info" };
 function dayKind(k) { const c = CAL.jours[k]; if (c) return DAY_KIND[c]; const [y, m, d] = k.split("-").map(Number); const w = new Date(y, m - 1, d).getDay(); return w === 0 || w === 6 ? "weekend" : "libre"; }
 function myEvents() { const p = state.progress; if (!Array.isArray(p.agenda)) p.agenda = []; return p.agenda; }
-function eventsOn(k) { return CAL.evenements.filter((e) => e.date === k).map((e) => ({ ...e, fixe: true })).concat(myEvents().filter((e) => e.date === k)); }
+function eventsOn(k) {
+  const cs = (state.ecole && Array.isArray(state.ecole.cours) ? state.ecole.cours : []).filter((c) => c.date === k && !c.annule && (c.creneaux || []).length).sort((a, b) => a.creneaux[0][0].localeCompare(b.creneaux[0][0]))
+    .map((c) => { const m = matiere(c.matiere); return { id: c.id, date: k, type: "cours", fixe: true, href: "#c-" + c.id, titre: (m ? m.nom : c.titre), note: [creneauxTxt(c), (c.salles || []).join(", ")].filter(Boolean).join(" · ") }; });
+  return cs.concat(CAL.evenements.filter((e) => e.date === k).map((e) => ({ ...e, fixe: true }))).concat(myEvents().filter((e) => e.date === k));
+}
 function dPlus(k, n) { const [y, m, d] = k.split("-").map(Number); const x = new Date(y, m - 1, d + n); return ymd(x); }
 function daysBetween(a, b) { const p = (k) => { const [y, m, d] = k.split("-").map(Number); return Date.UTC(y, m - 1, d); }; return Math.round((p(b) - p(a)) / 864e5); }
 function nextBlock(kind, from) {
@@ -1437,10 +1450,10 @@ function viewCalendar() {
       <div class="stack">
         <div class="card stack">
           <div class="row"><h3 style="margin:0">${frDate(u.day)}</h3><span class="spacer"></span><span class="cal-pill k-${dk}">${KIND_LABEL[dk]}</span></div>
-          ${devs.length ? `<ul class="cal-evlist">${devs.map((e) => `<li class="t-${e.type}${e.fait ? " done" : ""}"><span class="cal-tag">${EV_TYPES[e.type] || ""}</span><span class="grow">${e.type === "rendu" && !e.fixe ? `<a href="#r-${esc(e.id)}">${esc(e.titre)}</a>` : esc(e.titre)}${e.note ? `<br><span class="muted small">${esc(e.note)}</span>` : ""}</span>${e.fixe ? "" : `${e.type === "rendu" ? `<button class="btn sm ghost" data-act="calDone" data-id="${e.id}">${e.fait ? "↺" : "✓ Rendu"}</button>` : ""}<button class="btn sm ghost" data-act="calDel" data-id="${e.id}" aria-label="Supprimer">✕</button>`}</li>`).join("")}</ul>` : `<p class="muted small" style="margin:0">Rien de prévu ce jour-là.</p>`}
+          ${devs.length ? `<ul class="cal-evlist">${devs.map((e) => `<li class="t-${e.type}${e.fait ? " done" : ""}"><span class="cal-tag">${EV_TYPES[e.type] || ""}</span><span class="grow">${e.href ? `<a href="${esc(e.href)}">${esc(e.titre)}</a>` : e.type === "rendu" && !e.fixe ? `<a href="#r-${esc(e.id)}">${esc(e.titre)}</a>` : esc(e.titre)}${e.note ? `<br><span class="muted small">${esc(e.note)}</span>` : ""}</span>${e.fixe ? "" : `${e.type === "rendu" ? `<button class="btn sm ghost" data-act="calDone" data-id="${e.id}">${e.fait ? "↺" : "✓ Rendu"}</button>` : ""}<button class="btn sm ghost" data-act="calDel" data-id="${e.id}" aria-label="Supprimer">✕</button>`}</li>`).join("")}</ul>` : `<p class="muted small" style="margin:0">Rien de prévu ce jour-là.</p>`}
           <form class="cal-form" data-form="calAdd">
             <input name="titre" placeholder="Ajouter : rendu, examen, rendez-vous…" required maxlength="120">
-            <div class="row"><select name="type">${Object.entries(EV_TYPES).filter(([k]) => k !== "info").map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select>
+            <div class="row"><select name="type">${Object.entries(EV_TYPES).filter(([k]) => k !== "info" && k !== "cours").map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select>
             <input name="note" placeholder="Détail (facultatif)" maxlength="200" style="flex:1"><button class="btn sm primary">Ajouter</button></div>
           </form>
         </div>
@@ -3038,6 +3051,7 @@ function viewEcoleSetup() {
 function viewEcole() {
   const e = ecole();
   if (!e.setup) return viewEcoleSetup();
+  ensureEdt();
   const yr = ecYear();
   const mats = e.matieres.filter((m) => yr === "tout" || m.annee === yr || !m.annee);
   const showAll = !!state.ui.ecAllRendus;
@@ -3050,17 +3064,21 @@ function viewEcole() {
     const rs = sortRendus(rendus().filter((r) => r.matiere === m.id && renduOpen(r)));
     const nxt = rs.find((r) => r.date);
     const late = nxt && nxt.date < today();
+    const nc2 = e.cours.find((c) => c.matiere === m.id && c.date && c.date >= today() && !c.annule && !e.cours.some((o) => o.matiere === m.id && o.date && o.date >= today() && !o.annule && o.date < c.date));
     return `<a class="mat-card" href="#mat-${esc(m.id)}" style="${mtc(m)}" aria-label="${esc(m.nom)}">
       <span class="mat-top">${matIcon(m)}<span class="mat-type">${esc(PROG.types[m.type] || "Matière")}</span></span>
       <span class="mat-name">${esc(m.nom)}</span>
       <span class="mat-meta">${m.heures ? `<span>${m.heures} h</span>` : ""}${m.ects ? `<span>${m.ects} ECTS</span>` : ""}${m.mode ? `<span>${esc(m.mode)}</span>` : ""}</span>
-      <span class="mat-foot"><span>${nc ? `${nc} cours` : "Aucun cours"}</span>${nxt ? `<span class="${late ? "late" : "due"}">· rendu ${late ? "en retard" : relDays(nxt.date)}</span>` : rs.length ? `<span class="due">· ${rs.length} rendu${rs.length > 1 ? "s" : ""}</span>` : ""}<span class="mat-go" aria-hidden="true">→</span></span>
+      <span class="mat-foot"><span>${nc ? `${nc} cours` : "Aucun cours"}${nc2 ? ` · prochain ${esc(frDate(nc2.date))}` : ""}</span>${nxt ? `<span class="${late ? "late" : "due"}">· rendu ${late ? "en retard" : relDays(nxt.date)}</span>` : rs.length ? `<span class="due">· ${rs.length} rendu${rs.length > 1 ? "s" : ""}</span>` : ""}<span class="mat-go" aria-hidden="true">→</span></span>
     </a>`;
   };
 
   return `<div class="wrap">
     <div class="stack" style="gap:4px"><div class="eyebrow">${esc(PROG.formation || "MBA")} · ${esc(PROG.ecole || "")}</div><h1>Mes cours</h1>
-      <p class="lead" style="margin:0">Tes matières, tes cours (notes, liens vers tes outils) et tes rendus. Les rendus apparaissent aussi dans le <a href="#calendrier">calendrier</a>.</p></div>
+      <p class="lead" style="margin:0">Tes matières, tes cours (notes, liens vers tes outils) et tes rendus. Cours et rendus apparaissent aussi dans le <a href="#calendrier">calendrier</a>.</p></div>
+    ${(() => { const c = calSummary(); const nx = upcomingCours(4);
+      return `<div class="card stack"><div class="row"><h2 style="margin:0">Prochains cours</h2><span class="cal-pill k-${c.kind}">Aujourd'hui : ${KIND_LABEL[c.kind]}</span>${c.school && c.kind !== "ecole" ? `<span class="muted small">prochaine école ${esc(frDate(c.school.start))} (${c.school.n} j)</span>` : ""}</div>
+        <div class="c-list">${nx.map((x) => coursRow(x, { withMat: true })).join("") || `<p class="muted small">Aucun cours à venir dans ton emploi du temps${e.edtInfo && e.edtInfo.jusqu ? ` (connu jusqu'au ${esc(frDate(e.edtInfo.jusqu))})` : ""}. Mets-le à jour ci-dessous.</p>`}</div></div>`; })()}
     <div class="row"><span class="seg">${["M1", "M2", "tout"].map((y) => `<button class="${yr === y ? "on" : ""}" data-act="ecYear" data-y="${y}">${y === "tout" ? "Tout" : y}</button>`).join("")}</span><span class="muted small">${mats.length} matière${mats.length > 1 ? "s" : ""}</span><span class="spacer"></span><button class="btn sm" data-act="ecNewMat">+ Matière</button></div>
     <div class="card stack">
       <div class="row"><h2 style="margin:0">Rendus</h2><span class="muted small">${yr === "tout" ? "" : yr + " · "}${openR.length} à faire${allR.length - openR.length ? ` · ${allR.length - openR.length} terminé${allR.length - openR.length > 1 ? "s" : ""}` : ""}</span><span class="spacer"></span>
@@ -3070,6 +3088,7 @@ function viewEcole() {
         ${undated.length ? `<details class="r-undated" ${state.ui.ecUndated ? "open" : ""}><summary>Date à définir <span class="muted small">· ${undated.length}</span></summary><div class="r-list">${undated.map((r) => renduRow(r)).join("")}</div></details>` : ""}`; })()}
     </div>
     ${Object.entries(ues).map(([ue, ms]) => `<section class="stack" style="gap:8px"><div class="eyebrow">${esc(PROG.ue[ue] || (ue === "_" ? "Autres matières" : ue))}</div><div class="mat-grid">${ms.map(card).join("")}</div></section>`).join("") || `<p class="muted">Aucune matière pour ${yr}. <button class="btn sm" data-act="ecNewMat">+ Matière</button></p>`}
+    ${edtCard()}
   </div>`;
 }
 function viewMatiere(id) {
@@ -3077,6 +3096,7 @@ function viewMatiere(id) {
   if (!m) return `<div class="wrap"><h1>Matière introuvable</h1><p><a href="#cours">Retour à mes cours</a></p></div>`;
   const e = ecole();
   const cs = e.cours.filter((c) => c.matiere === id).sort((a, b) => String(b.date || "~").localeCompare(String(a.date || "~")) || (b.created || 0) - (a.created || 0));
+  const t0 = today(); const csNext = cs.filter((c) => c.date && c.date >= t0).reverse(); const csPast = cs.filter((c) => !c.date || c.date < t0);
   const rs = sortRendus(rendus().filter((r) => r.matiere === id));
   const ateliers = (m.atelier || []).map((a) => ATELIER_ALIAS[a] || a).filter((a) => tracks().some((t) => t.id === a));
   const confirm = state.ui.confirmDel === "mat:" + id;
@@ -3092,7 +3112,9 @@ function viewMatiere(id) {
     <div class="card stack">
       <div class="row"><h2 style="margin:0">Cours</h2><span class="muted small">${cs.length}</span></div>
       <form class="row" data-form="ecNewCours" data-mat="${esc(id)}"><input class="field" name="titre" placeholder="Titre du cours (ex. : Séance 1 : les personas)" required maxlength="160" style="flex:1;min-width:200px"><input class="field" type="date" name="date" title="Date (facultatif)"><button class="btn sm primary">Ajouter le cours</button></form>
-      <div class="c-list">${cs.map((c) => `<a class="c-row" href="#c-${esc(c.id)}">${c.date ? (() => { const [y, mo, d] = c.date.split("-").map(Number); const dt = new Date(y, mo - 1, d); return `<span class="c-day" title="${esc(frDate(c.date))}"><span><b>${d}</b><small>${dt.toLocaleDateString("fr-FR", { month: "short" }).replace(".", "")}</small></span></span>`; })() : `<span class="c-day none">sans<br>date</span>`}<span class="r-main"><b>${esc(c.titre)}</b>${(c.tags || []).length ? `<small>${c.tags.map((t) => "#" + esc(t)).join(" ")}</small>` : ""}</span><span class="c-meta">${(c.liens || []).length ? `<span class="c-pill">${c.liens.length} lien${c.liens.length > 1 ? "s" : ""}</span>` : ""}${String(c.notes || "").trim() ? `<span class="c-pill">notes</span>` : ""}</span><span class="mat-go" aria-hidden="true" style="opacity:1">→</span></a>`).join("") || `<p class="muted small">Aucun cours pour l'instant.</p>`}</div>
+      ${csNext.length ? `<div class="eyebrow">À venir</div><div class="c-list">${csNext.map((c) => coursRow(c)).join("")}</div>` : ""}
+      ${csPast.length ? `<div class="eyebrow">${csNext.length ? "Passés" : "Cours"}</div><div class="c-list">${csPast.map((c) => coursRow(c)).join("")}</div>` : ""}
+      ${cs.length ? "" : `<p class="muted small">Aucun cours pour l'instant.</p>`}
     </div>
     <div class="card stack">
       <div class="row"><h2 style="margin:0">Rendus</h2><span class="spacer"></span><button class="btn sm" data-act="ecNewRendu" data-mat="${esc(id)}">+ Rendu</button></div>
@@ -3117,6 +3139,8 @@ function viewCoursItem(id) {
     <input class="title-input" data-ec="titre" data-kind="cours" data-id="${esc(id)}" value="${esc(c.titre)}" maxlength="160" aria-label="Titre du cours">
     <div class="row"><label class="row small"><span class="muted">Date</span><input class="field" type="date" data-ec="date" data-kind="cours" data-id="${esc(id)}" value="${esc(c.date || "")}"></label>
       <label class="row small" style="flex:1"><span class="muted">Étiquettes</span><input class="field" style="flex:1;min-width:180px" data-ec="tags" data-kind="cours" data-id="${esc(id)}" value="${esc((c.tags || []).join(", "))}" placeholder="séparées par des virgules : cours, TD, révision…"></label></div>
+    ${(c.creneaux || []).length || (c.salles || []).length || (c.profs || []).length ? `<div class="c-info">${c.annule ? `<span class="c-pill warn">plus dans l'emploi du temps</span>` : ""}${(c.creneaux || []).length ? `<span><b>Horaires</b> ${esc(creneauxTxt(c))}</span>` : ""}${(c.salles || []).length ? `<span><b>Salle</b> ${esc(c.salles.join(", "))}</span>` : ""}${(c.profs || []).length ? `<span><b>Prof</b> ${esc(c.profs.join(", "))}</span>` : ""}${c.edtKey ? `<span class="muted small">depuis Pronote</span>` : ""}</div>` : ""}
+    ${String(c.contenu || "").trim() ? `<details class="card stack" open><summary><b>Programme de la séance</b> <span class="muted small">· donné par l'école</span></summary><div class="prose" style="margin-top:8px">${md(contenuMd(c.contenu))}</div></details>` : ""}
     <div class="card stack"><h3 style="margin:0">Liens et outils</h3>
       ${(c.liens || []).length ? `<div class="tool-list">${linkChips(c.liens, "cours", id)}</div>` : ""}
       ${linkForm("cours", id)}
@@ -3177,13 +3201,134 @@ function setupEcole(idx, withRendus) {
   const e = ecole(); const now = Date.now();
   const byNom = {};
   idx.forEach((i) => { const p = PROG.modules[i]; if (!p) return;
-    const m = { id: "mat" + rid(), nom: p.nom, annee: p.annee, ue: p.ue, type: p.type, couleur: TYPE_COLOR[p.type] || "graphite", heures: p.heures, ects: p.ects, themes: p.themes || [], atelier: p.atelier || [], evaluation: p.evaluation || "", mode: p.mode || "", ts: now };
+    const m = { id: "mat" + rid(), nom: p.nom, prog: p.nom, annee: p.annee, ue: p.ue, type: p.type, couleur: TYPE_COLOR[p.type] || "graphite", heures: p.heures, ects: p.ects, themes: p.themes || [], atelier: p.atelier || [], evaluation: p.evaluation || "", mode: p.mode || "", ts: now };
     e.matieres.push(m); byNom[p.nom] = m.id; });
   if (withRendus) for (const [nom, titre, consignes] of KNOWN_RENDUS) {
     if (rendus().some((r) => r.titre === titre)) continue;
     myEvents().push({ id: "ev" + rid(), type: "rendu", titre, date: null, matiere: byNom[nom] || "", statut: "a_faire", consignes: consignes ? consignes + "\n\n> Date à confirmer avec l'école." : "> Date à confirmer avec l'école.", checklist: [], liens: [], ts: now });
   }
   e.setup = true; saveEcole(); saveProgress();
+  ensureEdt();
+}
+/* ---------- Emploi du temps (Pronote / Hyperplanning, iCal) → cours datés ---------- */
+const EDT = DATA.edt || null;
+const STARTER = "Starter-pack rentrée M1 + workshop client 1";
+const EDT_MAP = {
+  "architecture logicielle": ["Architecture logicielle, design patterns & urbanisation SI"],
+  "management de projets": ["Management de projets"],
+  "anglais": ["Professional English", "Professional English / préparation TOEIC"],
+  "challenge lean start-up": ["Challenge Lean Start-up"],
+  "ui/ux design": ["UX / UI & accessibilité numérique"],
+  "developpement front": ["Développement Front-end avancé (TypeScript / frameworks)"],
+  "developpement back": ["Développement Back-end & conception d'API"],
+  "mooc cybersecurite anssi": ["MOOC Cybersécurité ANSSI"],
+  "orthodidacte": ["Orthodidacte"],
+  "workshop de rentree": [STARTER], "rentree": [STARTER], "forum inter-fillieres": [STARTER], "forum inter-filieres": [STARTER], "shooting photo": [STARTER],
+};
+function norm(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim(); }
+function anneeOf(d) { return d < "2027-09-01" ? "M1" : "M2"; }
+function edtMatiere(label, d) {
+  const e = ecole(); const n = norm(label); const an = anneeOf(d);
+  const cands = EDT_MAP[n] || [];
+  const want = cands.length > 1 && an === "M2" ? cands[1] : cands[0];
+  let m = want && e.matieres.find((x) => x.prog === want || x.nom === want);
+  if (!m) m = e.matieres.find((x) => (x.edt || []).some((a) => norm(a) === n) || norm(x.nom) === n);
+  if (!m) { m = { id: "mat" + rid(), nom: label, annee: an, ue: "", type: "", couleur: COLORS[e.matieres.length % COLORS.length], heures: 0, ects: 0, themes: [], atelier: [], edt: [label], ts: Date.now() }; e.matieres.push(m); }
+  return m;
+}
+function hh(t) { return String(t || "").replace(/^0(\d)/, "$1").replace(":", "h").replace(/h00$/, "h"); }
+function creneauxTxt(c) { return (c.creneaux || []).map(([a, b]) => `${hh(a)}–${hh(b)}`).join(" · "); }
+function edtTitle(g, label) {
+  const ts = (g.t || []).map((x) => String(x).split("\n")[0].replace(/\s*\(\d+h\d*\)\s*$/, "").trim()).filter(Boolean);
+  return ts.length ? ts.join(" · ").slice(0, 160) : label;
+}
+function syncEdt(seances, periode) {
+  const e = ecole(); if (!Array.isArray(e.edtIgnore)) e.edtIgnore = [];
+  const seen = new Set(); let added = 0, updated = 0, removed = 0;
+  for (const g of seances) {
+    const key = "edt:" + norm(g.m) + ":" + g.d; seen.add(key);
+    if (e.edtIgnore.includes(key)) continue;
+    const fields = { date: g.d, creneaux: g.c, salles: g.s || [], profs: g.p || [], contenu: (g.t || []).join("\n\n"), edtLabel: g.m };
+    const cur = e.cours.find((c) => c.edtKey === key);
+    if (cur) { const before = JSON.stringify([cur.date, cur.creneaux, cur.salles, cur.profs, cur.contenu]); Object.assign(cur, fields); delete cur.annule; if (before !== JSON.stringify([cur.date, cur.creneaux, cur.salles, cur.profs, cur.contenu])) { cur.ts = Date.now(); updated++; } continue; }
+    const m = edtMatiere(g.m, g.d);
+    e.cours.push({ id: "co" + rid(), matiere: m.id, titre: edtTitle(g, g.m), tags: [], notes: "", liens: [], edtKey: key, created: Date.now(), ts: Date.now(), ...fields });
+    added++;
+  }
+  if (periode) for (const c of e.cours) if (c.edtKey && !seen.has(c.edtKey) && c.date >= periode[0] && c.date <= periode[1] && !c.annule) {
+    if (!String(c.notes || "").trim() && !(c.liens || []).length) { e.cours = e.cours.filter((x) => x !== c); e.deleted.push(c.id); } else { c.annule = true; c.ts = Date.now(); }
+    removed++;
+  }
+  const last = seances.reduce((a, g) => (g.d > a ? g.d : a), "");
+  e.edtInfo = { maj: today(), jusqu: last || (e.edtInfo || {}).jusqu || "", n: seances.length };
+  saveEcole();
+  return { added, updated, removed };
+}
+function ensureEdt() {
+  const e = ecole();
+  if (!e.setup || !EDT || e.edtVersion === EDT.version) return;
+  syncEdt(EDT.seances, EDT.periode); e.edtVersion = EDT.version; saveEcole();
+}
+function parseIcs(text) {
+  const lines = String(text).replace(/\r?\n[ \t]/g, "").split(/\r?\n/);
+  const evs = []; let cur = null;
+  for (const l of lines) {
+    if (l === "BEGIN:VEVENT") cur = {};
+    else if (l === "END:VEVENT") { if (cur) evs.push(cur); cur = null; }
+    else if (cur) { const i = l.indexOf(":"); if (i < 0) continue; const k = l.slice(0, i).split(";")[0]; cur[k] = l.slice(i + 1).replace(/\\n/gi, "\n").replace(/\\,/g, ",").replace(/\;/g, ";"); }
+  }
+  const fmt = new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
+  const loc = (s) => {
+    const m = String(s).match(/(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)(\d\d)(Z?)/); if (!m) return null;
+    if (!m[7]) return [`${m[1]}-${m[2]}-${m[3]}`, `${m[4]}:${m[5]}`];
+    const p = fmt.formatToParts(new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`)); const g = (t) => (p.find((x) => x.type === t) || {}).value;
+    return [`${g("year")}-${g("month")}-${g("day")}`, `${g("hour") === "24" ? "00" : g("hour")}:${g("minute")}`];
+  };
+  const txt = (h) => String(h).replace(/<span[^>]*>\s*<span[^>]*>Sans titre<\/span><\/span>/g, "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/(div|p|li)>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/\n{2,}/g, "\n").trim();
+  const out = {}; let min = "", max = "";
+  for (const e of evs) {
+    const a = loc(e.DTSTART || ""), b = loc(e.DTEND || ""); if (!a || !b) continue;
+    const D = e.DESCRIPTION || "";
+    const m = ((D.match(/Matière : (.*)/) || [])[1] || String(e.SUMMARY || "Cours").split(" - ")[0]).trim();
+    if (/^f[ée]ri[ée]/i.test(m)) continue;
+    const p = ((D.match(/Enseignants? : (.*)/) || [])[1] || "").replace(/MDS - EMARGEMENT/g, "").split(/,\s*/).map((x) => x.trim()).filter(Boolean);
+    const s = (D.match(/Salle : (.*)/) || [])[1] || (D.match(/Mémo : (.*)/) || [])[1] || e.LOCATION || "";
+    const c = D.includes("Contenu pédagogique") ? txt(D.split("Contenu pédagogique de cette séance :")[1]) : "";
+    const k = m + "|" + a[0]; const o = out[k] || (out[k] = { m, d: a[0], c: [], s: [], p: [], t: [] });
+    o.c.push([a[1], b[1]]); if (s && !o.s.includes(s)) o.s.push(s); for (const x of p) if (!o.p.includes(x)) o.p.push(x); if (c && !o.t.includes(c)) o.t.push(c);
+    if (!min || a[0] < min) min = a[0]; if (a[0] > max) max = a[0];
+  }
+  const cal = (String(text).match(/X-CALSTART:(\d{4})(\d\d)(\d\d)/) || []), cal2 = (String(text).match(/X-CALEND:(\d{4})(\d\d)(\d\d)/) || []);
+  const periode = [cal[1] ? `${cal[1]}-${cal[2]}-${cal[3]}` : min, cal2[1] ? `${cal2[1]}-${cal2[2]}-${cal2[3]}` : max];
+  const seances = Object.values(out).sort((x, y) => (x.d + x.c[0][0]).localeCompare(y.d + y.c[0][0]));
+  seances.forEach((o) => o.c.sort((x, y) => x[0].localeCompare(y[0])));
+  return { seances, periode };
+}
+async function importIcsFile(file) {
+  if (!file) return;
+  const text = await file.text();
+  if (!/BEGIN:VCALENDAR/.test(text)) { toast("Ce fichier n'est pas un emploi du temps iCal (.ics)."); return; }
+  const { seances, periode } = parseIcs(text);
+  if (!seances.length) { toast("Aucun cours trouvé dans ce fichier."); return; }
+  if (!ecole().setup) setupEcole(PROG.modules.map((_, i) => i), true);
+  const r = syncEdt(seances, periode);
+  render(); toast(`Emploi du temps à jour : ${r.added} cours ajoutés, ${r.updated} modifiés${r.removed ? `, ${r.removed} retirés` : ""}.`);
+}
+function contenuMd(t) { return String(t || "").split("\n").map((l) => (/^\s*[-•]\s/.test(l) ? l.replace(/^\s*•\s/, "- ") : "\n" + l + "\n")).join("\n"); }
+function upcomingCours(n) { const t = today(); return ecole().cours.filter((c) => c.date && c.date >= t && !c.annule).sort((a, b) => (a.date + ((a.creneaux || [[""]])[0][0])).localeCompare(b.date + ((b.creneaux || [[""]])[0][0]))).slice(0, n); }
+function dayPill(d) { const [y, mo, dd] = d.split("-").map(Number); const dt = new Date(y, mo - 1, dd); return `<span class="c-day" title="${esc(frDate(d))}"><span><small>${dt.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "")}</small><b>${dd}</b><small>${dt.toLocaleDateString("fr-FR", { month: "short" }).replace(".", "")}</small></span></span>`; }
+function coursRow(c, opts = {}) {
+  const m = matiere(c.matiere);
+  const info = [creneauxTxt(c), (c.salles || []).join(", "), opts.withMat ? "" : (c.profs || []).join(", ")].filter(Boolean).join(" · ");
+  return `<a class="c-row ${c.annule ? "annule" : ""} ${c.date && c.date < today() ? "past" : ""}" href="#c-${esc(c.id)}" style="${mtc(m)}">${c.date ? dayPill(c.date) : `<span class="c-day none">sans<br>date</span>`}<span class="r-main">${opts.withMat && m ? `<span class="c-mat">${esc(m.nom)}</span>` : ""}<b>${esc(c.titre)}</b>${info ? `<small>${esc(info)}</small>` : ""}${(c.tags || []).length ? `<small>${c.tags.map((t) => "#" + esc(t)).join(" ")}</small>` : ""}</span><span class="c-meta">${c.annule ? `<span class="c-pill warn">annulé</span>` : ""}${(c.liens || []).length ? `<span class="c-pill">${c.liens.length} lien${c.liens.length > 1 ? "s" : ""}</span>` : ""}${String(c.notes || "").trim() ? `<span class="c-pill">notes</span>` : ""}</span><span class="mat-go" aria-hidden="true" style="opacity:1">→</span></a>`;
+}
+function edtCard() {
+  const e = ecole(); const info = e.edtInfo;
+  return `<details class="card edt-card" ${state.ui.edtOpen ? "open" : ""}><summary><b>Emploi du temps</b> <span class="muted small">${info ? `· Pronote, mis à jour le ${esc(frDate(info.maj))}${info.jusqu ? `, cours connus jusqu'au ${esc(frDate(info.jusqu))}` : ""}` : "· pas encore importé"}</span></summary>
+    <div class="stack" style="margin-top:10px">
+      <p class="small">Pour le mettre à jour : dans Pronote, ouvre ton <b>emploi du temps</b>, clique sur l'icône <b>iCal</b> puis <b>Télécharger</b>, et choisis le fichier <code>.ics</code> ici. Tes notes, liens et étiquettes sont gardés, seuls les horaires, salles et profs sont mis à jour. Tu peux aussi m'envoyer le lien dans la conversation.</p>
+      <label class="btn sm" style="align-self:flex-start">Choisir le fichier .ics<input type="file" id="edt-file" accept=".ics,text/calendar" hidden></label>
+    </div></details>`;
 }
 function render() {
   const r = currentRoute();
@@ -3258,7 +3403,7 @@ const ACTIONS = {
   ecAskDel(el) { state.ui.confirmDel = el.dataset.key; if (el.dataset.key.startsWith("mat:")) state.ui.matEdit = el.dataset.key.slice(4); render(); },
   ecCancelDel() { state.ui.confirmDel = null; render(); },
   ecDelMat(el) { const e = ecole(); const id = el.dataset.id; const cs = e.cours.filter((c) => c.matiere === id).map((c) => c.id); e.deleted.push(id, ...cs); e.matieres = e.matieres.filter((m) => m.id !== id); e.cours = e.cours.filter((c) => c.matiere !== id); state.ui.confirmDel = null; saveEcole(); location.hash = "#cours"; toast("Matière supprimée."); },
-  ecDelCours(el) { const e = ecole(); const c = coursItem(el.dataset.id); e.deleted.push(el.dataset.id); e.cours = e.cours.filter((x) => x.id !== el.dataset.id); state.ui.confirmDel = null; saveEcole(); location.hash = c && matiere(c.matiere) ? "#mat-" + c.matiere : "#cours"; toast("Cours supprimé."); },
+  ecDelCours(el) { const e = ecole(); const c = coursItem(el.dataset.id); e.deleted.push(el.dataset.id); if (c && c.edtKey) (e.edtIgnore = e.edtIgnore || []).push(c.edtKey); e.cours = e.cours.filter((x) => x.id !== el.dataset.id); state.ui.confirmDel = null; saveEcole(); location.hash = c && matiere(c.matiere) ? "#mat-" + c.matiere : "#cours"; toast("Cours supprimé."); },
   ecDelRendu(el) { const r = renduItem(el.dataset.id); state.progress.agenda = myEvents().filter((x) => x.id !== el.dataset.id); state.ui.confirmDel = null; saveProgress(); location.hash = r && matiere(r.matiere) ? "#mat-" + r.matiere : "#cours"; toast("Rendu supprimé."); },
   ecStatut(el) { const r = renduItem(el.dataset.id); if (!r) return; r.statut = el.dataset.s; r.fait = r.statut === "rendu" || r.statut === "note"; r.ts = Date.now(); saveProgress(); render(); if (r.statut === "note") { const i = document.querySelector('[data-ec="resultat"]'); if (i) i.focus(); } },
   ecCk(el) { const r = renduItem(el.dataset.id); const x = r && (r.checklist || [])[+el.dataset.i]; if (!x) return; x.ok = el.checked; r.ts = Date.now(); saveProgress(); render(); },
@@ -3515,6 +3660,7 @@ function handleForm(f, submitter) {
   }
 }
 document.addEventListener("change", (e) => {
+  if (e.target.id === "edt-file") { const f = e.target.files && e.target.files[0]; e.target.value = ""; importIcsFile(f).catch(showError); return; }
   if (e.target.dataset && e.target.dataset.ec && (e.target.type === "date" || e.target.tagName === "SELECT")) { if (ecApply(e.target)) { ecSaveKind(e.target.dataset.kind); render(); } return; }
   if (e.target.id === "g-track") { readGenForm(); render(); }
   if (e.target.id === "sb-start") { state.ui.sbStart = e.target.value.trim() || "/"; }
@@ -3522,6 +3668,7 @@ document.addEventListener("change", (e) => {
 document.addEventListener("toggle", (e) => {
   if (e.target.classList && e.target.classList.contains("prereq")) state.ui.prereqOpen = e.target.open;
   if (e.target.classList && e.target.classList.contains("r-undated")) state.ui.ecUndated = e.target.open;
+  if (e.target.classList && e.target.classList.contains("edt-card")) state.ui.edtOpen = e.target.open;
   if (e.target.dataset && e.target.dataset.bug) { if (e.target.open) state.ui.dbgOpen = e.target.dataset.bug; else if (state.ui.dbgOpen === e.target.dataset.bug) state.ui.dbgOpen = null; }
 }, true);
 let draftTimer;

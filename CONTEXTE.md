@@ -55,12 +55,20 @@ Idée pour plus tard : les cartes mémo (point 3) pourront être générées dep
 - Matière : couleur (par type par défaut), année, thèmes, évaluation, liens vers les parcours de l'atelier (`ATELIER_ALIAS`).
 - Cours : titre, date facultative, étiquettes, liens d'outils reconnus (`TOOLS` : Canva, Miro, Figma, Notion, Google…, pastille
   colorée avec initiales, pas de logos), notes markdown (`mdEditor`, même barre d'outils que Mes notes ; `nInsert` accepte une cible).
-- **Dates des cours : NE PAS les placer automatiquement.** Ana va donner son emploi du temps de cours → à importer (cours datés
-  par matière, rattachés aux jours d'école).
+- **Emploi du temps (fait le 16/11)** : Ana a donné son lien iCal Pronote/Hyperplanning (lien personnel avec jeton : ne PAS le mettre
+  dans le dépôt, il est public). Le réseau du conteneur ne joint pas pronote-campus.net → lecture via le navigateur intégré
+  (fetch depuis une page du domaine), puis `ecole/edt.json` = séances regroupées par matière et par jour
+  `{m, d, c:[[début,fin]], s:salles, p:profs, t:contenus}` (sans son nom ni sa date de naissance). Pronote ne donne que jusqu'au
+  02/01/2027 → à réimporter plus tard. `DATA.edt` → `ensureEdt()` / `syncEdt()` crée un cours par (matière, jour) avec
+  `edtKey`, `creneaux`, `salles`, `profs`, `contenu` ; rattachement via `EDT_MAP` (libellé Pronote → nom du programme, champ `prog`
+  des matières), sinon création d'une matière. Réimport : met à jour horaires/salles/profs/contenu, garde titre/notes/liens/étiquettes ;
+  séance disparue → supprimée si vide, sinon `annule`. Cours supprimé par Ana → `edtIgnore`. Ana peut aussi importer elle-même un
+  `.ics` (carte « Emploi du temps » en bas de #cours, `parseIcs`). Cours visibles dans le calendrier (type "cours") et
+  « Prochains cours » en haut de #cours.
 
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
-2. **Espace « Mes cours » (école)** — étape 1 faite (voir ci-dessus). Reste l'étape 2 : fichiers du prof (capacité `assets` : PDF/images affichés, PPTX/DOCX téléchargeables), tableau de bord « cette semaine : école ou entreprise » + échéances, et l'import de l'emploi du temps d'Ana. — PAS seulement du code : management de projet, anglais, UX/UI, etc.
+2. **Espace « Mes cours » (école)** — étape 1 faite (voir ci-dessus). Reste l'étape 2 : fichiers du prof (capacité `assets` : PDF/images affichés, PPTX/DOCX téléchargeables), tableau de bord « cette semaine : école ou entreprise » + échéances, et l'emploi du temps est importé (réimporter après le 02/01/2027). — PAS seulement du code : management de projet, anglais, UX/UI, etc.
    - Ana est en **MBA Développeur Full Stack (MyDigitalSchool, 2026-2028, en alternance)**. La liste complète des matières
      est dans `ecole/programme.json` (44 modules, M1/M2, UE, heures, ECTS, type, thèmes, évaluations, et lien vers les
      parcours de l'atelier dans `atelier`). S'en servir pour pré-remplir les matières (Ana confirme / supprime ensuite).
