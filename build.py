@@ -13,6 +13,7 @@ from c_debug import MODULES as DEBUG
 from c_api import MODULES as API
 from c_forms import MODULES as FORMS
 from c_decoupe import MODULES as DECOUPE
+from c_ts import MODULES as TSM
 
 TRACKS = [
     {"id": "php", "group": "back", "name": "PHP orienté objet", "short": "PHP POO", "color": "violet",
@@ -25,6 +26,8 @@ TRACKS = [
      "desc": "Contrôleur, DTO, service, entité, repository : leurs rôles, leurs liens, et le trajet complet React → Symfony."},
     {"id": "ddd", "group": "back", "name": "DDD (bonus)", "short": "DDD (bonus)", "color": "green",
      "desc": "Pour aller plus loin : value objects, entités riches, agrégats, architecture en couches."},
+    {"id": "ts", "group": "front", "name": "TypeScript", "short": "TypeScript", "color": "navy",
+     "desc": "Types de base, unions, génériques, null et données inconnues, React typé, lire les erreurs."},
     {"id": "react", "group": "front", "name": "React", "short": "React", "color": "cyan",
      "desc": "Composants, state, formulaires, effets, hooks personnalisés."},
     {"id": "data", "group": "front", "name": "React : données & API", "short": "Données & API", "color": "rose",
@@ -43,7 +46,7 @@ TRACKS = [
      "desc": "Créer une API (REST, erreurs, auth, cache, idempotence, limites) et la consommer en PHP et en JS."},
 ]
 
-modules = PHP + DOC + DTO + ARCH + DDD + REACT + DATA_ + FORMS + NEXT + GIT + API + DECOUPE + DEBUG
+modules = PHP + DOC + DTO + ARCH + DDD + TSM + REACT + DATA_ + FORMS + NEXT + GIT + API + DECOUPE + DEBUG
 ids = set()
 for m in modules:
     assert m["id"] not in ids, m["id"]
@@ -61,7 +64,7 @@ for m in modules:
             for f in td["files"] + td["solution"]:
                 assert f.get("path"), (m["id"], td["level"], "fichier sans chemin")
             if td.get("run"):
-                assert td["run"]["kind"] in ("php", "react", "js", "next", "git"), (m["id"], td["level"])
+                assert td["run"]["kind"] in ("php", "react", "js", "next", "git", "term"), (m["id"], td["level"])
         assert m["lessons"], (m["id"], "pas de leçon")
         assert m["example"]["files"], (m["id"], "exemple vide")
         if m.get("diagram"):
@@ -86,7 +89,7 @@ for m in modules:
 GROUPS = [
     {"id": "methode", "name": "Méthode", "desc": "Savoir s'y prendre : découper une fonctionnalité, déboguer."},
     {"id": "back", "name": "Web · Back-end", "desc": "PHP → Doctrine → DTO → Architecture → API, DDD en bonus."},
-    {"id": "front", "name": "Web · Front-end", "desc": "React → Données & API → Formulaires → Next.js."},
+    {"id": "front", "name": "Web · Front-end", "desc": "TypeScript → React → Données & API → Formulaires → Next.js."},
     {"id": "outils", "name": "Outils", "desc": "Les outils du quotidien : Git, le terminal."},
 ]
 _gids = {g["id"] for g in GROUPS}

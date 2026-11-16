@@ -17,6 +17,7 @@ Dépose ici un fichier par parcours, nommé avec l'identifiant du parcours :
 | API REST | `api.svg` |
 | Formulaires React | `forms.svg` |
 | Découper une fonctionnalité | `decoupe.svg` |
+| TypeScript | `ts.svg` |
 
 - SVG de préférence (net à toutes les tailles), sinon PNG carré d'au moins 128 px.
 - Si le fichier manque, le dashboard affiche un badge texte à la place.

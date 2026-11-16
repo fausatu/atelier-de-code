@@ -23,7 +23,7 @@
   --warn: #a96d00; --warn-soft: #fbf0d9;
   --bad: #c83c3c;  --bad-soft: #fbe5e5;
   --t-violet: #6b55cc; --t-orange: #cf6a1d; --t-green: #18865f; --t-cyan: #13809f; --t-graphite: #4a5263;
-  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f; --t-amber: #b7791f; --t-teal: #0f8a7e; --t-indigo: #4a4fc4; --t-plum: #8e3f8a;
+  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f; --t-amber: #b7791f; --t-teal: #0f8a7e; --t-indigo: #4a4fc4; --t-plum: #8e3f8a; --t-navy: #2f5d9e;
   --code-bg: #f4f7fb; --code-ink: #24292f; --code-line: #d6dfea;
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
@@ -55,7 +55,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .count.zero { background: var(--surface-2); color: var(--muted); }
 .side-group { display: flex; flex-direction: column; gap: 1px; }
 .side-group + .side-group { margin-top: 8px; }
-.group-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); opacity: 0.8; padding: 4px 10px 2px; }
+.group-label { display: flex; align-items: center; gap: 6px; width: 100%; border: 0; background: none; cursor: pointer; text-align: left; font: 600 0.68rem var(--font-body); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 5px 10px 3px; border-radius: 6px; }
+.group-label:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.group-label .gchev { width: 0; height: 0; border-left: 4px solid currentColor; border-top: 3.5px solid transparent; border-bottom: 3.5px solid transparent; transform: rotate(90deg); transition: transform .12s; }
+.side-group.shut .gchev { transform: none; }
+.group-label .gcount { margin-left: auto; font-weight: 500; letter-spacing: 0; text-transform: none; }
 .home-group { display: flex; flex-direction: column; gap: 8px; }
 .home-group + .home-group { border-top: 1px solid var(--line); padding-top: 14px; }
 .home-group h4 { margin: 0; font-size: 0.95rem; }
@@ -539,7 +543,7 @@ body.q-open .qfab { display: none; }
 "use strict";
 const DATA = /*__CONTENT__*/null;
 const INTERVALS = [1, 3, 7, 16, 35];
-const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick", "amber", "teal", "indigo", "plum"];
+const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick", "amber", "teal", "indigo", "plum", "navy"];
 const LANGS = { php: "php", tsx: "typescript", ts: "typescript", typescript: "typescript", js: "javascript", jsx: "javascript", javascript: "javascript", sql: "sql", bash: "bash", shell: "bash", yaml: "yaml", json: "json", python: "python", css: "css", html: "xml", xml: "xml", twig: "xml", plaintext: null };
 const STEPS = ["Comprendre", "Exemple", "Quiz", "TD"];
 const LEVEL_NAMES = { 1: "Niveau 1 · Appliquer", 2: "Niveau 2 · Adapter", 3: "Niveau 3 · Approfondir" };
@@ -756,6 +760,7 @@ function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = fal
 
 /* ---------- contenu ---------- */
 function tracks() { return DATA.tracks.concat(state.custom.tracks || []); }
+const closedGroups = new Set((() => { try { return JSON.parse(localStorage.getItem("atelier:groupesFermes") || "[]"); } catch (e) { return []; } })());
 function trackGroups() {
   const defs = (DATA.groups || []).concat([{ id: "perso", name: "Mes parcours", desc: "Les parcours que tu as ajoutés." }]);
   const known = new Set(defs.map((g) => g.id));
@@ -929,7 +934,12 @@ function renderSide() {
       ${open ? `<div class="mods">${mods}<a class="mod-link all" href="#t-${esc(t.id)}">Voir le parcours</a></div>` : ""}
     </div>`;
   };
-  const groups = trackGroups().map((g) => `<div class="side-group"><div class="group-label">${esc(g.name)}</div>${g.tracks.map(trackItem).join("")}</div>`).join("");
+  const groups = trackGroups().map((g) => {
+    const hasCur = g.tracks.some((t) => t.id === curTrack);
+    const shut = closedGroups.has(g.id) && !hasCur;
+    const done = g.tracks.reduce((a, t) => a + trackStats(t.id).done, 0), total = g.tracks.reduce((a, t) => a + trackStats(t.id).total, 0);
+    return `<div class="side-group ${shut ? "shut" : ""}"><button class="group-label" data-act="toggleGroup" data-id="${esc(g.id)}" aria-expanded="${!shut}"><span class="gchev" aria-hidden="true"></span>${esc(g.name)}<span class="gcount">${shut ? `${done}/${total}` : ""}</span></button>${shut ? "" : g.tracks.map(trackItem).join("")}</div>`;
+  }).join("");
   $("#side").innerHTML = `
     <a class="brand" href="#accueil"><b>Atelier de code</b></a>
     <nav class="nav-main">
@@ -1292,7 +1302,7 @@ function panelTD(m) {
   const runnerUI = run ? `
       <div class="runout">
         <div class="row"><button class="btn run" data-act="run" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>${runState.busy ? '<span class="spin"></span> Exécution…' : (run === "php" ? "▶ Exécuter le PHP" : run === "git" ? "▶ Lancer les commandes" : "▶ Exécuter")}</button>${td.run.tests ? `<button class="btn" data-act="runTests" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>Lancer les tests</button>` : ""}<span class="muted small">${run === "php" ? "PHP 8.4 tourne dans ton navigateur." : run === "git" ? "Git simulé : tes commandes s'exécutent dans un dépôt de test, recréé à chaque lancement." : "Ton code tourne dans ton navigateur."}</span></div>
-        ${run !== "php" ? `<div class="preview${run === "git" ? " tall" : ""}" ${runState.html === undefined && !runState.frame ? 'style="display:none"' : ""}><iframe id="prev-${esc(key)}" sandbox="allow-scripts allow-forms" title="Aperçu"></iframe></div>` : ""}
+        ${run !== "php" ? `<div class="preview${run === "git" ? " tall" : ""}" ${(runState.html === undefined && !runState.frame) || run === "js" ? 'style="display:none"' : ""}><iframe id="prev-${esc(key)}" sandbox="allow-scripts allow-forms" title="Aperçu"></iframe></div>` : ""}
         <div class="out-head">Sortie</div>
         <pre class="console" id="con-${esc(key)}">${runState.console !== undefined ? runState.console : '<span class="dim">Clique sur Exécuter pour voir le résultat ici.</span>'}</pre>
         ${runState.tests ? renderTests(runState.tests) : ""}
@@ -1403,12 +1413,64 @@ async function runPhp(m, td, key, withTests) {
   }
   rs.busy = false; render();
 }
-const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font:14px/1.5 system-ui,sans-serif;margin:12px;color:#1f2633}button{font:inherit}input,textarea,select{font:inherit}</style></head><body><div id="root"></div>
+const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start, opts) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font:14px/1.5 system-ui,sans-serif;margin:12px;color:#1f2633}button{font:inherit}input,textarea,select{font:inherit}</style></head><body><div id="root"></div>
 <script>(function () { const L = ${JSON.stringify(libs.code || []).replace(/</g, "\\u003c")}; for (const c of L) { try { (0, eval)(c); } catch (e) { parent.postMessage({ atelier: true, type: "error", text: "Bibliothèque : " + e.message }, "*"); } } })();<\/script>
 <script>
 (function(){
   const files = ${JSON.stringify(files)};
   const post = (m) => parent.postMessage(Object.assign({ atelier: true }, m), "*");
+  const OPTS = ${JSON.stringify(opts || {}).replace(/</g, "\\u003c")};
+  /* ---- vérification TypeScript (compilateur dans l'aperçu) ---- */
+  let TS_DIAG = [], TS_CASES = [];
+  function tsCheck(extra) {
+    const ts = window.ts, LIBS = window.__TS_LIBS;
+    if (window.__TS_FR && !tsCheck.fr) { try { ts.setLocalizedDiagnosticMessages(window.__TS_FR); } catch (e) {} tsCheck.fr = true; }
+    const FS = new Map(Object.entries(LIBS)); const roots = [];
+    for (const [p, c] of Object.entries(Object.assign({}, files, extra || {}))) { if (!/\\.(tsx?)$/.test(p)) continue; const k = "/" + p.replace(/^\\/+/, ""); FS.set(k, c); roots.push(k); }
+    const dirs = new Set(); for (const k of FS.keys()) { let d = k; while ((d = d.slice(0, d.lastIndexOf("/")))) dirs.add(d); }
+    const host = {
+      getSourceFile: (fn, lv) => { const t = FS.get(fn); return t === undefined ? undefined : ts.createSourceFile(fn, t, lv); },
+      getDefaultLibFileName: () => "/lib.d.ts", writeFile: () => {}, getCurrentDirectory: () => "/",
+      getDirectories: (p) => [...dirs].filter((d) => d.startsWith(p.replace(/\\/$/, "") + "/") && !d.slice(p.length + 1).includes("/")).map((d) => d.split("/").pop()),
+      fileExists: (f) => FS.has(f), readFile: (f) => FS.get(f), directoryExists: (d) => d === "/" || dirs.has(d.replace(/\\/$/, "")),
+      getCanonicalFileName: (f) => f, useCaseSensitiveFileNames: () => true, getNewLine: () => "\\n", realpath: (f) => f,
+    };
+    const o = { strict: true, noEmit: true, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true, skipLibCheck: true, types: [], noFallthroughCasesInSwitch: true, isolatedModules: true };
+    const program = ts.createProgram(roots, o, host);
+    return ts.getPreEmitDiagnostics(program).filter((d) => !d.file || !(d.file.fileName === "/lib.d.ts" || d.file.fileName.startsWith("/node_modules/"))).map((d) => {
+      const pos = d.file ? d.file.getLineAndCharacterOfPosition(d.start || 0) : { line: 0, character: 0 };
+      return { file: d.file ? d.file.fileName.slice(1) : "", line: pos.line + 1, col: pos.character + 1, code: d.code, message: ts.flattenDiagnosticMessageText(d.messageText, "\\n") };
+    });
+  }
+  function prepareTypeTests(src) {
+    const out = [], cases = [];
+    src.split("\\n").forEach((l) => {
+      const m = l.match(/^\\s*\\/\\/\\s*(✗|✓)\\s*(.*)$/);
+      if (m) { cases.push({ kind: m[1], name: m[2], line: out.length + (m[1] === "✗" ? 2 : 1) + 1 }); out.push(l); if (m[1] === "✗") out.push("// @ts-expect-error"); }
+      else out.push(l);
+    });
+    return { src: out.join("\\n"), cases };
+  }
+  if (OPTS.typecheck) {
+    if (!window.ts || !window.__TS_LIBS) post({ type: "error", text: "Le vérificateur TypeScript n'a pas pu être chargé." });
+    else try {
+      const tt = OPTS.typetests ? prepareTypeTests(OPTS.typetests) : null;
+      TS_DIAG = tsCheck(tt ? { "verif-types.tsx": tt.src } : null);
+      const mine = TS_DIAG.filter((d) => d.file !== "verif-types.tsx");
+      if (!mine.length) post({ type: "console", level: "info", text: "✓ TypeScript : aucune erreur de type" });
+      else { post({ type: "console", level: "error", text: "✗ TypeScript : " + mine.length + " erreur" + (mine.length > 1 ? "s" : "") + " de type" }); for (const d of mine) post({ type: "console", level: "error", text: d.file + ":" + d.line + ":" + d.col + "  TS" + d.code + "  " + d.message }); }
+      if (tt) {
+        const vd = TS_DIAG.filter((d) => d.file === "verif-types.tsx");
+        const srcLines = tt.src.split("\\n");
+        TS_CASES = tt.cases.map((c) => {
+          const code = (srcLines[c.line - 1] || "").trim();
+          if (c.kind === "✗") { const unused = vd.find((d) => d.code === 2578 && d.line === c.line - 1); return { ok: !unused, name: "Refusé par les types : " + c.name, detail: unused ? "TypeScript accepte « " + code + " » alors qu'il devrait le refuser" : "" }; }
+          const err = vd.find((d) => d.line === c.line);
+          return { ok: !err, name: "Accepté par les types : " + c.name, detail: err ? "TypeScript refuse « " + code + " » : " + err.message : "" };
+        });
+      }
+    } catch (e) { post({ type: "error", text: "Vérification TypeScript : " + (e && e.message || e) }); }
+  }
   const fmt = (a) => a.map((x) => { try { return typeof x === "string" ? x : JSON.stringify(x, null, 1); } catch (e) { return String(x); } }).join(" ");
   ["log", "info", "warn", "error"].forEach((k) => { const o = console[k].bind(console); console[k] = (...a) => { o(...a); post({ type: "console", level: k, text: fmt(a) }); }; });
   window.addEventListener("error", (e) => post({ type: "error", text: String(e.message) }));
@@ -1529,6 +1591,7 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start) => `<!DOCTYP
   const h = {
     get next() { return window.__next; },
     get git() { return window.__git; },
+    typeErrors: (file) => TS_DIAG.filter((d) => d.file !== "verif-types.tsx" && (!file || d.file === file)),
     sleep, tick, root, require: req, source: (p) => files[p] || "",
     $: (s) => root.querySelector(s), $$: (s) => Array.from(root.querySelectorAll(s)),
     text: () => root.textContent,
@@ -1547,6 +1610,8 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start) => `<!DOCTYP
     assert.includes = (hay, needle, name) => assert(String(hay).includes(needle), name, "introuvable : " + JSON.stringify(needle));
     const deepEq = (x, y) => { if (x === y) return true; if (typeof x !== "object" || typeof y !== "object" || !x || !y) return false; if (Array.isArray(x) !== Array.isArray(y)) return false; const kx = Object.keys(x).filter((k) => x[k] !== undefined), ky = Object.keys(y).filter((k) => y[k] !== undefined); if (kx.length !== ky.length) return false; return kx.every((k) => deepEq(x[k], y[k])); };
     assert.deepEqual = (a, b, name, detail) => assert(deepEq(a, b), name, detail || ("attendu : " + JSON.stringify(b) + " · obtenu : " + JSON.stringify(a)));
+    assert.noTypeErrors = (name, file) => { const e = TS_DIAG.filter((d) => d.file !== "verif-types.tsx" && (!file || d.file === file)); assert(e.length === 0, name || "Aucune erreur de type", e.slice(0, 3).map((d) => d.file + ":" + d.line + " TS" + d.code + " " + d.message).join(" · ")); };
+    for (const c of TS_CASES) cases.push(c);
     try { const fn = new Function("assert", "h", "with (h) { return (async () => { " + src + "\\n })(); }"); await fn(assert, h); }
     catch (e) { error = String(e && e.message || e); }
     post({ type: "tests", cases, error });
@@ -1574,7 +1639,8 @@ function runJs(m, td, key, withTests) {
   if (Object.values(files).some((c) => /from ['"](react-hook-form|@tanstack\/react-form|zod|@hookform\/resolvers\/zod)['"]/.test(c))) libs.forms = BASE + "vendor/forms/forms.js?v=1";
   if (td.run.kind === "next") libs.next = BASE + "vendor/next-sim/next-sim.js?v=4";
   if (td.run.kind === "git") libs.git = BASE + "vendor/git-sim/git-sim.js?v=1";
-  const order = ["react", "reactDom", "babel", "tanstack", "forms", "next", "git"].filter((k) => libs[k]);
+  if (td.run.typecheck) { libs.ts = BASE + "vendor/ts/typescript.js?v=1"; libs.tslibs = BASE + "vendor/ts/libs.js?v=1"; }
+  const order = ["react", "reactDom", "babel", "tanstack", "forms", "next", "git", "ts", "tslibs"].filter((k) => libs[k]);
   Promise.all(order.map((k) => libText(libs[k]))).then((code) => {
     libs.code = code;
     runJsFrame(m, td, key, withTests, rs, files, entry, libs);
@@ -1589,7 +1655,7 @@ function libText(url) {
   return LIB_CACHE[url] || (LIB_CACHE[url] = fetch(url).then((r) => { if (!r.ok) throw new Error(url + " (" + r.status + ")"); return r.text(); }).catch((e) => { delete LIB_CACHE[url]; throw e; }));
 }
 function runJsFrame(m, td, key, withTests, rs, files, entry, libs) {
-  const html = JS_RUNNER(files, entry, td.run.api || "", withTests ? td.run.tests || "" : "", libs, td.run.kind, td.run.start);
+  const html = JS_RUNNER(files, entry, td.run.api || "", withTests ? td.run.tests || "" : "", libs, td.run.kind, td.run.start, { typecheck: !!td.run.typecheck, typetests: withTests ? td.run.typetests || "" : "" });
   const iframe = $("#prev-" + CSS.escape(key));
   if (!iframe) { rs.busy = false; return; }
   const lines = [];
@@ -2484,6 +2550,12 @@ const ACTIONS = {
     if (st === 3) state.ui.level[q.ctx.module] = Number(q.ctx.etape.replace(/\D/g, "")) || 1;
     if (window.matchMedia("(max-width: 720px)").matches) qSetOpen(false);
     if (location.hash === "#m-" + q.ctx.module) render(); else location.hash = "#m-" + q.ctx.module;
+  },
+  toggleGroup(el) {
+    const id = el.dataset.id;
+    if (closedGroups.has(id)) closedGroups.delete(id); else closedGroups.add(id);
+    try { localStorage.setItem("atelier:groupesFermes", JSON.stringify([...closedGroups])); } catch (e) {}
+    renderSide();
   },
   delTrack(el) { state.custom.tracks = state.custom.tracks.filter((t) => t.id !== el.dataset.id); libWriter.schedule(); render(); },
 };
