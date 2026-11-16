@@ -44,7 +44,9 @@ Idée pour plus tard : les cartes mémo (point 3) pourront être générées dep
 
 ## Mes cours, étape 1 (fait le 16/11) : matières, cours, rendus
 - Route `#cours` (lien « Mes cours » dans la barre latérale, pastille = rendus dans les 14 jours), `#mat-<id>`, `#c-<id>` (cours), `#r-<id>` (rendu).
-- Premier passage : écran de préparation à partir de `ecole/programme.json` (injecté par build.py dans `DATA.programme`) ; Ana coche
+- Premier passage : un bouton « Préparer mes matières » crée tout (+ lien « Choisir une par une » = ancien écran à cases). Cartes de matière = liens
+  avec icône par type (`TYPE_ICONS`), en-tête « héros » sur la page matière, cours avec pastille de date.
+- (ancien) écran de préparation à partir de `ecole/programme.json` (injecté par build.py dans `DATA.programme`) ; Ana coche
   ses matières, + option « grands rendus connus » (`KNOWN_RENDUS`, date à définir).
 - **Stockage** : `state.ecole = { matieres, cours, deleted, setup }` → localStorage + doc db `data/users/<uid>/ecole` (`ecoleWriter`)
   + export/GitHub (`snapshotData`, fusion par id avec `ts`, `deleted` = suppressions). Les **rendus** restent dans

@@ -572,21 +572,46 @@ body.q-open .qfab { display: none; }
 .q-ans .who { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .q-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 /* Mes cours */
+.mat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.mat-card { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 14px 14px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; transition: transform .14s, box-shadow .14s, border-color .14s; min-height: 150px; }
+.mat-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; border-radius: 14px 14px 0 0; background: var(--tc); opacity: .85; }
+.mat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgb(31 38 51 / 0.09); border-color: color-mix(in srgb, var(--tc) 45%, var(--line)); }
+.mat-card:focus-visible { outline: 2px solid var(--tc); outline-offset: 2px; }
+.mat-top { display: flex; align-items: center; gap: 9px; }
+.mat-ic { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: color-mix(in srgb, var(--tc) 13%, var(--surface)); color: var(--tc); }
+.mat-ic svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mat-type { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--tc); line-height: 1.2; }
+.mat-name { font: 600 1rem/1.3 var(--font-display); letter-spacing: -0.005em; }
+.mat-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 0.8rem; color: var(--muted); }
+.mat-foot { margin-top: auto; display: flex; align-items: center; gap: 8px; padding-top: 9px; border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent); font-size: 0.8rem; color: var(--muted); }
+.mat-foot .due { color: var(--warn); font-weight: 600; }
+.mat-foot .late { color: var(--bad); font-weight: 600; }
+.mat-go { margin-left: auto; color: var(--tc); font-weight: 700; transform: translateX(-3px); opacity: .35; transition: opacity .14s, transform .14s; }
+.mat-card:hover .mat-go { opacity: 1; transform: none; }
+.mat-hero { position: relative; display: flex; gap: 16px; align-items: flex-start; padding: 20px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--tc) 25%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--tc) 10%, var(--surface)), var(--surface) 70%); }
+.mat-hero .mat-ic { width: 52px; height: 52px; border-radius: 14px; }
+.mat-hero .mat-ic svg { width: 26px; height: 26px; }
+.mat-hero h1 { font-size: 1.7rem; }
+.mat-hero .chip { background: var(--surface); border: 1px solid color-mix(in srgb, var(--tc) 30%, var(--line)); }
+.c-row .c-day { flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 10px; background: color-mix(in srgb, var(--tc) 11%, var(--surface)); color: var(--tc); line-height: 1; text-align: center; }
+.c-day b { font: 700 1.05rem var(--font-display); display: block; }
+.c-day small { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.c-day.none { background: var(--surface-2); color: var(--muted); font-size: 0.66rem; font-weight: 600; }
+.c-row { border-left-width: 1px !important; }
+.c-row:hover { transform: translateX(2px); }
+.c-row .c-meta { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.c-pill { font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+.ec-start { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; padding: 26px; border-radius: 16px; background: linear-gradient(135deg, var(--accent-soft), var(--surface) 70%); border: 1px solid var(--line); }
+.ec-start ul { margin: 0; padding-left: 18px; color: var(--muted); }
+.setup-item.off { opacity: .5; }
+.setup-item input { accent-color: var(--tc); }
 .r-undated > summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; padding: 4px 0; }
 .r-undated .r-list { margin-top: 6px; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
 .seg button { border: 0; background: transparent; padding: 5px 12px; font-size: 0.84rem; font-weight: 500; color: var(--muted); cursor: pointer; }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button.on { background: var(--tc, var(--accent)); color: #fff; }
-.mat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
-.mat-card { position: relative; display: flex; flex-direction: column; gap: 3px; padding: 14px 14px 12px 18px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--ink); text-decoration: none; overflow: hidden; }
-.mat-card:hover { border-color: var(--tc); }
-.mat-card .mat-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--tc); }
-.mat-card b { font-weight: 600; line-height: 1.3; }
-.mat-card small { color: var(--muted); font-size: 0.8rem; }
-.mat-foot { margin-top: 6px; font-size: 0.82rem; }
 .warn-t { color: var(--warn); font-weight: 600; }
-.mat-title { border-left: 6px solid var(--tc); padding-left: 12px; }
 .r-list, .c-list { display: flex; flex-direction: column; gap: 6px; }
 .r-row, .c-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border: 1px solid var(--line); border-left: 4px solid var(--tc); border-radius: 8px; background: var(--surface); color: var(--ink); text-decoration: none; }
 .r-row:hover, .c-row:hover { border-color: var(--tc); }
@@ -2929,6 +2954,20 @@ function rendus() { return myEvents().filter((e) => e.type === "rendu"); }
 function renduItem(id) { return rendus().find((r) => r.id === id); }
 function renduStatut(r) { return r.statut || (r.fait ? "rendu" : "a_faire"); }
 function renduOpen(r) { const s = renduStatut(r); return s === "a_faire" || s === "en_cours"; }
+const TYPE_ICONS = {
+  dev: '<path d="M8 7 3 12l5 5M16 7l5 5-5 5"/>',
+  gestion: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16M5.5 8h1.5M11 8h2M11 11.5h2M17 8h1.5"/>',
+  design: '<path d="M12 3a9 9 0 1 0 0 18c1 0 1.5-.7 1.5-1.5 0-.5-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.9.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.4-4-7.8-9-7.8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/>',
+  soft: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.7 5.5-4.7s4.9 1.7 5.5 4.7"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.4c2.3 0 4 1.3 4.5 3.8"/>',
+  langue: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9c-2.5-2.6-3.7-5.6-3.7-9S9.5 5.6 12 3z"/>',
+  droit: '<path d="M12 4v16M7 20h10M5 7h14M5 7l-2.5 6a3 3 0 0 0 5 0L5 7zM19 7l-2.5 6a3 3 0 0 0 5 0L19 7z"/>',
+  rse: '<path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19 13 11"/>',
+  securite: '<path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.4 7.5 9.5 4.4-1.1 7.5-4.9 7.5-9.5V6z"/><path d="m9 12 2 2 4-4"/>',
+  projet: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  option: '<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  autre: '<path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v14H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 1 6.5 18H20"/>',
+};
+function matIcon(m) { return `<span class="mat-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${TYPE_ICONS[m && m.type] || TYPE_ICONS.autre}</svg></span>`; }
 function matColor(m) { return COLORS.includes(m && m.couleur) ? m.couleur : "graphite"; }
 function mtc(m) { return `--tc: var(--t-${matColor(m)})`; }
 function ecYear() { return state.ui.ecYear || (today() < "2027-09-01" ? "M1" : "M2"); }
@@ -2974,17 +3013,25 @@ function renduRow(r, opts = {}) {
   </a>`;
 }
 function viewEcoleSetup() {
+  const nM1 = PROG.modules.filter((m) => m.annee === "M1").length, nM2 = PROG.modules.length - nM1;
+  if (!state.ui.ecChoose) return `<div class="wrap">
+    <div class="ec-start">
+      <div class="eyebrow">${esc(PROG.formation || "MBA")} · ${esc(PROG.ecole || "")} · ${esc(PROG.promo || "")}</div>
+      <h1>Mes cours</h1>
+      <p class="lead" style="margin:0">Je prépare toutes les matières de ton programme. Tu pourras ensuite en supprimer (une option que tu ne suis pas, par exemple), en ajouter ou les renommer.</p>
+      <ul><li>${nM1} matières en M1, ${nM2} en M2, rangées par bloc de compétences</li><li>les ${KNOWN_RENDUS.length} grands rendus connus (Go / No-go, rapport d'entreprise, TOEIC…), avec « date à définir »</li><li>pas de dates de cours : on les ajoutera avec ton emploi du temps</li></ul>
+      <div class="row"><button class="btn primary" data-act="ecSetupGo">Préparer mes matières</button><button class="btn ghost" data-act="ecChoose">Choisir les matières une par une</button></div>
+    </div></div>`;
   const by = {};
   PROG.modules.forEach((m, i) => { (by[m.annee] = by[m.annee] || {}); (by[m.annee][m.ue] = by[m.annee][m.ue] || []).push([m, i]); });
   return `<div class="wrap">
-    <div class="stack"><div class="eyebrow">${esc(PROG.formation || "MBA")} · ${esc(PROG.ecole || "")} · ${esc(PROG.promo || "")}</div><h1>Mes cours</h1>
-      <p class="lead">Je prépare tes matières à partir de ton programme. Décoche celles que tu ne veux pas (une option que tu n'as pas prise, par exemple) : tu pourras en ajouter, renommer ou supprimer plus tard. Les dates de cours, on les ajoutera avec ton emploi du temps.</p></div>
+    <div class="stack"><h1>Choisir mes matières</h1><p class="lead">Coche les matières que tu suis, puis valide en bas de la page.</p></div>
     <form class="stack" data-form="ecSetup" style="gap:18px">
       ${Object.entries(by).map(([an, ues]) => `<div class="card stack"><div class="row"><h2 style="margin:0">${an === "M1" ? "1re année (M1 · 2026-2027)" : "2e année (M2 · 2027-2028)"}</h2><span class="spacer"></span><button type="button" class="btn sm ghost" data-act="ecSetupAll" data-an="${an}">Tout cocher / décocher</button></div>
         ${Object.entries(ues).map(([ue, ms]) => `<div class="stack" style="gap:6px"><div class="eyebrow">${esc(PROG.ue[ue] || ue)}</div><div class="setup-grid">${ms.map(([m, i]) => `<label class="setup-item" style="--tc: var(--t-${TYPE_COLOR[m.type] || "graphite"})"><input type="checkbox" name="m" value="${i}" data-an="${an}" checked><span><b>${esc(m.nom)}</b><small>${esc(PROG.types[m.type] || m.type)} · ${m.heures} h${m.ects ? ` · ${m.ects} ECTS` : ""}</small></span></label>`).join("")}</div></div>`).join("")}
       </div>`).join("")}
-      <label class="row"><input type="checkbox" name="rendus" checked> Ajouter aussi les grands rendus connus (${KNOWN_RENDUS.length}, avec « date à définir ») : rapport d'entreprise, Go / No-go, TOEIC, MOOC ANSSI…</label>
-      <div class="row"><button class="btn primary">Créer mes matières</button><button type="button" class="btn ghost" data-act="ecSetupEmpty">Commencer sans rien</button></div>
+      <label class="row"><input type="checkbox" name="rendus" checked> Ajouter aussi les ${KNOWN_RENDUS.length} grands rendus connus (date à définir)</label>
+      <div class="row"><button class="btn primary">Créer mes matières</button><button type="button" class="btn ghost" data-act="ecChoose">← Retour</button></div>
     </form>
   </div>`;
 }
@@ -2999,9 +3046,18 @@ function viewEcole() {
   const openR = allR.filter(renduOpen); const shownR = showAll ? allR : openR;
   const ues = {}; mats.forEach((m) => (ues[m.ue || "_"] = ues[m.ue || "_"] || []).push(m));
   const card = (m) => {
-    const nc = e.cours.filter((c) => c.matiere === m.id).length; const nr = rendus().filter((r) => r.matiere === m.id && renduOpen(r)).length;
-    return `<a class="mat-card" href="#mat-${esc(m.id)}" style="${mtc(m)}"><span class="mat-bar"></span><b>${esc(m.nom)}</b><small>${esc(PROG.types[m.type] || "Matière")}${m.heures ? ` · ${m.heures} h` : ""}${m.ects ? ` · ${m.ects} ECTS` : ""}</small><span class="mat-foot">${nc ? `${nc} cours` : `<span class="muted">aucun cours</span>`}${nr ? ` · <span class="warn-t">${nr} rendu${nr > 1 ? "s" : ""}</span>` : ""}</span></a>`;
+    const nc = e.cours.filter((c) => c.matiere === m.id).length;
+    const rs = sortRendus(rendus().filter((r) => r.matiere === m.id && renduOpen(r)));
+    const nxt = rs.find((r) => r.date);
+    const late = nxt && nxt.date < today();
+    return `<a class="mat-card" href="#mat-${esc(m.id)}" style="${mtc(m)}" aria-label="${esc(m.nom)}">
+      <span class="mat-top">${matIcon(m)}<span class="mat-type">${esc(PROG.types[m.type] || "Matière")}</span></span>
+      <span class="mat-name">${esc(m.nom)}</span>
+      <span class="mat-meta">${m.heures ? `<span>${m.heures} h</span>` : ""}${m.ects ? `<span>${m.ects} ECTS</span>` : ""}${m.mode ? `<span>${esc(m.mode)}</span>` : ""}</span>
+      <span class="mat-foot"><span>${nc ? `${nc} cours` : "Aucun cours"}</span>${nxt ? `<span class="${late ? "late" : "due"}">· rendu ${late ? "en retard" : relDays(nxt.date)}</span>` : rs.length ? `<span class="due">· ${rs.length} rendu${rs.length > 1 ? "s" : ""}</span>` : ""}<span class="mat-go" aria-hidden="true">→</span></span>
+    </a>`;
   };
+
   return `<div class="wrap">
     <div class="stack" style="gap:4px"><div class="eyebrow">${esc(PROG.formation || "MBA")} · ${esc(PROG.ecole || "")}</div><h1>Mes cours</h1>
       <p class="lead" style="margin:0">Tes matières, tes cours (notes, liens vers tes outils) et tes rendus. Les rendus apparaissent aussi dans le <a href="#calendrier">calendrier</a>.</p></div>
@@ -3025,17 +3081,18 @@ function viewMatiere(id) {
   const ateliers = (m.atelier || []).map((a) => ATELIER_ALIAS[a] || a).filter((a) => tracks().some((t) => t.id === a));
   const confirm = state.ui.confirmDel === "mat:" + id;
   return `<div class="wrap" style="${mtc(m)}">
-    <div class="stack" style="gap:6px"><div class="row small"><a href="#cours">Mes cours</a><span class="muted">› ${esc(m.annee || "")}${m.ue && PROG.ue[m.ue] ? " · " + esc(PROG.ue[m.ue]) : ""}</span></div>
-      <h1 class="mat-title">${esc(m.nom)}</h1>
-      <div class="row">${[PROG.types[m.type], m.heures ? m.heures + " h" : "", m.ects ? m.ects + " ECTS" : "", m.mode].filter(Boolean).map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div>
+    <div class="row small"><a href="#cours">Mes cours</a><span class="muted">› ${esc(m.annee || "")}${m.ue && PROG.ue[m.ue] ? " · " + esc(PROG.ue[m.ue]) : ""}</span></div>
+    <div class="mat-hero">${matIcon(m)}<div class="stack" style="gap:8px;flex:1;min-width:0"><span class="mat-type">${esc(PROG.types[m.type] || "Matière")}</span>
+      <h1>${esc(m.nom)}</h1>
+      <div class="row">${[m.heures ? m.heures + " h" : "", m.ects ? m.ects + " ECTS" : "", m.mode].filter(Boolean).map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div>
       ${m.evaluation ? `<p><b>Évaluation :</b> ${esc(m.evaluation)}</p>` : ""}
       ${(m.themes || []).length ? `<p class="muted small"><b>Au programme :</b> ${m.themes.map(esc).join(" · ")}</p>` : ""}
       ${ateliers.length ? `<div class="row small"><span class="muted">S'entraîner dans l'atelier :</span>${ateliers.map((a) => `<a class="chip" style="${tc(track(a))};text-decoration:none" href="#t-${esc(a)}">${esc(track(a).short || track(a).name)}</a>`).join("")}</div>` : ""}
-    </div>
+    </div></div>
     <div class="card stack">
       <div class="row"><h2 style="margin:0">Cours</h2><span class="muted small">${cs.length}</span></div>
       <form class="row" data-form="ecNewCours" data-mat="${esc(id)}"><input class="field" name="titre" placeholder="Titre du cours (ex. : Séance 1 : les personas)" required maxlength="160" style="flex:1;min-width:200px"><input class="field" type="date" name="date" title="Date (facultatif)"><button class="btn sm primary">Ajouter le cours</button></form>
-      <div class="c-list">${cs.map((c) => `<a class="c-row" href="#c-${esc(c.id)}"><span class="c-date">${c.date ? esc(frDate(c.date)) : "sans date"}</span><span class="r-main"><b>${esc(c.titre)}</b>${(c.tags || []).length ? `<small>${c.tags.map((t) => "#" + esc(t)).join(" ")}</small>` : ""}</span><span class="muted small">${(c.liens || []).length ? `${c.liens.length} lien${c.liens.length > 1 ? "s" : ""}` : ""}${String(c.notes || "").trim() ? " · notes" : ""}</span></a>`).join("") || `<p class="muted small">Aucun cours pour l'instant.</p>`}</div>
+      <div class="c-list">${cs.map((c) => `<a class="c-row" href="#c-${esc(c.id)}">${c.date ? (() => { const [y, mo, d] = c.date.split("-").map(Number); const dt = new Date(y, mo - 1, d); return `<span class="c-day" title="${esc(frDate(c.date))}"><span><b>${d}</b><small>${dt.toLocaleDateString("fr-FR", { month: "short" }).replace(".", "")}</small></span></span>`; })() : `<span class="c-day none">sans<br>date</span>`}<span class="r-main"><b>${esc(c.titre)}</b>${(c.tags || []).length ? `<small>${c.tags.map((t) => "#" + esc(t)).join(" ")}</small>` : ""}</span><span class="c-meta">${(c.liens || []).length ? `<span class="c-pill">${c.liens.length} lien${c.liens.length > 1 ? "s" : ""}</span>` : ""}${String(c.notes || "").trim() ? `<span class="c-pill">notes</span>` : ""}</span><span class="mat-go" aria-hidden="true" style="opacity:1">→</span></a>`).join("") || `<p class="muted small">Aucun cours pour l'instant.</p>`}</div>
     </div>
     <div class="card stack">
       <div class="row"><h2 style="margin:0">Rendus</h2><span class="spacer"></span><button class="btn sm" data-act="ecNewRendu" data-mat="${esc(id)}">+ Rendu</button></div>
@@ -3191,7 +3248,8 @@ function keepDrafts() {
 }
 const ACTIONS = {
   ecSetupAll(el) { const bs = [...document.querySelectorAll(`form[data-form=ecSetup] input[name=m][data-an="${el.dataset.an}"]`)]; const on = !bs.every((b) => b.checked); bs.forEach((b) => (b.checked = on)); },
-  ecSetupEmpty() { ecole().setup = true; saveEcole(); render(); },
+  ecSetupGo() { setupEcole(PROG.modules.map((_, i) => i), true); render(); toast(`${PROG.modules.length} matières prêtes. Clique sur une matière pour l'ouvrir.`); },
+  ecChoose() { state.ui.ecChoose = !state.ui.ecChoose; render(); },
   ecYear(el) { state.ui.ecYear = el.dataset.y; render(); },
   ecAllRendus() { state.ui.ecAllRendus = !state.ui.ecAllRendus; render(); },
   ecNewMat() { const y = ecYear(); const m = { id: "mat" + rid(), nom: "Nouvelle matière", annee: y === "tout" ? "M1" : y, ue: "", type: "", couleur: COLORS[ecole().matieres.length % COLORS.length], heures: 0, ects: 0, themes: [], atelier: [], ts: Date.now() }; ecole().matieres.push(m); saveEcole(); state.ui.matEdit = m.id; location.hash = "#mat-" + m.id; setTimeout(() => { const i = document.querySelector('[data-ec="nom"]'); if (i) { i.focus(); i.select(); } }, 60); },
