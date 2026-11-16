@@ -25,6 +25,10 @@ tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barr
    - Ana est en **MBA Développeur Full Stack (MyDigitalSchool, 2026-2028, en alternance)**. La liste complète des matières
      est dans `ecole/programme.json` (44 modules, M1/M2, UE, heures, ECTS, type, thèmes, évaluations, et lien vers les
      parcours de l'atelier dans `atelier`). S'en servir pour pré-remplir les matières (Ana confirme / supprime ensuite).
+   - **Alternance** : `ecole/calendrier.json` = calendrier jour par jour (école / entreprise / examens / rattrapages / férié),
+     les périodes regroupées et les dates clés (M1 : examens le 23/04/2027 ; M2 : examens 03-07/07/2028). Idées : afficher
+     « cette semaine : école ou entreprise », planifier les révisions et les rendus selon les semaines d'école, et rattacher
+     les cours aux jours d'école.
    - Grands rendus connus : My Digital Start-up (Go/No-go au printemps M1, livrables M2), rapport d'entreprise (M1),
      note d'intention du mémoire (début M2), workshops client 2 et 3, certificat MOOC ANSSI, Orthodidacte niveau 3, TOEIC.
    - Matières (couleur, semestre) → cours (date, étiquettes) avec : fichiers du prof (PDF/images affichés, PPTX/DOCX téléchargeables
