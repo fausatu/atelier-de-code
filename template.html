@@ -585,6 +585,24 @@ body.q-open .qfab { display: none; }
 .q-ans .who { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .q-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 /* Mes cours */
+.file-list { display: flex; flex-direction: column; gap: 6px; }
+.file-row { display: flex; align-items: center; gap: 8px; }
+.file-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); cursor: pointer; text-align: left; color: var(--ink); }
+.file-open:hover { border-color: var(--tc, var(--accent)); }
+.fb { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; color: #fff; font: 700 0.68rem var(--font-body); letter-spacing: .03em; }
+.dropzone { display: flex; flex-direction: column; gap: 3px; align-items: center; text-align: center; padding: 16px; border: 2px dashed color-mix(in srgb, var(--tc, var(--accent)) 35%, var(--line)); border-radius: 12px; cursor: pointer; color: var(--muted); font-size: 0.86rem; background: color-mix(in srgb, var(--tc, var(--accent)) 4%, transparent); }
+.dropzone b { color: var(--ink); }
+.dropzone:hover, .files-card.drag .dropzone { border-color: var(--tc, var(--accent)); background: color-mix(in srgb, var(--tc, var(--accent)) 10%, transparent); }
+.viewer { position: fixed; inset: 0; z-index: 60; background: rgb(15 20 30 / 0.55); display: grid; place-items: center; padding: 20px; }
+.viewer[hidden] { display: none; }
+.viewer-box { width: min(1080px, 100%); height: min(92vh, 100%); display: flex; flex-direction: column; background: var(--bg); border-radius: 14px; overflow: hidden; box-shadow: 0 20px 60px rgb(0 0 0 / 0.3); }
+.viewer-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.viewer-head b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.viewer-body { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.pdf-page { background: #fff; box-shadow: 0 1px 6px rgb(0 0 0 / 0.15); max-width: 100%; height: auto; }
+.viewer-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.viewer-text { align-self: stretch; max-width: 80ch; margin: 0 auto; background: var(--surface); padding: 20px 24px; border-radius: 10px; }
+body.viewer-open { overflow: hidden; }
 .week-card { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 0; padding: 0; }
 .wk-col { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; min-width: 0; }
 .wk-col + .wk-col { border-left: 1px solid var(--line); }
@@ -1177,6 +1195,7 @@ function applyStandaloneAI() {
 async function initCaps() {
   if (!window.claude || typeof window.claude.use !== "function") { standalone = true; applyStandaloneAI(); setSync("local"); render(); return; }
   claude.use("sample").then((s) => { sample = s; if (s) document.body.classList.add("has-ai"); }).catch(() => {});
+  claude.use("assets").then((a) => { assetsApi = a; if (a && /^(c|r)-/.test(currentRoute())) refresh(); }).catch(() => {});
   setSync("wait");
   let db, user;
   try { [db, user] = await Promise.all([claude.use("db"), claude.use("user")]); } catch (e) {}
@@ -3220,6 +3239,7 @@ function viewCoursItem(id) {
       <label class="row small" style="flex:1"><span class="muted">Étiquettes</span><input class="field" style="flex:1;min-width:180px" data-ec="tags" data-kind="cours" data-id="${esc(id)}" value="${esc((c.tags || []).join(", "))}" placeholder="séparées par des virgules : cours, TD, révision…"></label></div>
     ${(c.creneaux || []).length || (c.salles || []).length || (c.profs || []).length ? `<div class="c-info">${c.annule ? `<span class="c-pill warn">plus dans l'emploi du temps</span>` : ""}${(c.creneaux || []).length ? `<span><b>Horaires</b> ${esc(creneauxTxt(c))}</span>` : ""}${(c.salles || []).length ? `<span><b>Salle</b> ${esc(c.salles.join(", "))}</span>` : ""}${(c.profs || []).length ? `<span><b>Prof</b> ${esc(c.profs.join(", "))}</span>` : ""}${c.edtKey ? `<span class="muted small">depuis Pronote</span>` : ""}</div>` : ""}
     ${String(c.contenu || "").trim() ? `<details class="card stack" open><summary><b>Programme de la séance</b> <span class="muted small">· donné par l'école</span></summary><div class="prose" style="margin-top:8px">${md(contenuMd(c.contenu))}</div></details>` : ""}
+    ${filesCard("cours", id, c)}
     <div class="card stack"><h3 style="margin:0">Liens et outils</h3>
       ${(c.liens || []).length ? `<div class="tool-list">${linkChips(c.liens, "cours", id)}</div>` : ""}
       ${linkForm("cours", id)}
@@ -3250,6 +3270,7 @@ function viewRendu(id) {
       <form class="row" data-form="ecCk" data-id="${esc(id)}"><input class="field" name="t" placeholder="Ajouter une étape : relire, exporter en PDF, déposer sur Moodle…" required maxlength="200" style="flex:1"><button class="btn sm">Ajouter</button></form>
     </div>
     <div class="card stack"><h3 style="margin:0">Consignes</h3>${mdEditor("rendu", id, "consignes", r.consignes, "Colle ici les consignes du prof : format, nombre de pages, critères…")}</div>
+    ${filesCard("rendu", id, r)}
     <div class="card stack"><h3 style="margin:0">Liens et outils</h3>
       ${(r.liens || []).length ? `<div class="tool-list">${linkChips(r.liens, "rendu", id)}</div>` : ""}
       ${linkForm("rendu", id)}
@@ -3399,7 +3420,7 @@ function dayPill(d) { const [y, mo, dd] = d.split("-").map(Number); const dt = n
 function coursRow(c, opts = {}) {
   const m = matiere(c.matiere);
   const info = [creneauxTxt(c), (c.salles || []).join(", "), opts.withMat ? "" : (c.profs || []).join(", ")].filter(Boolean).join(" · ");
-  return `<a class="c-row ${c.annule ? "annule" : ""} ${c.date && c.date < today() ? "past" : ""}" href="#c-${esc(c.id)}" style="${mtc(m)}">${c.date ? dayPill(c.date) : `<span class="c-day none">sans<br>date</span>`}<span class="r-main">${opts.withMat && m ? `<span class="c-mat">${esc(m.nom)}</span>` : ""}<b>${esc(c.titre)}</b>${info ? `<small>${esc(info)}</small>` : ""}${(c.tags || []).length ? `<small>${c.tags.map((t) => "#" + esc(t)).join(" ")}</small>` : ""}</span><span class="c-meta">${c.annule ? `<span class="c-pill warn">annulé</span>` : ""}${(c.liens || []).length ? `<span class="c-pill">${c.liens.length} lien${c.liens.length > 1 ? "s" : ""}</span>` : ""}${String(c.notes || "").trim() ? `<span class="c-pill">notes</span>` : ""}</span><span class="mat-go" aria-hidden="true" style="opacity:1">→</span></a>`;
+  return `<a class="c-row ${c.annule ? "annule" : ""} ${c.date && c.date < today() ? "past" : ""}" href="#c-${esc(c.id)}" style="${mtc(m)}">${c.date ? dayPill(c.date) : `<span class="c-day none">sans<br>date</span>`}<span class="r-main">${opts.withMat && m ? `<span class="c-mat">${esc(m.nom)}</span>` : ""}<b>${esc(c.titre)}</b>${info ? `<small>${esc(info)}</small>` : ""}${(c.tags || []).length ? `<small>${c.tags.map((t) => "#" + esc(t)).join(" ")}</small>` : ""}</span><span class="c-meta">${c.annule ? `<span class="c-pill warn">annulé</span>` : ""}${(c.fichiers || []).length ? `<span class="c-pill">${c.fichiers.length} fichier${c.fichiers.length > 1 ? "s" : ""}</span>` : ""}${(c.liens || []).length ? `<span class="c-pill">${c.liens.length} lien${c.liens.length > 1 ? "s" : ""}</span>` : ""}${String(c.notes || "").trim() ? `<span class="c-pill">notes</span>` : ""}</span><span class="mat-go" aria-hidden="true" style="opacity:1">→</span></a>`;
 }
 function edtCard() {
   const e = ecole(); const info = e.edtInfo;
@@ -3409,6 +3430,127 @@ function edtCard() {
       <label class="btn sm" style="align-self:flex-start">Choisir le fichier .ics<input type="file" id="edt-file" accept=".ics,text/calendar" hidden></label>
     </div></details>`;
 }
+/* ---------- Fichiers du prof (capacité assets) : PDF, images, vidéos, texte ; PPTX/DOCX → texte extrait ---------- */
+let assetsApi = null;
+const FILE_TYPES = { pdf: "application/pdf", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", svg: "image/svg+xml", mp4: "video/mp4", webm: "video/webm", txt: "text/plain", md: "text/markdown", csv: "text/csv", json: "application/json" };
+function extOf(n) { return (String(n).toLowerCase().match(/\.([a-z0-9]+)$/) || [])[1] || ""; }
+function fmtSize(b) { return b > 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " Mo" : Math.max(1, Math.round(b / 1024)) + " Ko"; }
+function fileKind(f) { const t = f.type || ""; return f.extrait ? "texte" : t === "application/pdf" ? "pdf" : t.startsWith("image/") ? "image" : t.startsWith("video/") ? "video" : "texte"; }
+const FILE_BADGE = { pdf: ["PDF", "#c0392b"], image: ["IMG", "#2f8a6e"], video: ["VID", "#6b55cc"], texte: ["TXT", "#5d6779"], pptx: ["PPT", "#d24726"], docx: ["DOC", "#2b579a"] };
+async function unzipEntries(buf, want) {
+  const u8 = new Uint8Array(buf), dv = new DataView(buf); let eocd = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 70000); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error("Fichier Office illisible (archive abîmée).");
+  const n = dv.getUint16(eocd + 10, true); let p = dv.getUint32(eocd + 16, true); const out = {}; const dec = new TextDecoder();
+  for (let k = 0; k < n; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+    const name = dec.decode(u8.subarray(p + 46, p + 46 + nl)); p += 46 + nl + xl + cl;
+    if (!want(name)) continue;
+    const lnl = dv.getUint16(off + 26, true), lxl = dv.getUint16(off + 28, true); const data = u8.subarray(off + 30 + lnl + lxl, off + 30 + lnl + lxl + csize);
+    if (method === 0) out[name] = dec.decode(data);
+    else if (method === 8) out[name] = await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+  }
+  return out;
+}
+function xmlDoc(s) { return new DOMParser().parseFromString(s, "application/xml"); }
+async function officeToMarkdown(file) {
+  const ext = extOf(file.name); const buf = await file.arrayBuffer();
+  if (ext === "pptx") {
+    const xs = await unzipEntries(buf, (n) => /^ppt\/slides\/slide\d+\.xml$/.test(n) || /^ppt\/notesSlides\/notesSlide\d+\.xml$/.test(n));
+    const num = (n) => +n.match(/(\d+)\.xml$/)[1];
+    const slides = Object.keys(xs).filter((n) => n.startsWith("ppt/slides/")).sort((a, b) => num(a) - num(b));
+    const parts = [`# ${file.name.replace(/\.pptx$/i, "")}`];
+    slides.forEach((n, i) => {
+      const d = xmlDoc(xs[n]); const paras = [...d.getElementsByTagName("a:p")].map((pp) => [...pp.getElementsByTagName("a:t")].map((t) => t.textContent).join("").trim()).filter(Boolean);
+      parts.push(`## Diapo ${i + 1}${paras[0] ? " : " + paras[0] : ""}`);
+      paras.slice(1).forEach((t) => parts.push("- " + t));
+      const note = xs[`ppt/notesSlides/notesSlide${num(n)}.xml`];
+      if (note) { const nt = [...xmlDoc(note).getElementsByTagName("a:p")].map((pp) => [...pp.getElementsByTagName("a:t")].map((t) => t.textContent).join("").trim()).filter((t) => t && !/^\d+$/.test(t)); if (nt.length) parts.push("> Notes : " + nt.join(" ")); }
+      parts.push("");
+    });
+    return { md: parts.join("\n"), count: slides.length + " diapos" };
+  }
+  if (ext === "docx") {
+    const xs = await unzipEntries(buf, (n) => n === "word/document.xml");
+    if (!xs["word/document.xml"]) throw new Error("Document Word illisible.");
+    const d = xmlDoc(xs["word/document.xml"]); const out = [`# ${file.name.replace(/\.docx$/i, "")}`]; let np = 0;
+    for (const pp of d.getElementsByTagName("w:p")) {
+      const t = [...pp.getElementsByTagName("w:t")].map((x) => x.textContent).join("").trim(); if (!t) continue; np++;
+      const st = pp.getElementsByTagName("w:pStyle")[0]; const sv = st ? st.getAttribute("w:val") || "" : "";
+      const lvl = (sv.match(/(?:Heading|Titre|Title)(\d?)/i) || [])[1];
+      if (/Heading|Titre|Title/i.test(sv)) out.push("", "#".repeat(Math.min(4, (+lvl || 1) + 1)) + " " + t, "");
+      else if (pp.getElementsByTagName("w:numPr").length || /List|Liste|Puce/i.test(sv)) out.push("- " + t);
+      else out.push("", t, "");
+    }
+    return { md: out.join("\n").replace(/\n{3,}/g, "\n\n"), count: np + " paragraphes" };
+  }
+  throw new Error("Format non pris en charge.");
+}
+async function uploadFiles(kind, id, files) {
+  const o = ecObj(kind, id); if (!o) return;
+  if (!assetsApi) { toast("Les fichiers s'enregistrent seulement dans claude.ai (ton compte)."); return; }
+  const list = [...files]; let ok = 0;
+  for (const f of list) {
+    const ext = extOf(f.name);
+    try {
+      let blob = f, type = FILE_TYPES[ext], extra = {};
+      if (ext === "pptx" || ext === "docx") {
+        toast(`Lecture de ${f.name}…`);
+        const r = await officeToMarkdown(f); blob = new Blob([r.md], { type: "text/markdown" }); type = "text/markdown"; extra = { extrait: ext, orig: f.name, info: r.count };
+      } else if (!type) { toast(`${f.name} : format non pris en charge (PDF, image, vidéo, PPTX, DOCX, texte).`); continue; }
+      if (blob.size > 20 * 1048576) { toast(`${f.name} dépasse 20 Mo.`); continue; }
+      const res = await assetsApi.upload(blob, { type });
+      (o.fichiers = o.fichiers || []).push({ id: res.id, nom: extra.orig ? extra.orig.replace(/\.(pptx|docx)$/i, "") + " (texte)" : f.name, type, taille: f.size, ajoute: today(), ...extra });
+      o.ts = Date.now(); ok++;
+    } catch (err) {
+      const c = err && err.code;
+      toast(`${f.name} : ${c === "too_large" ? "trop lourd (20 Mo max)" : c === "unsupported_type" ? "format refusé" : c === "quota_or_state" ? "espace de stockage plein" : c === "rate_limited" ? "trop d'envois d'un coup, réessaie dans un instant" : (err && err.message) || "envoi impossible"}`);
+    }
+  }
+  if (ok) { ecSaveKind(kind); render(); toast(`${ok} fichier${ok > 1 ? "s" : ""} ajouté${ok > 1 ? "s" : ""}.`); }
+}
+function filesCard(kind, id, o) {
+  const fs = o.fichiers || []; const confirm = state.ui.confirmDel;
+  return `<div class="card stack files-card" data-drop="${kind}" data-id="${esc(id)}"><div class="row"><h3 style="margin:0">Fichiers</h3><span class="muted small">${fs.length || ""}</span></div>
+    ${fs.length ? `<div class="file-list">${fs.map((f, i) => { const k = f.extrait || fileKind(f); const [b, col] = FILE_BADGE[k] || FILE_BADGE.texte; const key = `file:${kind}:${id}:${i}`;
+      return `<div class="file-row"><button class="file-open" data-act="fileView" data-kind="${kind}" data-id="${esc(id)}" data-i="${i}"><span class="fb" style="background:${col}">${b}</span><span class="r-main"><b>${esc(f.nom)}</b><small>${f.extrait ? `texte extrait${f.info ? " · " + esc(f.info) : ""}` : esc(fmtSize(f.taille || 0))} · ajouté ${esc(frDate(f.ajoute))}</small></span></button>
+        ${confirm === key ? `<span class="small">Supprimer ?</span><button class="btn sm danger" data-act="fileDel" data-kind="${kind}" data-id="${esc(id)}" data-i="${i}">Oui</button><button class="btn sm ghost" data-act="ecCancelDel">Non</button>` : `<a class="btn sm ghost" href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">Ouvrir</a><button class="q-x" data-act="ecAskDel" data-key="${key}" aria-label="Supprimer ce fichier">×</button>`}</div>`; }).join("")}</div>` : ""}
+    ${assetsApi ? `<label class="dropzone"><input type="file" class="file-in" data-kind="${kind}" data-id="${esc(id)}" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.svg,.mp4,.webm,.pptx,.docx,.txt,.md,.csv,.json" hidden><b>Ajouter des fichiers</b><span>Glisse-les ici ou clique. PDF, images, vidéos (20 Mo max). PowerPoint et Word : j'en garde le <b>texte</b>, exporte-les aussi en PDF pour garder la mise en page.</span></label>`
+      : `<p class="muted small">${standalone ? "Les fichiers se rangent dans ton compte claude.ai : ouvre l'atelier depuis claude.ai pour en ajouter." : "Connexion au stockage de fichiers…"}</p>`}
+  </div>`;
+}
+let pdfjsReady = null;
+function loadPdfjs() {
+  if (pdfjsReady) return pdfjsReady;
+  pdfjsReady = new Promise((ok, ko) => { const s = document.createElement("script"); s.src = BASE + "vendor/pdfjs/pdf.min.js"; s.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = BASE + "vendor/pdfjs/pdf.worker.min.js"; ok(window.pdfjsLib); }; s.onerror = () => { pdfjsReady = null; ko(new Error("pdf.js introuvable")); }; document.head.appendChild(s); });
+  return pdfjsReady;
+}
+let viewerToken = 0;
+async function openViewer(f) {
+  const tok = ++viewerToken; const url = "/_blob/" + f.id; const k = fileKind(f);
+  let v = $("#viewer"); if (!v) { v = document.createElement("div"); v.id = "viewer"; v.className = "viewer"; v.setAttribute("role", "dialog"); v.setAttribute("aria-modal", "true"); document.body.appendChild(v); }
+  v.innerHTML = `<div class="viewer-box"><div class="viewer-head"><b>${esc(f.nom)}</b><span class="muted small" id="viewer-info"></span><span class="spacer"></span><a class="btn sm ghost" href="${esc(url)}" target="_blank" rel="noopener">Ouvrir dans un onglet</a><button class="btn sm" data-act="viewerClose">Fermer</button></div><div class="viewer-body" id="viewer-body"><p class="muted"><span class="spin"></span> Chargement…</p></div></div>`;
+  v.hidden = false; document.body.classList.add("viewer-open"); v.querySelector("[data-act=viewerClose]").focus();
+  const body = $("#viewer-body");
+  try {
+    if (k === "image") body.innerHTML = `<img src="${esc(url)}" alt="${esc(f.nom)}" class="viewer-img">`;
+    else if (k === "video") body.innerHTML = `<video src="${esc(url)}" controls class="viewer-img"></video>`;
+    else if (k === "texte") { const t = await (await fetch(url)).text(); if (tok !== viewerToken) return; body.innerHTML = `<div class="prose viewer-text">${f.type === "text/markdown" ? md(t) : `<pre class="code"><code>${esc(t)}</code></pre>`}</div>`; highlight(body); }
+    else if (k === "pdf") {
+      const lib = await loadPdfjs(); const doc = await lib.getDocument({ url }).promise; if (tok !== viewerToken) return;
+      $("#viewer-info").textContent = `${doc.numPages} page${doc.numPages > 1 ? "s" : ""}`; body.innerHTML = "";
+      const w = Math.min(body.clientWidth - 24, 1000); const dpr = Math.min(2, window.devicePixelRatio || 1);
+      for (let i = 1; i <= doc.numPages; i++) {
+        if (tok !== viewerToken) return;
+        const page = await doc.getPage(i); const vp0 = page.getViewport({ scale: 1 }); const vp = page.getViewport({ scale: (w / vp0.width) * dpr });
+        const c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height; c.style.width = vp.width / dpr + "px"; c.className = "pdf-page"; c.setAttribute("aria-label", `Page ${i}`);
+        body.appendChild(c); await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+      }
+    }
+  } catch (err) { if (tok === viewerToken) body.innerHTML = `<p class="err">Impossible d'afficher ce fichier ici (${esc(err && err.message || "erreur")}). Essaie « Ouvrir dans un onglet ».</p>`; }
+}
+function closeViewer() { viewerToken++; const v = $("#viewer"); if (v) { v.hidden = true; v.innerHTML = ""; } document.body.classList.remove("viewer-open"); }
 function render() {
   const r = currentRoute();
   let html;
@@ -3511,6 +3653,9 @@ const ACTIONS = {
   },
   menu() { document.body.classList.toggle("menu-open"); },
   sideToggle() { sideToggle(); },
+  fileView(el) { const o = ecObj(el.dataset.kind, el.dataset.id); const f = o && (o.fichiers || [])[+el.dataset.i]; if (f) openViewer(f); },
+  viewerClose() { closeViewer(); },
+  async fileDel(el) { const o = ecObj(el.dataset.kind, el.dataset.id); const f = o && (o.fichiers || [])[+el.dataset.i]; if (!f) return; o.fichiers.splice(+el.dataset.i, 1); o.ts = Date.now(); state.ui.confirmDel = null; ecSaveKind(el.dataset.kind); render(); try { if (assetsApi) await assetsApi.delete(f.id); } catch (e) {} toast("Fichier supprimé."); },
   wkDay(el) { const u = calUi(); u.day = el.dataset.day; u.month = el.dataset.day.slice(0, 7); location.hash = "#calendrier"; },
   step(el) {
     keepDrafts(); const id = el.dataset.id; const s = Number(el.dataset.step);
@@ -3741,6 +3886,7 @@ function handleForm(f, submitter) {
   }
 }
 document.addEventListener("change", (e) => {
+  if (e.target.classList && e.target.classList.contains("file-in")) { const fl = [...(e.target.files || [])]; const { kind, id } = e.target.dataset; e.target.value = ""; uploadFiles(kind, id, fl).catch(showError); return; }
   if (e.target.id === "edt-file") { const f = e.target.files && e.target.files[0]; e.target.value = ""; importIcsFile(f).catch(showError); return; }
   if (e.target.dataset && e.target.dataset.ec && (e.target.type === "date" || e.target.tagName === "SELECT")) { if (ecApply(e.target)) { ecSaveKind(e.target.dataset.kind); render(); } return; }
   if (e.target.id === "g-track") { readGenForm(); render(); }
@@ -3778,6 +3924,7 @@ document.addEventListener("keydown", (e) => {
   if (el.closest && el.closest(".tree-edit") && e.key === "Escape") { e.preventDefault(); state.ui.sbNew = false; state.ui.sbRename = null; render(); return; }
   if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyQ") { e.preventDefault(); qSelAtOpen = mainSelection(); qSetOpen(!qUi().open); return; }
   if (e.key === "Escape" && qUi().open && (!el.closest || el.closest("#qpanel") || el === document.body)) { e.preventDefault(); qSetOpen(false); return; }
+  if (e.key === "Escape" && document.body.classList.contains("viewer-open")) { e.preventDefault(); closeViewer(); return; }
   if (fabOpen() && e.key === "Escape") { e.preventDefault(); fabSetOpen(false); $("#qfab").focus(); return; }
   if (fabOpen() && (e.key === "ArrowDown" || e.key === "ArrowUp") && el.closest && el.closest("#fab-menu")) { e.preventDefault(); const it = [...$("#fab-menu").querySelectorAll(".fab-item")]; const k = it.indexOf(el); it[(k + (e.key === "ArrowDown" ? 1 : it.length - 1)) % it.length].focus(); return; }
   if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyS") { e.preventDefault(); sideToggle(); return; }
@@ -3812,7 +3959,11 @@ document.addEventListener("focusout", (e) => {
     if (v && v !== orig) handleForm(f, null); else { state.ui.sbNew = false; state.ui.sbRename = null; render(); }
   }, 120);
 });
-window.addEventListener("hashchange", () => { document.body.classList.remove("menu-open"); if (fabOpen()) fabSetOpen(false); render(); });
+document.addEventListener("dragover", (e) => { const z = e.target.closest && e.target.closest("[data-drop]"); if (!z || !assetsApi) return; e.preventDefault(); z.classList.add("drag"); });
+document.addEventListener("dragleave", (e) => { const z = e.target.closest && e.target.closest("[data-drop]"); if (z && !z.contains(e.relatedTarget)) z.classList.remove("drag"); });
+document.addEventListener("drop", (e) => { const z = e.target.closest && e.target.closest("[data-drop]"); if (!z) return; e.preventDefault(); z.classList.remove("drag"); if (!assetsApi) { toast("Les fichiers s'enregistrent seulement dans claude.ai."); return; } uploadFiles(z.dataset.drop, z.dataset.id, e.dataTransfer.files).catch(showError); });
+document.addEventListener("mousedown", (e) => { if (e.target.id === "viewer") closeViewer(); });
+window.addEventListener("hashchange", () => { closeViewer(); document.body.classList.remove("menu-open"); if (fabOpen()) fabSetOpen(false); render(); });
 
 /* ---------- Claude ---------- */
 function levelContext() { return "L'élève a un niveau intermédiaire en programmation. Il a besoin de comprendre COMMENT une chose fonctionne pour pouvoir la faire. Réponds en français, de façon simple, concise et concrète."; }

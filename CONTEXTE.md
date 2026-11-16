@@ -72,9 +72,18 @@ Idée pour plus tard : les cartes mémo (point 3) pourront être générées dep
 - Tableau de bord : `weekCard()` remplace `calStrip()` : semaine lun-ven école/entreprise (clic → jour du calendrier),
   3 prochains cours, échéances (rendus datés, en retard en rouge, nombre sans date).
 
+## Fichiers du prof (fait le 16/11)
+- Capacité `assets` déclarée (`{db, sample, user, assets}`). `assetsApi` (null hors claude.ai → message). Carte « Fichiers » sur
+  chaque cours et rendu (`filesCard`) : glisser-déposer ou sélecteur, `o.fichiers = [{id, nom, type, taille, ajoute, extrait?, orig?, info?}]`.
+- Types acceptés par la plateforme : PDF, images, vidéos, texte (20 Mo). **PPTX/DOCX refusés par la plateforme** → texte extrait dans le
+  navigateur (`officeToMarkdown` : petit lecteur zip + DecompressionStream ; diapos + notes, titres/listes Word) et stocké en `.md`.
+- Visionneuse `#viewer` : PDF rendu page par page avec pdf.js 3.11.174 embarqué (`vendor/pdfjs/`, à publier avec la page), images,
+  vidéos, texte/markdown. Suppression = `assets.delete` après confirmation.
+- Publier : `index.html` + `vendor/pdfjs/*` si modifiés.
+
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
-2. **Espace « Mes cours » (école)** — étape 1 faite (voir ci-dessus). Reste l'étape 2 : fichiers du prof (capacité `assets` : PDF/images affichés, PPTX/DOCX téléchargeables), tableau de bord « cette semaine : école ou entreprise » + échéances, et l'emploi du temps est importé (réimporter après le 02/01/2027). — PAS seulement du code : management de projet, anglais, UX/UI, etc.
+2. **Espace « Mes cours » (école)** — étape 1 faite (voir ci-dessus). Étape 2 faite aussi (fichiers, Ma semaine, emploi du temps ; réimporter l'emploi du temps après le 02/01/2027). Idée suivante possible : TD / cartes générés par Claude depuis les fichiers et notes d'un cours. — PAS seulement du code : management de projet, anglais, UX/UI, etc.
    - Ana est en **MBA Développeur Full Stack (MyDigitalSchool, 2026-2028, en alternance)**. La liste complète des matières
      est dans `ecole/programme.json` (44 modules, M1/M2, UE, heures, ECTS, type, thèmes, évaluations, et lien vers les
      parcours de l'atelier dans `atelier`). S'en servir pour pré-remplir les matières (Ana confirme / supprime ensuite).
