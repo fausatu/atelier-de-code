@@ -1,0 +1,723 @@
+{
+ "source": "Programme MBA Développeur Full Stack 2026-2028 (MyDigitalSchool), mise à jour du 30/04/2026",
+ "ecole": "MyDigitalSchool",
+ "formation": "MBA Développeur Full Stack",
+ "promo": "2026-2028",
+ "ue": {
+  "strategie": "Élaborer la stratégie du SI",
+  "projets": "Piloter les projets informatiques",
+  "performance": "Piloter la performance du SI",
+  "solutions": "Concevoir et déployer les solutions",
+  "pro": "Applications professionnelles"
+ },
+ "types": {
+  "dev": "Développement & technique",
+  "gestion": "Gestion de projet",
+  "design": "UX/UI",
+  "soft": "Soft skills",
+  "langue": "Langues & écrit",
+  "droit": "Droit",
+  "rse": "Numérique responsable",
+  "securite": "Sécurité",
+  "projet": "Projets & rendus",
+  "option": "Option"
+ },
+ "evaluations_globales": [
+  "Contrôles continus (oraux, QCM, TD)",
+  "Projet My Digital Start-up sur les deux ans",
+  "Rapport d'entreprise en 1re année",
+  "Workshop avec client réel en 2e année",
+  "Mémoire professionnel soutenu devant un jury",
+  "Évaluation en entreprise par le tuteur"
+ ],
+ "modules": [
+  {
+   "annee": "M1",
+   "ue": "strategie",
+   "nom": "Architecture logicielle, design patterns & urbanisation SI",
+   "heures": 28,
+   "ects": 4,
+   "type": "dev",
+   "themes": [
+    "monolithe, micro-services, event-driven, serverless",
+    "diagrammes C4",
+    "Clean / Hexagonal",
+    "choix de stack et BDD",
+    "API Gateway, CI/CD, observabilité",
+    "qualité, OWASP, Zero-Trust",
+    "RTO/RPO, CAPEX/OPEX, FinOps"
+   ],
+   "atelier": [
+    "architecture",
+    "ddd"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "strategie",
+   "nom": "Droit des sociétés",
+   "heures": 7,
+   "ects": 1,
+   "type": "droit",
+   "themes": [
+    "formes juridiques",
+    "création d'entreprise",
+    "pacte d'associés"
+   ],
+   "mode": "e-learning en autonomie"
+  },
+  {
+   "annee": "M1",
+   "ue": "strategie",
+   "nom": "Numérique responsable & RSE dans le SI",
+   "heures": 14,
+   "ects": 2,
+   "type": "rse",
+   "themes": [
+    "CSRD, RGESN, ISO 14001/26000",
+    "ACV logicielle, bilan carbone",
+    "éco-conception (115 bonnes pratiques)",
+    "GreenOps, FinOps",
+    "accessibilité"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "strategie",
+   "nom": "Audit d'entreprise",
+   "heures": 7,
+   "ects": 4,
+   "type": "projet",
+   "themes": [
+    "rapport d'entreprise : encadrement, production, déploiement, ajustements"
+   ],
+   "evaluation": "Rapport d'entreprise (1re année)"
+  },
+  {
+   "annee": "M1",
+   "ue": "projets",
+   "nom": "Challenge Lean Start-up",
+   "heures": 38.5,
+   "ects": 3,
+   "type": "gestion",
+   "themes": [
+    "Lean Start-up",
+    "proposition de valeur",
+    "Lean Canvas",
+    "interviews",
+    "MVP"
+   ],
+   "evaluation": "Compétition inter-écoles"
+  },
+  {
+   "annee": "M1",
+   "ue": "projets",
+   "nom": "Management de projets",
+   "heures": 21,
+   "ects": 2,
+   "type": "gestion",
+   "themes": [
+    "cadrage",
+    "planification",
+    "suivi et pilotage",
+    "communication projet",
+    "gestion des écarts",
+    "clôture"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "projets",
+   "nom": "Pilotage produit / agilité",
+   "heures": 14,
+   "ects": 2,
+   "type": "gestion",
+   "themes": [
+    "agilité",
+    "approche produit",
+    "Scrum",
+    "sprint et backlog",
+    "cérémonies"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "projets",
+   "nom": "Budgétisation de projet",
+   "heures": 14,
+   "ects": 1,
+   "type": "gestion",
+   "themes": [
+    "composantes d'un coût",
+    "estimations",
+    "suivi budgétaire",
+    "chiffrage My Digital Start-up"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "projets",
+   "nom": "Workshop client 2",
+   "heures": 35,
+   "ects": 4,
+   "type": "projet",
+   "themes": [
+    "brief client",
+    "livrables en équipe",
+    "rendez-vous intermédiaire",
+    "présentation et dossier client"
+   ],
+   "evaluation": "Présentation orale + dossier client"
+  },
+  {
+   "annee": "M1",
+   "ue": "projets",
+   "nom": "Management d'équipes (M1)",
+   "heures": 14,
+   "ects": 3,
+   "type": "soft",
+   "themes": [
+    "posture de manager",
+    "communication, écoute active",
+    "feedback, désaccords",
+    "profils comportementaux"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "performance",
+   "nom": "Software craftsmanship & qualité logicielle",
+   "heures": 21,
+   "ects": 3,
+   "type": "dev",
+   "themes": [
+    "Clean Code, KISS, code smells",
+    "SOLID",
+    "TDD (red-green-refactor), mocks",
+    "BDD",
+    "pair / mob programming, revues de code",
+    "linters, SonarQube, CI"
+   ],
+   "atelier": [
+    "architecture",
+    "debug"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "performance",
+   "nom": "MOOC Cybersécurité ANSSI",
+   "heures": 3.5,
+   "ects": 3,
+   "type": "securite",
+   "themes": [
+    "SecNumacadémie niveaux 1 à 3"
+   ],
+   "mode": "à distance (SecNumacadémie)",
+   "evaluation": "Certificat de réussite du MOOC"
+  },
+  {
+   "annee": "M1",
+   "ue": "performance",
+   "nom": "Mémoire professionnel (M1)",
+   "heures": 7,
+   "ects": 6,
+   "type": "projet",
+   "themes": [
+    "problématique en alternance",
+    "recherches documentaires",
+    "note d'intention"
+   ],
+   "evaluation": "Note d'intention à rendre en début de 2e année"
+  },
+  {
+   "annee": "M1",
+   "ue": "solutions",
+   "nom": "Ingénierie de l'automatisation",
+   "heures": 28,
+   "ects": 4,
+   "type": "dev",
+   "themes": [
+    "no code, vibe coding",
+    "Supabase, Airtable (BaaS)",
+    "API REST/GraphQL, RBAC, SSO",
+    "n8n, webhooks, Docker",
+    "agents IA, tool calling",
+    "OWASP, RGPD"
+   ],
+   "atelier": [
+    "api",
+    "terminal"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "solutions",
+   "nom": "Développement Front-end avancé (TypeScript / frameworks)",
+   "heures": 35,
+   "ects": 4,
+   "type": "dev",
+   "themes": [
+    "TypeScript strict, generics",
+    "Zustand, Redux Toolkit, Signals",
+    "SSR, SSG, Server Components",
+    "Figma → code, WCAG 2.2",
+    "PWA, CSP, XSS/CSRF",
+    "Vitest, Testing Library, Playwright"
+   ],
+   "atelier": [
+    "ts",
+    "react",
+    "data",
+    "forms",
+    "next"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "solutions",
+   "nom": "UX / UI & accessibilité numérique",
+   "heures": 35,
+   "ects": 4,
+   "type": "design",
+   "themes": [
+    "heuristiques de Nielsen, double diamant, design thinking",
+    "personas, cartes d'empathie",
+    "design system, tokens",
+    "RGAA 4 / WCAG 2.2, ARIA",
+    "wireframes, prototypes Figma",
+    "SUS, Axe, Lighthouse",
+    "Core Web Vitals, NPS"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "solutions",
+   "nom": "Conception technique et fonctionnelle",
+   "heures": 14,
+   "ects": 2,
+   "type": "gestion",
+   "themes": [
+    "event storming, user story mapping",
+    "cahier des charges, user stories",
+    "C4/UML",
+    "MoSCoW, critères d'acceptation",
+    "Definition of Ready, recette",
+    "ADR, OpenAPI"
+   ],
+   "atelier": [
+    "decoupe"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "solutions",
+   "nom": "Développement Back-end & conception d'API",
+   "heures": 35,
+   "ects": 4,
+   "type": "dev",
+   "themes": [
+    "REST, GraphQL, WebSocket",
+    "PostgreSQL, MongoDB, ORM",
+    "SOLID, Clean Architecture",
+    "OpenAPI / Swagger",
+    "OAuth 2, JWT, RBAC, OWASP API Top 10",
+    "Redis, logs, OpenTelemetry",
+    "Docker, CI/CD"
+   ],
+   "atelier": [
+    "php",
+    "doctrine",
+    "dto",
+    "api"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "solutions",
+   "nom": "Option M1",
+   "heures": 35,
+   "ects": 4,
+   "type": "option",
+   "themes": [
+    "au choix : jeu vidéo, événementiel, IoT, fabrique de l'innovation, freelancing"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "solutions",
+   "nom": "My Digital Start-up (M1)",
+   "heures": 35,
+   "ects": 10,
+   "type": "projet",
+   "themes": [
+    "étude de marché",
+    "prototype et tests utilisateurs",
+    "business model, business plan",
+    "rôles et gouvernance du groupe"
+   ],
+   "evaluation": "Soutenance « Go / No-go » au printemps"
+  },
+  {
+   "annee": "M1",
+   "ue": "pro",
+   "nom": "Starter-pack rentrée M1 + workshop client 1",
+   "heures": 35,
+   "ects": 0,
+   "type": "projet",
+   "themes": [
+    "serious game",
+    "workshop client",
+    "journal de bord",
+    "soutenance"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "pro",
+   "nom": "Professional English",
+   "heures": 35,
+   "ects": 3,
+   "type": "langue",
+   "themes": [
+    "expression orale et écrite",
+    "mises en situation",
+    "veille en anglais"
+   ]
+  },
+  {
+   "annee": "M1",
+   "ue": "pro",
+   "nom": "Orthodidacte",
+   "heures": 3.5,
+   "ects": 2,
+   "type": "langue",
+   "themes": [
+    "grammaire",
+    "règles d'écriture",
+    "communication écrite"
+   ],
+   "mode": "plateforme Orthodidacte",
+   "evaluation": "Niveau 3 complété"
+  },
+  {
+   "annee": "M1",
+   "ue": "pro",
+   "nom": "Expérience professionnelle (M1)",
+   "heures": 10.5,
+   "ects": 0,
+   "type": "soft",
+   "themes": [
+    "partage d'expérience",
+    "prise de recul sur le métier"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "strategie",
+   "nom": "Infrastructure : Cloud, Linux & serverless",
+   "heures": 28,
+   "ects": 3,
+   "type": "dev",
+   "themes": [
+    "IaaS, PaaS, FaaS",
+    "Linux en production, systemd",
+    "VPC, IAM, Zero-Trust",
+    "Lambda, cold start",
+    "Kafka, files d'attente",
+    "Terraform, Ansible, GitOps",
+    "Prometheus, Grafana, SLO",
+    "RPO/RTO"
+   ],
+   "atelier": [
+    "terminal"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "strategie",
+   "nom": "Tech Lab IA, Big Data & veille technologique",
+   "heures": 28,
+   "ects": 2,
+   "type": "dev",
+   "themes": [
+    "technologie émergente",
+    "POC",
+    "veille structurée",
+    "présentation + démo"
+   ],
+   "evaluation": "Présentation 15 min + démo + atelier"
+  },
+  {
+   "annee": "M2",
+   "ue": "projets",
+   "nom": "Management d'équipes (M2)",
+   "heures": 14,
+   "ects": 3,
+   "type": "soft",
+   "themes": [
+    "équipes pluridisciplinaires",
+    "objectifs, motivation",
+    "réunions",
+    "CNV, conflits",
+    "priorisation"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "projets",
+   "nom": "Prise de parole en public et art du pitch",
+   "heures": 14,
+   "ects": 2,
+   "type": "soft",
+   "themes": [
+    "structurer son propos",
+    "posture, voix",
+    "gestion du stress",
+    "mises en situation"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "projets",
+   "nom": "Conseil technique, audit & relation client",
+   "heures": 28,
+   "ects": 4,
+   "type": "gestion",
+   "themes": [
+    "cycle de mission, contrat",
+    "audit technique",
+    "ROI/TCO, quick wins",
+    "rapport C-level, storytelling",
+    "comités de pilotage"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "projets",
+   "nom": "Workshop client 3",
+   "heures": 56,
+   "ects": 6,
+   "type": "projet",
+   "themes": [
+    "prospection",
+    "cahier des charges",
+    "devis",
+    "réalisation",
+    "clôture"
+   ],
+   "evaluation": "Soutenance devant un jury professionnel"
+  },
+  {
+   "annee": "M2",
+   "ue": "performance",
+   "nom": "Mémoire professionnel (M2)",
+   "heures": 35,
+   "ects": 6,
+   "type": "projet",
+   "themes": [
+    "rédaction du mémoire",
+    "posture de chercheur"
+   ],
+   "evaluation": "Mémoire soutenu devant un jury"
+  },
+  {
+   "annee": "M2",
+   "ue": "performance",
+   "nom": "Droit du numérique",
+   "heures": 14,
+   "ects": 1,
+   "type": "droit",
+   "themes": [
+    "propriété intellectuelle, licences, open source",
+    "RGPD, Data Act, Cloud Act",
+    "souveraineté numérique"
+   ],
+   "mode": "e-learning en autonomie"
+  },
+  {
+   "annee": "M2",
+   "ue": "performance",
+   "nom": "Microservices, scaling & performances",
+   "heures": 17.5,
+   "ects": 2,
+   "type": "dev",
+   "themes": [
+    "DDD",
+    "REST, gRPC, message broker",
+    "Kubernetes, HPA, KEDA",
+    "circuit breaker, retry",
+    "cache, sharding",
+    "k6, chaos engineering"
+   ],
+   "atelier": [
+    "ddd",
+    "architecture"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "performance",
+   "nom": "Sécurité & audit du SI",
+   "heures": 28,
+   "ects": 4,
+   "type": "securite",
+   "themes": [
+    "ISO 27001, EBIOS RM",
+    "RGPD, NIS 2, DORA",
+    "SAST, DAST, SBOM, CVE",
+    "CIS, durcissement",
+    "pentest, Red/Blue Team",
+    "SIEM, SOC",
+    "PCA/PRA"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "solutions",
+   "nom": "My Digital Start-up (M2)",
+   "heures": 56,
+   "ects": 10,
+   "type": "projet",
+   "themes": [
+    "réalisation du projet",
+    "plan financier",
+    "stratégie de lancement",
+    "pitch deck"
+   ],
+   "evaluation": "Business plan + dossier technique + prototype, soutenances de groupe et individuelle"
+  },
+  {
+   "annee": "M2",
+   "ue": "solutions",
+   "nom": "Gouvernance & modélisation de la donnée / IA",
+   "heures": 28,
+   "ects": 4,
+   "type": "dev",
+   "themes": [
+    "catalogue, lignée, qualité",
+    "Kafka, Airflow, dbt",
+    "modèle en étoile",
+    "MLflow, RAG",
+    "AI Act, biais",
+    "drift, monitoring"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "solutions",
+   "nom": "Option M2",
+   "heures": 35,
+   "ects": 4,
+   "type": "option",
+   "themes": [
+    "au choix parmi la liste des options"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "solutions",
+   "nom": "Mentorat DFS My Digital Start-up",
+   "heures": 14,
+   "ects": 0,
+   "type": "projet",
+   "themes": [
+    "architecture",
+    "découpage des tâches",
+    "estimation",
+    "validation des livrables"
+   ],
+   "atelier": [
+    "decoupe"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "solutions",
+   "nom": "DevOps, Docker & environnements de déploiement",
+   "heures": 35,
+   "ects": 4,
+   "type": "dev",
+   "themes": [
+    "Docker : images, conteneurs, volumes, réseaux",
+    "multi-stage, CI/CD",
+    "dev / staging / prod, feature flags",
+    "Trivy, secrets",
+    "Terraform, Compose",
+    "Kubernetes, Helm, canary",
+    "Prometheus, Grafana"
+   ],
+   "atelier": [
+    "terminal",
+    "git"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "solutions",
+   "nom": "Applications mobiles & connectées (IoT)",
+   "heures": 35,
+   "ects": 4,
+   "type": "dev",
+   "themes": [
+    "Flutter, React Native, Kotlin MP",
+    "BLE, MQTT, WebSocket",
+    "Protobuf, Matter",
+    "AWS IoT Core",
+    "InfluxDB",
+    "offline-first",
+    "OTA, ETSI EN 303 645"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "pro",
+   "nom": "Rentrée M2",
+   "heures": 7,
+   "ects": 0,
+   "type": "soft",
+   "themes": [
+    "attendus de 2e année",
+    "cohésion"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "pro",
+   "nom": "Expérience professionnelle (M2)",
+   "heures": 10.5,
+   "ects": 0,
+   "type": "soft",
+   "themes": [
+    "partage d'expérience",
+    "préparation aux examens"
+   ]
+  },
+  {
+   "annee": "M2",
+   "ue": "pro",
+   "nom": "Professional English / préparation TOEIC",
+   "heures": 35,
+   "ects": 4,
+   "type": "langue",
+   "themes": [
+    "expression orale et écrite",
+    "documentation technique en anglais",
+    "TOEIC blancs (GlobalExam)"
+   ],
+   "evaluation": "Passage du TOEIC"
+  },
+  {
+   "annee": "M2",
+   "ue": "pro",
+   "nom": "Campus Masters Day",
+   "heures": 7,
+   "ects": 0,
+   "type": "soft",
+   "themes": [
+    "vie professionnelle, entrepreneuriat",
+    "tendances"
+   ]
+  }
+ ]
+}

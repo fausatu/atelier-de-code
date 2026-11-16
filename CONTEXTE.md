@@ -22,6 +22,11 @@ tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barr
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. **Notes par module** : panneau « Mes notes » sur chaque module (markdown, code coloré, tableaux).
 2. **Espace « Mes cours » (école)** — PAS seulement du code : management de projet, anglais, UX/UI, etc.
+   - Ana est en **MBA Développeur Full Stack (MyDigitalSchool, 2026-2028, en alternance)**. La liste complète des matières
+     est dans `ecole/programme.json` (44 modules, M1/M2, UE, heures, ECTS, type, thèmes, évaluations, et lien vers les
+     parcours de l'atelier dans `atelier`). S'en servir pour pré-remplir les matières (Ana confirme / supprime ensuite).
+   - Grands rendus connus : My Digital Start-up (Go/No-go au printemps M1, livrables M2), rapport d'entreprise (M1),
+     note d'intention du mémoire (début M2), workshops client 2 et 3, certificat MOOC ANSSI, Orthodidacte niveau 3, TOEIC.
    - Matières (couleur, semestre) → cours (date, étiquettes) avec : fichiers du prof (PDF/images affichés, PPTX/DOCX téléchargeables
      ou convertis), notes de cours, **liens vers des outils externes** (Canva, Miro, Figma, Notion, Google Drive/Docs/Slides, YouTube,
      Teams/Moodle… reconnus avec leur nom et un lien d'ouverture).
@@ -32,4 +37,5 @@ tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barr
 3. **Cartes mémo** génériques (pas que code : vocabulaire d'anglais, définitions de management…) : cartes par parcours,
    cartes générées depuis une fiche de cours ou un PDF (capacité `sample`), cartes créées à la main ; intégrées aux révisions
    (même rythme espacé).
-4. **Projet fil rouge** « La boutique » : parcours qui relie découpage → PHP/API → React/formulaire → Git → terminal.
+4. **Projet fil rouge** : parcours qui relie découpage → PHP/API → React/formulaire → Git → terminal. À discuter avec Ana :
+   le caler sur son vrai projet d'école **My Digital Start-up** plutôt qu'une boutique fictive.
