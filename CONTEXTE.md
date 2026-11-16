@@ -19,6 +19,13 @@
 15 parcours, 83 modules. Récemment : parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
 tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barre latérale allégée (outils en icônes, « Mes parcours »).
 
+## Calendrier (fait le 16/11)
+Page `#calendrier` : mois par mois avec les jours école / entreprise / examens / rattrapages / férié (données de
+`ecole/calendrier.json`, injectées par build.py dans `DATA.cal`), détail du jour, ajout d'événements perso
+(rendu, examen, école, rendez-vous, perso) stockés dans `state.progress.agenda` (synchronisés comme la progression),
+rendus cochables, « prochaines semaines d'école », « à venir ». Bandeau sur le tableau de bord, pastille dans la barre latérale.
+Les futurs **rendus** de « Mes cours » doivent réutiliser `state.progress.agenda` (type "rendu") pour apparaître ici.
+
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. **Notes par module** : panneau « Mes notes » sur chaque module (markdown, code coloré, tableaux).
 2. **Espace « Mes cours » (école)** — PAS seulement du code : management de projet, anglais, UX/UI, etc.

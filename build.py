@@ -1,3 +1,4 @@
+import os
 import json, sys
 sys.path.insert(0, "/home/claude/atelier")
 from c_php import MODULES as PHP
@@ -98,7 +99,23 @@ GROUPS = [
 _gids = {g["id"] for g in GROUPS}
 for t in TRACKS:
     assert t.get("group") in _gids, ("parcours sans catégorie", t["id"])
-data = {"groups": GROUPS, "tracks": TRACKS, "modules": modules, "setups": SETUPS}
+_cal = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ecole", "calendrier.json"), encoding="utf-8"))
+CAL = {"jours": {k: {"formation": "e", "rentree": "r", "entreprise": "n", "examens": "x", "rattrapages": "t", "ferie": "f"}[v]
+                 for k, v in _cal["jours"].items() if v in ("formation", "rentree", "entreprise", "examens", "rattrapages", "ferie")},
+       "debut": "2026-09-01", "fin": "2028-08-31",
+       "evenements": [
+           {"date": "2026-09-21", "titre": "Rentrée MBA 1", "type": "ecole"},
+           {"date": "2026-09-21", "titre": "Formation tuteurs (session 1)", "type": "info"},
+           {"date": "2026-10-01", "titre": "Formation tuteurs (session 1)", "type": "info"},
+           {"date": "2026-10-13", "titre": "Formation tuteurs (session 2)", "type": "info"},
+           {"date": "2026-11-03", "titre": "Formation tuteurs (session 2) + réunion tuteurs", "type": "info"},
+           {"date": "2027-04-23", "titre": "Examens MBA 1", "type": "examen"},
+           {"date": "2027-08-23", "titre": "Rattrapages MBA 1 (jusqu'au 27/08)", "type": "examen"},
+           {"date": "2027-09-06", "titre": "Rentrée MBA 2", "type": "ecole"},
+           {"date": "2028-07-03", "titre": "Examens MBA 2 (jusqu'au 07/07)", "type": "examen"},
+           {"date": "2028-08-21", "titre": "Rattrapages MBA 2 (jusqu'au 25/08)", "type": "examen"},
+       ]}
+data = {"groups": GROUPS, "tracks": TRACKS, "modules": modules, "setups": SETUPS, "cal": CAL}
 js = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
 tpl = open("/home/claude/atelier/template.html", encoding="utf-8").read()
 assert "/*__CONTENT__*/" in tpl

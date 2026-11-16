@@ -60,6 +60,40 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .group-label .gchev { width: 0; height: 0; border-left: 4px solid currentColor; border-top: 3.5px solid transparent; border-bottom: 3.5px solid transparent; transform: rotate(90deg); transition: transform .12s; }
 .side-group.shut .gchev { transform: none; }
 .group-label .gcount { margin-left: auto; font-weight: 500; letter-spacing: 0; text-transform: none; }
+
+.k-ecole { --kc: #f2c200; } .k-entreprise { --kc: #9aa3ad; } .k-examens { --kc: #3fa34d; } .k-rattrapages { --kc: #d65fd0; } .k-ferie { --kc: #c0392b; } .k-weekend, .k-libre { --kc: transparent; }
+.cal-pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; background: color-mix(in srgb, var(--kc) 28%, transparent); color: var(--ink); border: 1px solid color-mix(in srgb, var(--kc) 70%, transparent); }
+.cal-pill.k-weekend, .cal-pill.k-libre { background: var(--surface-2); border-color: var(--line); }
+.cal-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--kc); flex: none; }
+.cal-dot.k-weekend, .cal-dot.k-libre { background: var(--line); }
+.cal-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 16px; text-decoration: none; color: var(--ink); font-size: 0.9rem; }
+.cal-strip:hover { border-color: var(--accent); }
+.cal-warn { color: var(--warn); font-weight: 600; }
+.cal-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 1000px) { .cal-layout { grid-template-columns: 1fr; } }
+.cal-title { margin: 0; min-width: 170px; text-align: center; text-transform: capitalize; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-dow { font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; text-align: center; padding-bottom: 2px; }
+.cal-cell { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-height: 78px; padding: 5px 6px; border-radius: 8px; border: 1px solid var(--line); background: color-mix(in srgb, var(--kc) 18%, var(--surface)); border-left: 4px solid var(--kc); text-align: left; cursor: pointer; font: inherit; color: var(--ink); overflow: hidden; }
+.cal-cell.k-weekend, .cal-cell.k-libre { background: var(--surface-2); border-left-color: var(--line); }
+.cal-cell.out { border: 0; background: none; cursor: default; }
+.cal-cell:hover { border-color: var(--accent); }
+.cal-cell.sel { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cal-cell.today .cal-num { background: var(--accent); color: #fff; border-radius: 999px; padding: 0 6px; }
+.cal-num { font-weight: 600; font-size: 0.85rem; align-self: flex-start; }
+.cal-kind { font-size: 0.68rem; color: var(--muted); font-weight: 600; }
+.cal-ev { font-size: 0.7rem; line-height: 1.25; padding: 1px 4px; border-radius: 4px; background: var(--surface); border-left: 3px solid var(--evc, var(--accent)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-ev.done, .cal-evlist li.done .grow, .cal-up li.done { text-decoration: line-through; opacity: 0.6; }
+.cal-more { font-size: 0.68rem; color: var(--muted); }
+.t-rendu { --evc: var(--warn); } .t-examen { --evc: #3fa34d; } .t-ecole { --evc: #d4a800; } .t-rdv { --evc: var(--accent); } .t-perso { --evc: #8a5cf6; } .t-info { --evc: var(--muted); }
+.cal-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.8rem; color: var(--muted); }
+.cal-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--kc); margin-right: 5px; vertical-align: -1px; }
+.cal-evlist, .cal-up { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; }
+.cal-evlist li { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); border-left: 3px solid var(--evc, var(--accent)); }
+.cal-evlist .grow { flex: 1; min-width: 0; }
+.cal-tag { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--evc, var(--muted)); }
+.cal-form { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.cal-form input, .cal-form select { font: inherit; font-size: 0.88rem; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
 .tool-row { display: flex; gap: 4px; padding: 0 6px; }
 .tool-ic { position: relative; display: grid; place-items: center; width: 34px; height: 32px; border-radius: 8px; color: var(--muted); }
 .tool-ic svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -1008,6 +1042,7 @@ function renderSide() {
     <nav class="nav-main">
       <a class="nav-link ${r === "accueil" ? "on" : ""}" href="#accueil">Tableau de bord</a>
       <a class="nav-link ${r === "revision" ? "on" : ""}" href="#revision">Révisions <span class="count ${due ? "" : "zero"}">${due}</span></a>
+      <a class="nav-link ${r === "calendrier" ? "on" : ""}" href="#calendrier">Calendrier <span class="cal-dot k-${dayKind(today())}" title="Aujourd'hui : ${KIND_LABEL[dayKind(today())]}"></span></a>
       <a class="nav-link ${r === "parcours" ? "on" : ""}" href="#parcours">Parcours</a>
       <a class="nav-link ${r === "questions" ? "on" : ""}" href="#questions">Mes questions <span class="count ${qOpenCount() ? "" : "zero"}">${qOpenCount()}</span></a>
     </nav>
@@ -1137,6 +1172,7 @@ function viewHome() {
       </div>
       </div>
     </div>
+    ${calStrip()}
     <div class="card stack">${mineBlock}${doneLine}</div>
     <div class="card stack act-card"><div class="row"><h3>Activité</h3><span class="spacer"></span><span class="muted small">quiz, TD, étapes et révisions</span></div>
       <div class="act-row">${heatmap(16)}
@@ -1158,6 +1194,100 @@ function viewCatalog() {
   return `<div class="wrap">
     <div class="stack" style="gap:4px"><a class="small" href="#accueil">← Tableau de bord</a><h1>Tous les parcours</h1><p class="lead" style="margin:0">${tracks().length} parcours, rangés par catégorie. Clique sur un parcours pour voir ses modules.</p></div>
     <div class="card stack">${groups}</div>
+  </div>`;
+}
+
+
+/* ---------- calendrier (alternance + événements) ---------- */
+const CAL = DATA.cal || { jours: {}, evenements: [] };
+const DAY_KIND = { e: "ecole", r: "ecole", n: "entreprise", x: "examens", t: "rattrapages", f: "ferie" };
+const KIND_LABEL = { ecole: "École", entreprise: "Entreprise", examens: "Examens", rattrapages: "Rattrapages", ferie: "Férié", weekend: "Week-end", libre: "—" };
+const EV_TYPES = { rendu: "Rendu", examen: "Examen", ecole: "École", rdv: "Rendez-vous", perso: "Perso", info: "Info" };
+function dayKind(k) { const c = CAL.jours[k]; if (c) return DAY_KIND[c]; const [y, m, d] = k.split("-").map(Number); const w = new Date(y, m - 1, d).getDay(); return w === 0 || w === 6 ? "weekend" : "libre"; }
+function myEvents() { const p = state.progress; if (!Array.isArray(p.agenda)) p.agenda = []; return p.agenda; }
+function eventsOn(k) { return CAL.evenements.filter((e) => e.date === k).map((e) => ({ ...e, fixe: true })).concat(myEvents().filter((e) => e.date === k)); }
+function dPlus(k, n) { const [y, m, d] = k.split("-").map(Number); const x = new Date(y, m - 1, d + n); return ymd(x); }
+function daysBetween(a, b) { const p = (k) => { const [y, m, d] = k.split("-").map(Number); return Date.UTC(y, m - 1, d); }; return Math.round((p(b) - p(a)) / 864e5); }
+function nextBlock(kind, from) {
+  let k = from, guard = 0;
+  while (dayKind(k) !== kind && guard++ < 400) k = dPlus(k, 1);
+  if (guard >= 400) return null;
+  let end = k, n = 1, j = dPlus(k, 1), g2 = 0;
+  while (g2++ < 40) { const dk = dayKind(j); if (dk === kind) { end = j; n++; } else if (dk !== "weekend" && dk !== "ferie") break; j = dPlus(j, 1); }
+  return { start: k, end, n };
+}
+function calSummary() {
+  const t = today(), kind = dayKind(t);
+  const school = nextBlock("ecole", kind === "ecole" ? t : dPlus(t, 1));
+  const exams = CAL.evenements.filter((e) => e.type === "examen" && e.date >= t).sort((a, b) => a.date.localeCompare(b.date))[0];
+  const evs = CAL.evenements.map((e) => ({ ...e, fixe: true })).concat(myEvents()).filter((e) => e.date >= t && e.type !== "info").sort((a, b) => a.date.localeCompare(b.date));
+  return { t, kind, school, exams, next: evs.slice(0, 4) };
+}
+function calStrip() {
+  const c = calSummary();
+  const sch = c.school ? (c.kind === "ecole" ? `École jusqu'au ${frDate(c.school.end)}` : `Prochaine école : <b>${frDate(c.school.start)}</b> (${c.school.n} j)`) : "";
+  const rendu = myEvents().filter((e) => e.type === "rendu" && !e.fait && e.date >= c.t).sort((a, b) => a.date.localeCompare(b.date))[0];
+  return `<a class="card cal-strip" href="#calendrier">
+    <span class="cal-pill k-${c.kind}">Aujourd'hui : ${KIND_LABEL[c.kind]}</span>
+    ${sch ? `<span>${sch}</span>` : ""}
+    ${rendu ? `<span class="cal-warn">À rendre ${relDays(rendu.date)} : ${esc(rendu.titre)}</span>` : ""}
+    ${c.exams ? `<span class="muted">${esc(c.exams.titre)} ${relDays(c.exams.date)}</span>` : ""}
+    <span class="spacer"></span><span class="stat-link">Calendrier →</span></a>`;
+}
+function relDays(k) { const n = daysBetween(today(), k); return n === 0 ? "aujourd'hui" : n === 1 ? "demain" : `dans ${n} jours`; }
+function calUi() { return state.ui.cal || (state.ui.cal = { month: today().slice(0, 7), day: today() }); }
+function viewCalendar() {
+  const u = calUi(), t = today();
+  const [Y, M] = u.month.split("-").map(Number);
+  const first = new Date(Y, M - 1, 1), off = (first.getDay() + 6) % 7, nDays = new Date(Y, M, 0).getDate();
+  let cells = "";
+  for (let i = 0; i < off; i++) cells += `<div class="cal-cell out"></div>`;
+  const counts = {};
+  for (let d = 1; d <= nDays; d++) {
+    const k = `${u.month}-${String(d).padStart(2, "0")}`, kind = dayKind(k), evs = eventsOn(k);
+    counts[kind] = (counts[kind] || 0) + 1;
+    cells += `<button class="cal-cell k-${kind} ${k === t ? "today" : ""} ${k === u.day ? "sel" : ""}" data-act="calDay" data-day="${k}" title="${frDate(k)} : ${KIND_LABEL[kind]}">
+      <span class="cal-num">${d}</span><span class="cal-kind">${kind === "weekend" || kind === "libre" ? "" : KIND_LABEL[kind]}</span>
+      ${evs.slice(0, 2).map((e) => `<span class="cal-ev t-${e.type}${e.fait ? " done" : ""}">${esc(e.titre)}</span>`).join("")}${evs.length > 2 ? `<span class="cal-more">+${evs.length - 2}</span>` : ""}
+    </button>`;
+  }
+  const monthName = first.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const dk = dayKind(u.day), devs = eventsOn(u.day);
+  const c = calSummary();
+  const upcoming = (() => {
+    const out = []; let k = t;
+    for (let i = 0; i < 3; i++) { const b = nextBlock("ecole", k); if (!b) break; out.push(b); k = dPlus(b.end, 1); }
+    return out;
+  })();
+  const evList = CAL.evenements.map((e) => ({ ...e, fixe: true })).concat(myEvents()).filter((e) => e.date >= t).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 8);
+  return `<div class="wrap">
+    <div class="stack" style="gap:4px"><div class="eyebrow">Alternance MBA · ${frDate(t)}</div><h1>Calendrier</h1>
+      <p class="lead" style="margin:0">Aujourd'hui : <span class="cal-pill k-${c.kind}">${KIND_LABEL[c.kind]}</span>${c.school && c.kind !== "ecole" ? ` · prochaine école <b>${frDate(c.school.start)}</b> → ${frDate(c.school.end)}` : ""}${c.exams ? ` · ${esc(c.exams.titre)} ${relDays(c.exams.date)}` : ""}</p></div>
+    <div class="cal-layout">
+      <div class="card stack">
+        <div class="row"><button class="btn sm" data-act="calMove" data-n="-1" aria-label="Mois précédent">‹</button><h3 class="cal-title">${esc(monthName)}</h3><button class="btn sm" data-act="calMove" data-n="1" aria-label="Mois suivant">›</button><span class="spacer"></span><button class="btn sm ghost" data-act="calToday">Aujourd'hui</button></div>
+        <div class="cal-grid">${["lun", "mar", "mer", "jeu", "ven", "sam", "dim"].map((d) => `<div class="cal-dow">${d}</div>`).join("")}${cells}</div>
+        <div class="cal-legend">${["ecole", "entreprise", "examens", "rattrapages", "ferie"].map((k) => `<span><i class="k-${k}"></i>${KIND_LABEL[k]}${counts[k] ? ` (${counts[k]})` : ""}</span>`).join("")}</div>
+      </div>
+      <div class="stack">
+        <div class="card stack">
+          <div class="row"><h3 style="margin:0">${frDate(u.day)}</h3><span class="spacer"></span><span class="cal-pill k-${dk}">${KIND_LABEL[dk]}</span></div>
+          ${devs.length ? `<ul class="cal-evlist">${devs.map((e) => `<li class="t-${e.type}${e.fait ? " done" : ""}"><span class="cal-tag">${EV_TYPES[e.type] || ""}</span><span class="grow">${esc(e.titre)}${e.note ? `<br><span class="muted small">${esc(e.note)}</span>` : ""}</span>${e.fixe ? "" : `${e.type === "rendu" ? `<button class="btn sm ghost" data-act="calDone" data-id="${e.id}">${e.fait ? "↺" : "✓ Rendu"}</button>` : ""}<button class="btn sm ghost" data-act="calDel" data-id="${e.id}" aria-label="Supprimer">✕</button>`}</li>`).join("")}</ul>` : `<p class="muted small" style="margin:0">Rien de prévu ce jour-là.</p>`}
+          <form class="cal-form" data-form="calAdd">
+            <input name="titre" placeholder="Ajouter : rendu, examen, rendez-vous…" required maxlength="120">
+            <div class="row"><select name="type">${Object.entries(EV_TYPES).filter(([k]) => k !== "info").map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select>
+            <input name="note" placeholder="Détail (facultatif)" maxlength="200" style="flex:1"><button class="btn sm primary">Ajouter</button></div>
+          </form>
+        </div>
+        <div class="card stack"><h3 style="margin:0">Prochaines semaines d'école</h3>
+          <ul class="cal-up">${upcoming.map((b) => `<li><span class="cal-pill k-ecole">${b.n} j</span> ${frDate(b.start)} → ${frDate(b.end)} <span class="muted small">${relDays(b.start)}</span></li>`).join("") || "<li class='muted'>Plus de cours prévus.</li>"}</ul>
+        </div>
+        <div class="card stack"><h3 style="margin:0">À venir</h3>
+          <ul class="cal-up">${evList.map((e) => `<li class="t-${e.type}${e.fait ? " done" : ""}"><a href="#calendrier" data-act="calGo" data-day="${e.date}">${frDate(e.date)}</a> <span class="cal-tag">${EV_TYPES[e.type] || ""}</span> ${esc(e.titre)}</li>`).join("") || "<li class='muted'>Rien de prévu.</li>"}</ul>
+        </div>
+      </div>
+    </div>
+    <p class="muted small">Calendrier prévisionnel de l'école (2026-2028), il peut changer : envoie-moi le nouveau PDF si c'est le cas.</p>
   </div>`;
 }
 
@@ -2460,6 +2590,7 @@ function render() {
   else if (r === "debogueur") html = viewDebugger();
   else if (r === "questions") html = viewQuestions();
   else if (r === "parcours") html = viewCatalog();
+  else if (r === "calendrier") html = viewCalendar();
   else if (r.startsWith("t-")) html = viewTrack(r.slice(2));
   else if (r.startsWith("m-")) html = viewModule(r.slice(2));
   else html = viewHome();
@@ -2657,6 +2788,12 @@ const ACTIONS = {
     if (window.matchMedia("(max-width: 720px)").matches) qSetOpen(false);
     if (location.hash === "#m-" + q.ctx.module) render(); else location.hash = "#m-" + q.ctx.module;
   },
+  calDay(el) { calUi().day = el.dataset.day; render(); },
+  calGo(el) { const u = calUi(); u.day = el.dataset.day; u.month = el.dataset.day.slice(0, 7); render(); },
+  calToday() { const u = calUi(); u.day = today(); u.month = today().slice(0, 7); render(); },
+  calMove(el) { const u = calUi(); const [y, m] = u.month.split("-").map(Number); const d = new Date(y, m - 1 + Number(el.dataset.n), 1); u.month = ymd(d).slice(0, 7); render(); },
+  calDel(el) { const p = state.progress; p.agenda = myEvents().filter((e) => e.id !== el.dataset.id); saveLocal(); saveProgress(); render(); },
+  calDone(el) { const e = myEvents().find((x) => x.id === el.dataset.id); if (e) { e.fait = !e.fait; saveLocal(); saveProgress(); render(); } },
   toggleSideAll() { sideAll = !sideAll; try { localStorage.setItem("atelier:sideTous", sideAll ? "1" : "0"); } catch (e) {} renderSide(); },
   toggleGroup(el) {
     const id = el.dataset.id;
@@ -2689,6 +2826,7 @@ document.addEventListener("submit", (e) => {
   if (f.dataset.form === "q") { qSave(f.texte.value, e.submitter && e.submitter.value === "ask"); return; }
   if (f.dataset.form === "qNote") { const q = questions().find((x) => x.id === f.dataset.id); const v = f.note.value.trim(); if (q && v) { q.reponse = v; q.source = "moi"; q.statut = "repondue"; (qUi().keep = qUi().keep || []).push(q.id); saveProgress(); } qUi().note = null; qRefreshViews(); return; }
   if (f.dataset.form === "dbgFollow") { dbgFollowUp(f); return; }
+  if (f.dataset.form === "calAdd") { const titre = f.titre.value.trim(); if (!titre) return; myEvents().push({ id: "ev" + Date.now().toString(36), date: calUi().day, titre, type: f.type.value, note: f.note.value.trim() || undefined }); saveLocal(); saveProgress(); render(); toast("Ajouté au calendrier."); return; }
   if (f.dataset.form === "ask") { const q = f.q.value.trim(); if (q) aiAsk(mod(f.dataset.id), q); }
   if (f.dataset.form === "gen") { readGenForm(); aiGenerate(); }
   if (f.dataset.form === "gist") {
