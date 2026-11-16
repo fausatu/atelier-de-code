@@ -28,8 +28,8 @@ Les futurs **rendus** de « Mes cours » doivent réutiliser `state.progress.age
 
 ## Mes notes (fait le 16/11)
 Une note markdown par module, stockée dans `state.progress.notes[moduleId] = { text, ts, created }` (synchronisée comme la
-progression ; à la fusion GitHub, la version la plus récente gagne). Panneau latéral `#npanel` (bouton « Mes notes » en haut du
-module ou **Alt+N**, Échap pour fermer ; sur écran ≥ 1280 px le contenu se décale), modes Écrire / Aperçu (Ctrl+Entrée),
+progression ; à la fusion GitHub, la version la plus récente gagne). Panneau latéral `#npanel` (bouton flottant crayon en bas à droite →
+menu « Mes notes » / « Une question » (`fabSetOpen`), ou **Alt+N**, Échap pour fermer ; sur écran ≥ 1280 px le contenu se décale), modes Écrire / Aperçu (Ctrl+Entrée),
 barre d'outils (titre, gras Ctrl+B, code Ctrl+E, bloc de code avec le langage du parcours, liste, case, tableau, citation, lien Ctrl+K,
 « Citer » = passage surligné du cours), suite automatique des listes avec Entrée, bouton « Faire une fiche avec Claude » (capacité
 `sample`, proposition à ajouter ou jeter). Page `#notes` (icône dans la barre latérale) : notes par parcours, recherche, copier une /
