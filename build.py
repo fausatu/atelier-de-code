@@ -12,35 +12,38 @@ from c_git import MODULES as GIT
 from c_debug import MODULES as DEBUG
 from c_api import MODULES as API
 from c_forms import MODULES as FORMS
+from c_decoupe import MODULES as DECOUPE
 
 TRACKS = [
-    {"id": "php", "name": "PHP orienté objet", "short": "PHP POO", "color": "violet",
+    {"id": "php", "group": "back", "name": "PHP orienté objet", "short": "PHP POO", "color": "violet",
      "desc": "Classes, encapsulation, héritage, interfaces, autoload, injection de dépendances."},
-    {"id": "doctrine", "name": "Doctrine ORM", "short": "Doctrine", "color": "orange",
+    {"id": "doctrine", "group": "back", "name": "Doctrine ORM", "short": "Doctrine", "color": "orange",
      "desc": "Entités, migrations, persist/flush, repositories, relations, N+1."},
-    {"id": "dto", "name": "DTO avec Symfony", "short": "DTO", "color": "blue",
+    {"id": "dto", "group": "back", "name": "DTO avec Symfony", "short": "DTO", "color": "blue",
      "desc": "Recevoir et renvoyer du JSON proprement : DTO d'entrée, validation, sortie, filtres."},
-    {"id": "arch", "name": "Architecture : qui fait quoi", "short": "Architecture", "color": "olive",
+    {"id": "arch", "group": "back", "name": "Architecture : qui fait quoi", "short": "Architecture", "color": "olive",
      "desc": "Contrôleur, DTO, service, entité, repository : leurs rôles, leurs liens, et le trajet complet React → Symfony."},
-    {"id": "ddd", "name": "DDD (bonus)", "short": "DDD (bonus)", "color": "green",
+    {"id": "ddd", "group": "back", "name": "DDD (bonus)", "short": "DDD (bonus)", "color": "green",
      "desc": "Pour aller plus loin : value objects, entités riches, agrégats, architecture en couches."},
-    {"id": "react", "name": "React", "short": "React", "color": "cyan",
+    {"id": "react", "group": "front", "name": "React", "short": "React", "color": "cyan",
      "desc": "Composants, state, formulaires, effets, hooks personnalisés."},
-    {"id": "data", "name": "React : données & API", "short": "Données & API", "color": "rose",
+    {"id": "data", "group": "front", "name": "React : données & API", "short": "Données & API", "color": "rose",
      "desc": "Requêtes HTTP, fetch et axios, mutations, couche API, TanStack Query."},
-    {"id": "forms", "name": "Formulaires React", "short": "Formulaires", "color": "indigo",
+    {"id": "forms", "group": "front", "name": "Formulaires React", "short": "Formulaires", "color": "indigo",
      "desc": "Du formulaire fait main à React Hook Form et TanStack Form : validation zod, listes, composants de champ, migration."},
-    {"id": "next", "name": "Next.js (App Router)", "short": "Next.js", "color": "graphite",
+    {"id": "next", "group": "front", "name": "Next.js (App Router)", "short": "Next.js", "color": "graphite",
      "desc": "Routes, Server/Client Components, cache, Server Actions, API."},
-    {"id": "git", "name": "Git & GitHub", "short": "Git & GitHub", "color": "brick",
+    {"id": "git", "group": "outils", "name": "Git & GitHub", "short": "Git & GitHub", "color": "brick",
      "desc": "Le modèle de Git, merge, rebase, revenir en arrière, Conventional Commits, Pull Requests, outils."},
-    {"id": "debug", "name": "Déboguer", "short": "Débogage", "color": "amber",
+    {"id": "decoupe", "group": "methode", "name": "Découper une fonctionnalité", "short": "Découper", "color": "plum",
+     "desc": "Du ticket au code : scénarios, variables (comment je le sais ?), étapes, tranches."},
+    {"id": "debug", "group": "methode", "name": "Déboguer", "short": "Débogage", "color": "amber",
      "desc": "Lire les erreurs et corriger de vrais bugs : PHP, Doctrine, Symfony, React, API, Next.js, Git."},
-    {"id": "api", "name": "API REST", "short": "API", "color": "teal",
+    {"id": "api", "group": "back", "name": "API REST", "short": "API", "color": "teal",
      "desc": "Créer une API (REST, erreurs, auth, cache, idempotence, limites) et la consommer en PHP et en JS."},
 ]
 
-modules = PHP + DOC + DTO + ARCH + DDD + REACT + DATA_ + FORMS + NEXT + GIT + API + DEBUG
+modules = PHP + DOC + DTO + ARCH + DDD + REACT + DATA_ + FORMS + NEXT + GIT + API + DECOUPE + DEBUG
 ids = set()
 for m in modules:
     assert m["id"] not in ids, m["id"]
@@ -80,7 +83,16 @@ for m in modules:
         if r and r.get("setup"):
             for k, v in SETUPS.items():
                 r["setup"] = r["setup"].replace(v, "@@SETUP:" + k + "@@")
-data = {"tracks": TRACKS, "modules": modules, "setups": SETUPS}
+GROUPS = [
+    {"id": "methode", "name": "Méthode", "desc": "Savoir s'y prendre : découper une fonctionnalité, déboguer."},
+    {"id": "back", "name": "Web · Back-end", "desc": "PHP → Doctrine → DTO → Architecture → API, DDD en bonus."},
+    {"id": "front", "name": "Web · Front-end", "desc": "React → Données & API → Formulaires → Next.js."},
+    {"id": "outils", "name": "Outils", "desc": "Les outils du quotidien : Git, le terminal."},
+]
+_gids = {g["id"] for g in GROUPS}
+for t in TRACKS:
+    assert t.get("group") in _gids, ("parcours sans catégorie", t["id"])
+data = {"groups": GROUPS, "tracks": TRACKS, "modules": modules, "setups": SETUPS}
 js = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
 tpl = open("/home/claude/atelier/template.html", encoding="utf-8").read()
 assert "/*__CONTENT__*/" in tpl
