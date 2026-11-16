@@ -17,6 +17,7 @@ from c_decoupe import MODULES as DECOUPE
 from c_term import MODULES as TERM
 from c_ts import MODULES as TSM
 from c_fil import MODULES as FIL
+from c_fil2 import MODULES as FIL2
 
 TRACKS = [
     {"id": "php", "group": "back", "name": "PHP orienté objet", "short": "PHP POO", "color": "violet",
@@ -53,7 +54,7 @@ TRACKS = [
      "desc": "Créer une API (REST, erreurs, auth, cache, idempotence, limites) et la consommer en PHP et en JS."},
 ]
 
-modules = PHP + DOC + DTO + ARCH + DDD + TSM + REACT + DATA_ + FORMS + NEXT + GIT + TERM + API + DECOUPE + DEBUG + FIL
+modules = PHP + DOC + DTO + ARCH + DDD + TSM + REACT + DATA_ + FORMS + NEXT + GIT + TERM + API + DECOUPE + DEBUG + FIL + FIL2
 ids = set()
 for m in modules:
     assert m["id"] not in ids, m["id"]

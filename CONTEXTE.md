@@ -20,7 +20,7 @@
 - Commits : terminer par les lignes d'attribution Co-Authored-By / Claude-Session données par le système.
 
 ## État actuel (16/11/2026)
-16 parcours, 86 modules. Récemment : Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
+16 parcours, 89 modules. Récemment : Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
 tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barre latérale allégée (outils en icônes, « Mes parcours »).
 
 ## Calendrier (fait le 16/11)
@@ -115,10 +115,15 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   2. `fil-modele` Le modèle de données (Doctrine simulé : Film + enum Genre, Série/Épisode cascade+orphelins, Compte/Profil/enum Forfait)
   3. `fil-api` L'API du catalogue (Symfony simulé : `CatalogueFiltres` + `FilmCard`, fiche + contrôle parental 403/404, `/api/accueil` en rangées)
 - Le Doctrine simulé ne gère pas ManyToMany (genre = enum ; Ma liste devra être une entité `ElementListe` ManyToOne×2).
-- **Suite (modules 4 à 9)** : 4. règles métier en écriture (créer un profil : DTO d'entrée + validation + forfait),
-  5. reprise de lecture (`PUT /api/visionnages`, idempotence, « Continuer à regarder »), 6. front React + TS (catalogue TanStack Query,
-  fiche, lecteur `<video>` qui sauvegarde la position), 7. formulaires (profil avec React Hook Form + zod, erreurs de l'API),
-  8. Git (une branche par tranche, PR), 9. terminal (lancer back + front, .env, ports).
+- Modules 4 à 6 faits (`c_fil2.py`, 18 TD au total pour le parcours, 18/18 + départs qui échouent) :
+  4. `fil-profils` Créer et supprimer un profil (`#[MapRequestPayload]` NouveauProfil, `#[CurrentUser] Compte`, exceptions
+     `#[WithHttpStatus(409)]`, DELETE 404 hors compte / 409 dernier adulte, PATCH forfait)
+  5. `fil-reprise` Reprendre la lecture (Visionnage, `PUT` idempotent, numéro d'`envoi` contre les requêtes en retard,
+     `Horloge` injectée, `GET /api/continuer`)
+  6. `fil-front` Le front React (types du contrat, catalogue `useQuery(['films', { q, genre }])`, fiche 403/404,
+     classe `Sauvegarde` toutes les 10 s + pause, `Lecteur` « Reprendre à 6:00 »). API simulée : `BOBINE_API`.
+- **Suite (modules 7 à 9)** : 7. formulaires (créer/modifier un profil avec React Hook Form + zod, afficher les 422/409 de l'API),
+  8. Git (une branche par tranche, Conventional Commits, PR), 9. terminal (lancer back + front, .env, ports occupés).
 
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
