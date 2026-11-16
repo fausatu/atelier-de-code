@@ -60,6 +60,29 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .group-label .gchev { width: 0; height: 0; border-left: 4px solid currentColor; border-top: 3.5px solid transparent; border-bottom: 3.5px solid transparent; transform: rotate(90deg); transition: transform .12s; }
 .side-group.shut .gchev { transform: none; }
 .group-label .gcount { margin-left: auto; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.tool-row { display: flex; gap: 4px; padding: 0 6px; }
+.tool-ic { position: relative; display: grid; place-items: center; width: 34px; height: 32px; border-radius: 8px; color: var(--muted); }
+.tool-ic svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tool-ic:hover { background: var(--surface-2); color: var(--ink); }
+.tool-ic.on { background: var(--accent-soft); color: var(--accent); }
+.tool-ic::after { content: attr(data-tip); position: absolute; left: 50%; top: calc(100% + 6px); transform: translateX(-50%); white-space: nowrap; background: var(--ink); color: var(--surface); font-size: 0.76rem; font-weight: 500; padding: 4px 8px; border-radius: 6px; opacity: 0; pointer-events: none; transition: opacity .12s; z-index: 5; }
+.tool-ic:hover::after, .tool-ic:focus-visible::after { opacity: 1; }
+.side-more { margin-top: 6px; border: 0; background: none; color: var(--muted); font: 500 0.82rem var(--font-body); text-align: left; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+.side-more:hover { color: var(--accent); background: var(--surface-2); }
+.side-empty { margin: 4px 0 0; padding: 0 10px; font-size: 0.82rem; color: var(--muted); }
+.tcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.tcard { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--line); border-left: 3px solid var(--tc); border-radius: var(--r); text-decoration: none; color: var(--ink); transition: border-color .12s, transform .12s; }
+.tcard:hover { border-color: var(--tc); transform: translateY(-1px); }
+.tcard-name { font-size: 0.98rem; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tcard .row { flex-wrap: nowrap; }
+.tcard-desc { margin: 0; }
+.tcard-next { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tcard-go { margin-top: auto; font-weight: 600; font-size: 0.86rem; color: var(--tc); }
+.done-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border-top: 1px solid var(--line); padding-top: 12px; }
+.done-line .chip { text-decoration: none; }
+.act-card h3 { font-size: 1rem; }
+.act-card .hm-wrap { max-width: 330px; flex: 0 1 330px; min-width: 220px; }
+.act-card .act-row { gap: 40px; }
 .home-group { display: flex; flex-direction: column; gap: 8px; }
 .home-group + .home-group { border-top: 1px solid var(--line); padding-top: 14px; }
 .home-group h4 { margin: 0; font-size: 0.95rem; }
@@ -825,6 +848,11 @@ function status(id) {
 }
 const STATUS_LABEL = { new: "À faire", started: "En cours", done: "Acquis", due: "À réviser" };
 function dueModules() { return allModules().filter((m) => status(m.id) === "due"); }
+function trackStarted(tid) { return modulesOf(tid).some((m) => status(m.id) !== "new"); }
+function trackFinished(tid) { const s = trackStats(tid); return s.total > 0 && s.done === s.total; }
+function myTracks() { return tracks().filter((t) => trackStarted(t.id) && !trackFinished(t.id)); }
+function trackNext(tid) { const ms = modulesOf(tid); return ms.find((m) => status(m.id) === "started") || ms.find((m) => status(m.id) === "due") || ms.find((m) => status(m.id) === "new") || ms[0]; }
+const STARTERS = ["decoupe", "php", "react"];
 function trackStats(tid) { const ms = modulesOf(tid); const done = ms.filter((m) => prog(m.id)?.done).length; return { total: ms.length, done }; }
 
 /* ---------- persistance ---------- */
@@ -951,6 +979,7 @@ function currentRoute() { return (location.hash || "#accueil").slice(1); }
 const OPEN_LS = "atelier-open-tracks";
 let openTracks = (() => { try { return new Set(JSON.parse(localStorage.getItem(OPEN_LS) || "[]")); } catch (e) { return new Set(); } })();
 function saveOpen() { try { localStorage.setItem(OPEN_LS, JSON.stringify([...openTracks])); } catch (e) {} }
+let sideAll = (() => { try { return localStorage.getItem("atelier:sideTous") === "1"; } catch (e) { return false; } })();
 function renderSide() {
   const r = currentRoute();
   const due = dueModules().length;
@@ -959,13 +988,16 @@ function renderSide() {
     const s = trackStats(t.id);
     const open = openTracks.has(t.id) || t.id === curTrack;
     const mods = open ? modulesOf(t.id).map((m) => `<a class="mod-link ${r === "m-" + m.id ? "on" : ""}" href="#m-${esc(m.id)}"><span class="st ${status(m.id)}" title="${STATUS_LABEL[status(m.id)]}"></span>${esc(m.title)}</a>`).join("") : "";
-    const pctW = s.total ? (100 * s.done / s.total) : 0;
     return `<div class="track-group ${open ? "open" : ""}" style="${tc(t)}">
-      <button class="track-head" data-act="toggleTrack" data-id="${esc(t.id)}" aria-expanded="${open}"><span class="chev" aria-hidden="true"></span>${logo(t, 18)}<span class="tname">${esc(t.short || t.name)}</span><span class="minibar"><i style="width:${pctW}%"></i></span><span class="frac">${s.done}/${s.total}</span></button>
+      <button class="track-head" data-act="toggleTrack" data-id="${esc(t.id)}" aria-expanded="${open}"><span class="chev" aria-hidden="true"></span>${logo(t, 18)}<span class="tname">${esc(t.short || t.name)}</span><span class="frac">${s.done}/${s.total}</span></button>
       ${open ? `<div class="mods">${mods}<a class="mod-link all" href="#t-${esc(t.id)}">Voir le parcours</a></div>` : ""}
     </div>`;
   };
-  const groups = trackGroups().map((g) => {
+  const showAll = sideAll;
+  const mine = myTracks().map((t) => t.id);
+  if (curTrack && !mine.includes(curTrack)) mine.push(curTrack);
+  const mineHtml = mine.length ? mine.map((id) => trackItem(track(id))).join("") : `<p class="side-empty">Aucun parcours commencé. <a href="#parcours">Choisir un parcours →</a></p>`;
+  const groups = !showAll ? "" : trackGroups().map((g) => {
     const hasCur = g.tracks.some((t) => t.id === curTrack);
     const shut = closedGroups.has(g.id) && !hasCur;
     const done = g.tracks.reduce((a, t) => a + trackStats(t.id).done, 0), total = g.tracks.reduce((a, t) => a + trackStats(t.id).total, 0);
@@ -976,14 +1008,19 @@ function renderSide() {
     <nav class="nav-main">
       <a class="nav-link ${r === "accueil" ? "on" : ""}" href="#accueil">Tableau de bord</a>
       <a class="nav-link ${r === "revision" ? "on" : ""}" href="#revision">Révisions <span class="count ${due ? "" : "zero"}">${due}</span></a>
-      <a class="nav-link ${r === "essayer" ? "on" : ""}" href="#essayer">Bac à sable</a>
-      <a class="nav-link ${r === "debogueur" ? "on" : ""}" href="#debogueur">Mon débogueur</a>
+      <a class="nav-link ${r === "parcours" ? "on" : ""}" href="#parcours">Parcours</a>
       <a class="nav-link ${r === "questions" ? "on" : ""}" href="#questions">Mes questions <span class="count ${qOpenCount() ? "" : "zero"}">${qOpenCount()}</span></a>
-      <a class="nav-link ${r === "ajouter" ? "on" : ""}" href="#ajouter">Ajouter un module</a>
     </nav>
-    <div class="side-label">Parcours</div>
-    <div class="groups">${groups}</div>
-    <a class="nav-link ${r === "synchro" ? "on" : ""}" href="#synchro" style="font-size:0.86rem">Synchroniser ma progression</a>
+    <div class="tool-row" role="navigation" aria-label="Outils">
+      <a class="tool-ic ${r === "essayer" ? "on" : ""}" href="#essayer" aria-label="Bac à sable" data-tip="Bac à sable"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7 3 12l5 5M16 7l5 5-5 5"/></svg></a>
+      <a class="tool-ic ${r === "debogueur" ? "on" : ""}" href="#debogueur" aria-label="Mon débogueur" data-tip="Mon débogueur"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="8" width="10" height="12" rx="5"/><path d="M12 8v12M9 5l1.5 2.5M15 5l-1.5 2.5M7 13H3M21 13h-4M7.5 9.5 4.5 7M16.5 9.5l3-2.5M7.5 17l-3 2.5M16.5 17l3 2.5"/></svg></a>
+      <a class="tool-ic ${r === "ajouter" ? "on" : ""}" href="#ajouter" aria-label="Ajouter un module" data-tip="Ajouter un module"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
+      <a class="tool-ic ${r === "synchro" ? "on" : ""}" href="#synchro" aria-label="Synchroniser ma progression" data-tip="Synchroniser"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/></svg></a>
+    </div>
+    <div class="side-label">${showAll ? "Tous les parcours" : "Mes parcours"}</div>
+    <div class="groups">${showAll ? groups : mineHtml}
+      <button class="side-more" data-act="toggleSideAll" aria-expanded="${showAll}">${showAll ? "← Seulement mes parcours" : `Tous les parcours (${tracks().length})`}</button>
+    </div>
     ${standalone ? `<a class="nav-link ${r === "claude" ? "on" : ""}" href="#claude" style="font-size:0.86rem">${sample ? "Claude activé" : "Activer les boutons Claude"}</a>` : ""}
     <div class="side-foot" id="sync"></div><div class="side-foot small" id="gist-side" style="border:0;padding-top:0"></div>`;
   renderSideSyncLine();
@@ -1056,11 +1093,21 @@ function viewHome() {
   const nt = nxt ? track(nxt.track) : null;
   const act = activityStats();
   const pct = all.length ? doneCount / all.length : 0;
-  const ringOf = (t) => {
-    const s = trackStats(t.id);
-    return `<a class="tr-ring" href="#t-${esc(t.id)}" style="${tc(t)}">${ring(s.total ? s.done / s.total : 0, 80, 7, "var(--tc)", logo(t, 28), `${s.done}/${s.total}`)}<span>${esc(t.short || t.name)}</span></a>`;
+  const mine = myTracks();
+  const finished = tracks().filter((t) => trackFinished(t.id));
+  const card = (t, starter) => {
+    const s = trackStats(t.id); const n = trackNext(t.id);
+    return `<a class="tcard" href="#${n ? "m-" + esc(n.id) : "t-" + esc(t.id)}" style="${tc(t)}">
+      <div class="row">${logo(t, 26)}<b class="tcard-name" title="${esc(t.name)}">${esc(t.name)}</b><span class="muted small">${s.done}/${s.total}</span></div>
+      ${starter ? `<p class="muted small tcard-desc">${esc(t.desc || "")}</p>` : `<div class="bar"><i style="width:${s.total ? (100 * s.done / s.total) : 0}%"></i></div>
+      <div class="small tcard-next"><span class="muted">Ensuite :</span> ${esc(n ? n.title : "")}</div>`}
+      <span class="tcard-go">${starter ? "Commencer" : "Reprendre"} →</span></a>`;
   };
-  const trackRings = trackGroups().map((g) => `<div class="home-group"><div class="row"><h4>${esc(g.name)}</h4><span class="muted small">${esc(g.desc || "")}</span></div><div class="tr-grid">${g.tracks.map(ringOf).join("")}</div></div>`).join("");
+  const starters = STARTERS.map((id) => tracks().find((t) => t.id === id)).filter(Boolean);
+  const mineBlock = mine.length
+    ? `<div class="row"><h3>En cours</h3><span class="spacer"></span><a class="small" href="#parcours">Explorer tous les parcours →</a></div><div class="tcards">${mine.map((t) => card(t)).join("")}</div>`
+    : `<div class="row"><h3>Pour démarrer</h3><span class="spacer"></span><a class="small" href="#parcours">Explorer tous les parcours →</a></div><p class="muted small" style="margin:0">Tu n'as pas encore commencé de parcours. Trois bons points de départ :</p><div class="tcards">${starters.map((t) => card(t, true)).join("")}</div>`;
+  const doneLine = finished.length ? `<div class="done-line"><span class="muted small">Terminés (${finished.length})</span>${finished.map((t) => `<a class="chip" style="${tc(t)}" href="#t-${esc(t.id)}">${esc(t.short || t.name)} ✓</a>`).join("")}</div>` : "";
   return `<div class="wrap">
     <div class="stack" style="gap:4px"><div class="eyebrow">${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div><h1>Mon atelier de code</h1></div>
     <div class="home-hero">
@@ -1090,15 +1137,27 @@ function viewHome() {
       </div>
       </div>
     </div>
-    <div class="card stack"><h3>Parcours</h3>${trackRings}</div>
-    <div class="card stack"><div class="row"><h3>Activité</h3><span class="spacer"></span><span class="muted small">quiz, TD, étapes et révisions</span></div>
-      <div class="act-row">${heatmap(22)}
+    <div class="card stack">${mineBlock}${doneLine}</div>
+    <div class="card stack act-card"><div class="row"><h3>Activité</h3><span class="spacer"></span><span class="muted small">quiz, TD, étapes et révisions</span></div>
+      <div class="act-row">${heatmap(16)}
         <div class="act-stats">
           <div><b>${Object.keys(state.progress.activity || {}).length}</b><span>jours actifs</span></div>
           <div><b>${Object.values(state.progress.activity || {}).reduce((a, b) => a + b, 0)}</b><span>actions au total</span></div>
           <div><b>${Object.values(state.progress.activity || {}).reduce((a, b) => Math.max(a, b), 0)}</b><span>record sur une journée</span></div>
         </div>
       </div></div>
+  </div>`;
+}
+
+function viewCatalog() {
+  const ringOf = (t) => {
+    const s = trackStats(t.id);
+    return `<a class="tr-ring" href="#t-${esc(t.id)}" style="${tc(t)}">${ring(s.total ? s.done / s.total : 0, 80, 7, "var(--tc)", logo(t, 28), `${s.done}/${s.total}`)}<span>${esc(t.short || t.name)}</span></a>`;
+  };
+  const groups = trackGroups().map((g) => `<div class="home-group"><div class="row"><h4>${esc(g.name)}</h4><span class="muted small">${esc(g.desc || "")}</span></div><div class="tr-grid">${g.tracks.map(ringOf).join("")}</div></div>`).join("");
+  return `<div class="wrap">
+    <div class="stack" style="gap:4px"><a class="small" href="#accueil">← Tableau de bord</a><h1>Tous les parcours</h1><p class="lead" style="margin:0">${tracks().length} parcours, rangés par catégorie. Clique sur un parcours pour voir ses modules.</p></div>
+    <div class="card stack">${groups}</div>
   </div>`;
 }
 
@@ -2400,6 +2459,7 @@ function render() {
   else if (r === "essayer") html = viewSandbox();
   else if (r === "debogueur") html = viewDebugger();
   else if (r === "questions") html = viewQuestions();
+  else if (r === "parcours") html = viewCatalog();
   else if (r.startsWith("t-")) html = viewTrack(r.slice(2));
   else if (r.startsWith("m-")) html = viewModule(r.slice(2));
   else html = viewHome();
@@ -2597,6 +2657,7 @@ const ACTIONS = {
     if (window.matchMedia("(max-width: 720px)").matches) qSetOpen(false);
     if (location.hash === "#m-" + q.ctx.module) render(); else location.hash = "#m-" + q.ctx.module;
   },
+  toggleSideAll() { sideAll = !sideAll; try { localStorage.setItem("atelier:sideTous", sideAll ? "1" : "0"); } catch (e) {} renderSide(); },
   toggleGroup(el) {
     const id = el.dataset.id;
     if (closedGroups.has(id)) closedGroups.delete(id); else closedGroups.add(id);
