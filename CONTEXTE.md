@@ -16,7 +16,7 @@
 - Commits : terminer par les lignes d'attribution Co-Authored-By / Claude-Session données par le système.
 
 ## État actuel (16/11/2026)
-15 parcours, 83 modules. Récemment : notes par module ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
+15 parcours, 83 modules. Récemment : Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
 tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barre latérale allégée (outils en icônes, « Mes parcours »).
 
 ## Calendrier (fait le 16/11)
@@ -38,9 +38,23 @@ toutes les notes en markdown, « Modifier » rouvre le module avec le panneau. R
 (profite aussi aux leçons). Fonctions : `notesMap`, `noteOf`, `nSetOpen`, `renderN`, `nInsert`, `nAi`, `viewNotes`.
 Idée pour plus tard : les cartes mémo (point 3) pourront être générées depuis une note.
 
+## Mes cours, étape 1 (fait le 16/11) : matières, cours, rendus
+- Route `#cours` (lien « Mes cours » dans la barre latérale, pastille = rendus dans les 14 jours), `#mat-<id>`, `#c-<id>` (cours), `#r-<id>` (rendu).
+- Premier passage : écran de préparation à partir de `ecole/programme.json` (injecté par build.py dans `DATA.programme`) ; Ana coche
+  ses matières, + option « grands rendus connus » (`KNOWN_RENDUS`, date à définir).
+- **Stockage** : `state.ecole = { matieres, cours, deleted, setup }` → localStorage + doc db `data/users/<uid>/ecole` (`ecoleWriter`)
+  + export/GitHub (`snapshotData`, fusion par id avec `ts`, `deleted` = suppressions). Les **rendus** restent dans
+  `state.progress.agenda` (type "rendu") avec `statut` (a_faire/en_cours/rendu/note), `fait` synchronisé, `matiere`, `consignes` (md),
+  `checklist`, `liens`, `resultat`, `date` (peut être null = « date à définir ») ; le calendrier les affiche et les relie à `#r-<id>`.
+- Matière : couleur (par type par défaut), année, thèmes, évaluation, liens vers les parcours de l'atelier (`ATELIER_ALIAS`).
+- Cours : titre, date facultative, étiquettes, liens d'outils reconnus (`TOOLS` : Canva, Miro, Figma, Notion, Google…, pastille
+  colorée avec initiales, pas de logos), notes markdown (`mdEditor`, même barre d'outils que Mes notes ; `nInsert` accepte une cible).
+- **Dates des cours : NE PAS les placer automatiquement.** Ana va donner son emploi du temps de cours → à importer (cours datés
+  par matière, rattachés aux jours d'école).
+
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
-2. **Espace « Mes cours » (école)** — PAS seulement du code : management de projet, anglais, UX/UI, etc.
+2. **Espace « Mes cours » (école)** — étape 1 faite (voir ci-dessus). Reste l'étape 2 : fichiers du prof (capacité `assets` : PDF/images affichés, PPTX/DOCX téléchargeables), tableau de bord « cette semaine : école ou entreprise » + échéances, et l'import de l'emploi du temps d'Ana. — PAS seulement du code : management de projet, anglais, UX/UI, etc.
    - Ana est en **MBA Développeur Full Stack (MyDigitalSchool, 2026-2028, en alternance)**. La liste complète des matières
      est dans `ecole/programme.json` (44 modules, M1/M2, UE, heures, ECTS, type, thèmes, évaluations, et lien vers les
      parcours de l'atelier dans `atelier`). S'en servir pour pré-remplir les matières (Ana confirme / supprime ensuite).

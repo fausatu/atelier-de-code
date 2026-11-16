@@ -571,6 +571,67 @@ body.q-open .qfab { display: none; }
 .q-ans { border-top: 1px dashed var(--line); padding-top: 8px; font-size: 0.92rem; }
 .q-ans .who { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .q-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Mes cours */
+.r-undated > summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; padding: 4px 0; }
+.r-undated .r-list { margin-top: 6px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 5px 12px; font-size: 0.84rem; font-weight: 500; color: var(--muted); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.on { background: var(--tc, var(--accent)); color: #fff; }
+.mat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.mat-card { position: relative; display: flex; flex-direction: column; gap: 3px; padding: 14px 14px 12px 18px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--ink); text-decoration: none; overflow: hidden; }
+.mat-card:hover { border-color: var(--tc); }
+.mat-card .mat-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--tc); }
+.mat-card b { font-weight: 600; line-height: 1.3; }
+.mat-card small { color: var(--muted); font-size: 0.8rem; }
+.mat-foot { margin-top: 6px; font-size: 0.82rem; }
+.warn-t { color: var(--warn); font-weight: 600; }
+.mat-title { border-left: 6px solid var(--tc); padding-left: 12px; }
+.r-list, .c-list { display: flex; flex-direction: column; gap: 6px; }
+.r-row, .c-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border: 1px solid var(--line); border-left: 4px solid var(--tc); border-radius: 8px; background: var(--surface); color: var(--ink); text-decoration: none; }
+.r-row:hover, .c-row:hover { border-color: var(--tc); }
+.r-row.closed { opacity: 0.65; }
+.r-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.r-main b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.r-main small { color: var(--muted); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-st { flex: none; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+.r-st.st-en_cours { background: var(--accent-soft); color: var(--accent); }
+.r-st.st-rendu { background: var(--good-soft); color: var(--good); }
+.r-st.st-note { background: var(--good); color: #fff; }
+.r-date { flex: none; font-size: 0.82rem; color: var(--muted); }
+.r-date.late { color: var(--bad); font-weight: 600; }
+.c-date { flex: none; width: 92px; font-size: 0.82rem; color: var(--muted); }
+.setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px; }
+.setup-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-left: 4px solid var(--tc); border-radius: 8px; background: var(--surface); cursor: pointer; }
+.setup-item input { margin-top: 4px; }
+.setup-item span { display: flex; flex-direction: column; }
+.setup-item small { color: var(--muted); font-size: 0.78rem; }
+.setup-item:has(input:not(:checked)) { opacity: 0.55; }
+.title-input { font: 700 1.85rem/1.2 var(--font-display); letter-spacing: -0.01em; border: 1px solid transparent; border-radius: 8px; background: transparent; padding: 2px 6px; margin-left: -7px; width: 100%; color: var(--ink); }
+.title-input:hover { border-color: var(--line); }
+.title-input:focus { border-color: var(--accent); background: var(--surface); outline: none; }
+.tool-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.tool-chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px 5px 5px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.tool-chip a { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); text-decoration: none; }
+.tool-chip a:hover b { text-decoration: underline; }
+.tool-chip .tb { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; color: #fff; font: 700 0.72rem var(--font-body); }
+.tool-chip b { display: block; font-size: 0.86rem; font-weight: 600; line-height: 1.2; }
+.tool-chip small { display: block; font-size: 0.76rem; color: var(--muted); line-height: 1.2; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-box { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.md-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--line); background: var(--bg); }
+.md-head .n-tools { border: 0; padding: 0; background: transparent; }
+.md-area { display: block; width: 100%; min-height: 260px; resize: vertical; border: 0; padding: 12px 14px; background: var(--surface); color: var(--ink); font: 14px/1.6 var(--font-mono); outline: none; }
+.md-area::placeholder { font-family: var(--font-body); color: var(--muted); }
+.md-prev { padding: 14px 16px; max-width: none; }
+.ck-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.ck-list li { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 6px; }
+.ck-list li:hover { background: var(--surface-2); }
+.ck-list label { flex: 1; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.ck-list li.ok span { text-decoration: line-through; color: var(--muted); }
+.swatches { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.sw { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
+.sw.on { box-shadow: 0 0 0 2px var(--ink); }
+@media (max-width: 720px) { .c-date { width: 70px; } .r-row { flex-wrap: wrap; } .r-date { width: 100%; padding-left: 2px; } .title-input { font-size: 1.4rem; } }
 /* Mes notes : panneau latéral par module + page #notes */
 .npanel { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); z-index: 46; background: var(--bg); border-left: 1px solid var(--line); box-shadow: -10px 0 30px rgb(0 0 0 / 0.12); display: flex; flex-direction: column; }
 .npanel[hidden] { display: none; }
@@ -679,6 +740,7 @@ const state = {
   progress: { modules: {} },
   drafts: {},
   custom: { tracks: [], modules: [] },
+  ecole: { matieres: [], cours: [], deleted: [], setup: false },
   ui: { step: {}, level: {}, hints: {}, showSol: {}, ftab: {}, review: null, gen: null, confirmDel: null, newTrackColor: "rose", runs: {} },
 };
 let sample = null, uid = null, refs = null;
@@ -691,11 +753,12 @@ function loadLocal() {
     if (d.progress && d.progress.modules) state.progress = d.progress;
     if (d.drafts) state.drafts = d.drafts;
     if (d.custom) state.custom = { tracks: d.custom.tracks || [], modules: d.custom.modules || [] };
+    if (d.ecole && typeof d.ecole === "object") state.ecole = d.ecole;
     return true;
   } catch (e) { return false; }
 }
 function saveLocal() {
-  try { localStorage.setItem(LS_KEY, JSON.stringify({ progress: state.progress, drafts: state.drafts, custom: state.custom })); } catch (e) {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ progress: state.progress, drafts: state.drafts, custom: state.custom, ecole: state.ecole })); } catch (e) {}
   if (typeof gistPush === "function") gistPush(false);
 }
 
@@ -1053,7 +1116,7 @@ async function initCaps() {
   try { uid = await user.id(); } catch (e) { uid = null; }
   if (!uid) { setSync("local"); return; }
   const base = "data/users/" + uid;
-  refs = { prog: db.doc(base + "/progress"), drafts: db.doc(base + "/drafts"), lib: db.doc(base + "/library") };
+  refs = { prog: db.doc(base + "/progress"), drafts: db.doc(base + "/drafts"), lib: db.doc(base + "/library"), ecole: db.doc(base + "/ecole") };
   const hadLocal = Object.keys(state.progress.modules).length > 0;
   let timer = setTimeout(() => setSync("local"), 10000);
   const done = () => { if (timer) { clearTimeout(timer); timer = null; } };
@@ -1068,6 +1131,12 @@ async function initCaps() {
     if (!snap.exists || draftWriter.pending()) return;
     const d = snap.data();
     if (d && d.codes) { state.drafts = JSON.parse(JSON.stringify(d.codes)); saveLocal(); }
+  }, () => {});
+  refs.ecole.onSnapshot((snap) => {
+    if (!snap.exists) { if (ecole().setup && snap.metadata && !snap.metadata.fromCache) saveEcole(); return; }
+    if (ecoleWriter.pending()) return;
+    const d = snap.data();
+    if (d) { state.ecole = JSON.parse(JSON.stringify(d)); saveLocal(); refresh(); }
   }, () => {});
   refs.lib.onSnapshot((snap) => {
     if (!snap.exists) { if ((state.custom.modules.length || state.custom.tracks.length) && snap.metadata && !snap.metadata.fromCache) libWriter.schedule(); return; }
@@ -1112,6 +1181,7 @@ function renderSide() {
       <a class="nav-link ${r === "accueil" ? "on" : ""}" href="#accueil">Tableau de bord</a>
       <a class="nav-link ${r === "revision" ? "on" : ""}" href="#revision">Révisions <span class="count ${due ? "" : "zero"}">${due}</span></a>
       <a class="nav-link ${r === "parcours" ? "on" : ""}" href="#parcours">Parcours</a>
+      <a class="nav-link ${r === "cours" || /^(mat|c|r)-/.test(r) ? "on" : ""}" href="#cours">Mes cours <span class="count ${soonRendus(14).length ? "" : "zero"}" title="Rendus dans les 14 prochains jours">${soonRendus(14).length}</span></a>
       <a class="nav-link ${r === "questions" ? "on" : ""}" href="#questions">Mes questions <span class="count ${qOpenCount() ? "" : "zero"}">${qOpenCount()}</span></a>
     </nav>
     <div class="tool-row" role="navigation" aria-label="Outils">
@@ -1342,7 +1412,7 @@ function viewCalendar() {
       <div class="stack">
         <div class="card stack">
           <div class="row"><h3 style="margin:0">${frDate(u.day)}</h3><span class="spacer"></span><span class="cal-pill k-${dk}">${KIND_LABEL[dk]}</span></div>
-          ${devs.length ? `<ul class="cal-evlist">${devs.map((e) => `<li class="t-${e.type}${e.fait ? " done" : ""}"><span class="cal-tag">${EV_TYPES[e.type] || ""}</span><span class="grow">${esc(e.titre)}${e.note ? `<br><span class="muted small">${esc(e.note)}</span>` : ""}</span>${e.fixe ? "" : `${e.type === "rendu" ? `<button class="btn sm ghost" data-act="calDone" data-id="${e.id}">${e.fait ? "↺" : "✓ Rendu"}</button>` : ""}<button class="btn sm ghost" data-act="calDel" data-id="${e.id}" aria-label="Supprimer">✕</button>`}</li>`).join("")}</ul>` : `<p class="muted small" style="margin:0">Rien de prévu ce jour-là.</p>`}
+          ${devs.length ? `<ul class="cal-evlist">${devs.map((e) => `<li class="t-${e.type}${e.fait ? " done" : ""}"><span class="cal-tag">${EV_TYPES[e.type] || ""}</span><span class="grow">${e.type === "rendu" && !e.fixe ? `<a href="#r-${esc(e.id)}">${esc(e.titre)}</a>` : esc(e.titre)}${e.note ? `<br><span class="muted small">${esc(e.note)}</span>` : ""}</span>${e.fixe ? "" : `${e.type === "rendu" ? `<button class="btn sm ghost" data-act="calDone" data-id="${e.id}">${e.fait ? "↺" : "✓ Rendu"}</button>` : ""}<button class="btn sm ghost" data-act="calDel" data-id="${e.id}" aria-label="Supprimer">✕</button>`}</li>`).join("")}</ul>` : `<p class="muted small" style="margin:0">Rien de prévu ce jour-là.</p>`}
           <form class="cal-form" data-form="calAdd">
             <input name="titre" placeholder="Ajouter : rendu, examen, rendez-vous…" required maxlength="120">
             <div class="row"><select name="type">${Object.entries(EV_TYPES).filter(([k]) => k !== "info").map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select>
@@ -2510,7 +2580,7 @@ function viewClaude() {
 
 
 /* ---------- synchronisation : export / import + gist GitHub ---------- */
-function snapshotData() { return { v: 1, at: new Date().toISOString(), progress: state.progress, drafts: state.drafts, custom: state.custom }; }
+function snapshotData() { return { v: 1, at: new Date().toISOString(), progress: state.progress, drafts: state.drafts, custom: state.custom, ecole: ecole() }; }
 function encodeExport(d) { const bytes = new TextEncoder().encode(JSON.stringify(d)); let bin = ""; bytes.forEach((b) => (bin += String.fromCharCode(b))); return "ATELIER1:" + btoa(bin); }
 function decodeExport(txt) {
   txt = String(txt || "").trim();
@@ -2545,12 +2615,18 @@ function mergeData(inc) {
   if (Array.isArray(inc.progress.bugs)) { const mine = bugs(); for (const b of inc.progress.bugs) { const cur = mine.find((x) => x.id === b.id); if (!cur) mine.push(b); else if (b.resolu) cur.resolu = true; } mine.sort((a, b) => (b.date || "").localeCompare(a.date || "")); }
   if (Array.isArray(inc.progress.questions)) { const mine = questions(); for (const q of inc.progress.questions) { const cur = mine.find((x) => x.id === q.id); if (!cur) mine.push(q); else if (q.reponse && !cur.reponse) { cur.reponse = q.reponse; cur.source = q.source; cur.statut = q.statut; } else if (q.statut === "repondue") cur.statut = "repondue"; } mine.sort((a, b) => (b.ts || 0) - (a.ts || 0)); }
   if (inc.progress.notes && typeof inc.progress.notes === "object") { const mine = notesMap(); for (const [id, n] of Object.entries(inc.progress.notes)) if (n && typeof n.text === "string" && (!mine[id] || (n.ts || 0) > (mine[id].ts || 0))) mine[id] = n; }
+  if (Array.isArray(inc.progress.agenda)) { const mine = myEvents(); for (const ev of inc.progress.agenda) { const i = mine.findIndex((x) => x.id === ev.id); if (i < 0) mine.push(ev); else if ((ev.ts || 0) > (mine[i].ts || 0)) mine[i] = ev; } }
+  if (inc.ecole && typeof inc.ecole === "object") {
+    const e = ecole(); const del = new Set([...e.deleted, ...(inc.ecole.deleted || [])]); e.deleted = [...del];
+    for (const key of ["matieres", "cours"]) { const mine = e[key]; for (const x of inc.ecole[key] || []) { if (del.has(x.id)) continue; const i = mine.findIndex((y) => y.id === x.id); if (i < 0) mine.push(x); else if ((x.ts || 0) > (mine[i].ts || 0)) mine[i] = x; } e[key] = mine.filter((y) => !del.has(y.id)); }
+    if (inc.ecole.setup) e.setup = true;
+  }
   for (const [k, v] of Object.entries(inc.drafts || {})) if (state.drafts[k] === undefined) state.drafts[k] = v;
   const c = inc.custom || {};
   for (const t of c.tracks || []) if (!state.custom.tracks.some((x) => x.id === t.id)) state.custom.tracks.push(t);
   for (const m of c.modules || []) if (!state.custom.modules.some((x) => x.id === m.id)) state.custom.modules.push(m);
 }
-function persistAll() { saveLocal(); saveProgress(); draftWriter.schedule(); libWriter.schedule(); }
+function persistAll() { saveLocal(); saveProgress(); draftWriter.schedule(); libWriter.schedule(); saveEcole(); }
 
 const GIST_LS = "atelier-gist", GIST_DESC = "atelier-de-code-progression", GIST_FILE = "progression.json";
 const gist = { token: "", id: "", status: "off", last: null, timer: null, busy: false, again: false };
@@ -2658,7 +2734,7 @@ function noteOf(id) { const n = notesMap()[id]; return n && typeof n.text === "s
 function noteCount() { return Object.keys(notesMap()).filter((id) => noteOf(id)).length; }
 function nUi() { return state.ui.n || (state.ui.n = { open: false, mode: "write", ai: null, aiBusy: false }); }
 function noteModuleId() { const r = currentRoute(); return r.startsWith("m-") && mod(r.slice(2)) ? r.slice(2) : null; }
-function noteLang(m) { const f = exFiles(m)[0]; const l = f && (f.lang || (f.path || "").split(".").pop()); return l && l !== "txt" ? l : ""; }
+function noteLang(m) { if (!m) return ""; const f = exFiles(m)[0]; const l = f && (f.lang || (f.path || "").split(".").pop()); return l && l !== "txt" ? l : ""; }
 function noteWhen(ts) { if (!ts) return ""; const d = new Date(ts); const k = ymd(d); return k === today() ? "aujourd'hui à " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : frDate(k); }
 function noteExcerpt(t) { return String(t).split("\n").map((l) => l.replace(/^[#>\-*\s\d.|]+|\[[ xX]\]\s*|[`*_~]/g, "").trim()).filter((l) => l && !/^-{2,}/.test(l)).join(" · ").slice(0, 160); }
 let noteTimer = null;
@@ -2722,9 +2798,9 @@ function renderN() {
     </div>`;
   highlight(panel);
 }
-function nInsert(k, quoteText) {
-  const ta = $("#n-text"); if (!ta) return;
-  const m = mod(ta.dataset.id);
+function nInsert(k, quoteText, target) {
+  const ta = target || $("#n-text"); if (!ta) return;
+  const m = ta.id === "n-text" ? mod(ta.dataset.id) : null;
   const v = ta.value; let a = ta.selectionStart, b = ta.selectionEnd; const sel = v.slice(a, b);
   const nl = (pos) => (pos > 0 && v[pos - 1] !== "\n" ? "\n" : "");
   let ins, selFrom, selTo;
@@ -2745,7 +2821,7 @@ function nInsert(k, quoteText) {
   ta.focus(); ta.setSelectionRange(a, b);
   ta.setRangeText(ins, a, b, "end");
   ta.setSelectionRange(a + selFrom, a + selTo);
-  noteInput(ta);
+  ta.dispatchEvent(new Event("input", { bubbles: true }));
 }
 async function nAi() {
   const id = noteModuleId(); const m = id && mod(id); const u = nUi();
@@ -2811,6 +2887,247 @@ function fabSetOpen(open) {
   const first = menu.querySelector(".fab-item"); if (first) first.focus();
 }
 function fabOpen() { const b = $("#qfab"); return !!b && b.getAttribute("aria-expanded") === "true"; }
+/* ---------- Mes cours (école) : matières + cours dans state.ecole, rendus dans state.progress.agenda (type "rendu") ---------- */
+const PROG = DATA.programme || { ue: {}, types: {}, modules: [] };
+const TYPE_COLOR = { dev: "blue", gestion: "orange", design: "rose", soft: "teal", langue: "indigo", droit: "slate", rse: "green", securite: "brick", projet: "violet", option: "graphite" };
+const ATELIER_ALIAS = { architecture: "arch" };
+const R_STATUTS = { a_faire: "À faire", en_cours: "En cours", rendu: "Rendu", note: "Noté" };
+const KNOWN_RENDUS = [
+  ["Audit d'entreprise", "Rapport d'entreprise", "Rapport d'entreprise de 1re année."],
+  ["Challenge Lean Start-up", "Challenge Lean Start-up : compétition inter-écoles", ""],
+  ["Workshop client 2", "Workshop client 2 : présentation orale + dossier client", ""],
+  ["My Digital Start-up (M1)", "My Digital Start-up : soutenance « Go / No-go »", "Soutenance au printemps de la 1re année."],
+  ["MOOC Cybersécurité ANSSI", "Certificat du MOOC ANSSI (SecNumacadémie)", "À faire à distance sur SecNumacadémie, rendre le certificat de réussite."],
+  ["Orthodidacte", "Orthodidacte : niveau 3 complété", "Sur la plateforme Orthodidacte."],
+  ["Mémoire professionnel (M1)", "Note d'intention du mémoire", "À rendre en début de 2e année."],
+  ["Tech Lab IA, Big Data & veille technologique", "Tech Lab : présentation 15 min + démo + atelier", ""],
+  ["Workshop client 3", "Workshop client 3 : soutenance devant un jury professionnel", ""],
+  ["My Digital Start-up (M2)", "My Digital Start-up : business plan + dossier technique + prototype", "Soutenances de groupe et individuelle."],
+  ["Mémoire professionnel (M2)", "Mémoire professionnel : soutenance devant le jury", ""],
+  ["Professional English / préparation TOEIC", "Passage du TOEIC", ""],
+];
+const TOOLS = [
+  [/canva\.com/, "Canva", "#00a3b4"], [/miro\.com/, "Miro", "#c9a200"], [/figma\.com/, "Figma", "#a259ff"], [/notion\.(so|site)/, "Notion", "#37352f"],
+  [/docs\.google\.com\/document/, "Google Docs", "#2f6fe0"], [/docs\.google\.com\/presentation/, "Google Slides", "#d99a00"], [/docs\.google\.com\/spreadsheets/, "Google Sheets", "#1e8e3e"],
+  [/docs\.google\.com\/forms|forms\.gle/, "Google Forms", "#7248b9"], [/drive\.google\.com/, "Google Drive", "#1e8e3e"], [/meet\.google\.com/, "Google Meet", "#00897b"],
+  [/youtube\.com|youtu\.be/, "YouTube", "#d92020"], [/teams\.(microsoft|live)\.com/, "Teams", "#5059c9"], [/moodle/, "Moodle", "#f98012"],
+  [/sharepoint\.com|onedrive/, "OneDrive", "#0364b8"], [/github\.com/, "GitHub", "#24292f"], [/gitlab/, "GitLab", "#e24329"], [/trello\.com/, "Trello", "#0c66e4"],
+  [/atlassian\.net|jira/, "Jira / Confluence", "#0c66e4"], [/padlet/, "Padlet", "#e23b5d"], [/wooclap/, "Wooclap", "#4b3fd6"], [/kahoot/, "Kahoot", "#46178f"],
+  [/loom\.com/, "Loom", "#625df5"], [/zoom\.us/, "Zoom", "#2d8cff"], [/slack\.com/, "Slack", "#4a154b"], [/claude\.ai/, "Claude", "#c96442"], [/chatgpt\.com|openai\.com/, "ChatGPT", "#10a37f"],
+  [/secnumacademie|ssi\.gouv/, "SecNumacadémie", "#000091"], [/orthodidacte/, "Orthodidacte", "#e5007d"], [/ets\.org|toeic/, "TOEIC", "#0a5f9e"],
+];
+function ecole() {
+  const e = state.ecole || (state.ecole = {});
+  if (!Array.isArray(e.matieres)) e.matieres = [];
+  if (!Array.isArray(e.cours)) e.cours = [];
+  if (!Array.isArray(e.deleted)) e.deleted = [];
+  return e;
+}
+function matiere(id) { return ecole().matieres.find((m) => m.id === id); }
+function coursItem(id) { return ecole().cours.find((c) => c.id === id); }
+function rendus() { return myEvents().filter((e) => e.type === "rendu"); }
+function renduItem(id) { return rendus().find((r) => r.id === id); }
+function renduStatut(r) { return r.statut || (r.fait ? "rendu" : "a_faire"); }
+function renduOpen(r) { const s = renduStatut(r); return s === "a_faire" || s === "en_cours"; }
+function matColor(m) { return COLORS.includes(m && m.couleur) ? m.couleur : "graphite"; }
+function mtc(m) { return `--tc: var(--t-${matColor(m)})`; }
+function ecYear() { return state.ui.ecYear || (today() < "2027-09-01" ? "M1" : "M2"); }
+function sortRendus(list) { return list.slice().sort((a, b) => (a.date ? 0 : 1) - (b.date ? 0 : 1) || String(a.date || "").localeCompare(String(b.date || "")) || String(a.titre).localeCompare(String(b.titre))); }
+function soonRendus(days) { const t = today(), lim = dPlus(t, days); return rendus().filter((r) => renduOpen(r) && r.date && r.date >= t && r.date <= lim); }
+const ecoleWriter = makeWriter(() => refs && refs.ecole, () => JSON.parse(JSON.stringify(ecole())), 800);
+function saveEcole() { ecoleWriter.schedule(); }
+function toolOf(url) {
+  let host = ""; try { host = new URL(url).hostname.replace(/^www\./, ""); } catch (e) {}
+  const hit = TOOLS.find(([re]) => re.test(url));
+  return hit ? { name: hit[1], color: hit[2] } : { name: host || "Lien", color: "#5d6779" };
+}
+function linkChips(list, kind, id) {
+  return (list || []).map((l, i) => { const t = toolOf(l.url); const init = t.name.replace(/[^A-Za-zÀ-ÿ ]/g, "").split(/\s+/).filter(Boolean).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "↗";
+    return `<span class="tool-chip"><a href="${esc(l.url)}" target="_blank" rel="noopener" title="${esc(l.url)}"><span class="tb" style="background:${t.color}">${esc(init)}</span><span><b>${esc(t.name)}</b>${l.titre ? `<small>${esc(l.titre)}</small>` : ""}</span></a>${kind ? `<button class="q-x" data-act="ecLinkDel" data-kind="${kind}" data-id="${esc(id)}" data-i="${i}" aria-label="Retirer ce lien">×</button>` : ""}</span>`; }).join("");
+}
+function linkForm(kind, id) {
+  return `<form class="row link-form" data-form="ecLink" data-kind="${kind}" data-id="${esc(id)}"><input class="field" name="url" placeholder="Coller un lien : Canva, Miro, Figma, Notion, Drive, YouTube, Teams…" required style="flex:2;min-width:200px"><input class="field" name="titre" placeholder="Nom (facultatif)" style="flex:1;min-width:120px"><button class="btn sm">Ajouter le lien</button></form>`;
+}
+function mdTools(target) {
+  const tools = [["h", "T", "Titre"], ["b", "G", "Gras"], ["code", "`c`", "Code dans la ligne"], ["block", "{ }", "Bloc de code"], ["sep"], ["list", "•", "Liste"], ["check", "☐", "Case à cocher"], ["table", "▦", "Tableau"], ["quote", "❝", "Citation"], ["link", "🔗", "Lien"]];
+  return tools.map((t) => t[0] === "sep" ? `<span class="sep"></span>` : `<button type="button" data-act="nIns" data-k="${t[0]}" ${target ? `data-target="${target}"` : ""} title="${t[2]}" aria-label="${t[2]}">${t[1]}</button>`).join("");
+}
+function mdEditor(kind, id, field, text, placeholder) {
+  const key = kind + ":" + id + ":" + field; const modes = state.ui.mdMode || (state.ui.mdMode = {});
+  const write = modes[key] ? modes[key] === "write" : !String(text || "").trim();
+  const tid = "md-" + kind + "-" + field;
+  return `<div class="md-box">
+    <div class="md-head"><span class="n-modes" role="tablist"><button role="tab" aria-selected="${write}" class="${write ? "on" : ""}" data-act="mdMode" data-key="${esc(key)}" data-mode="write">Écrire</button><button role="tab" aria-selected="${!write}" class="${write ? "" : "on"}" data-act="mdMode" data-key="${esc(key)}" data-mode="preview">Aperçu</button></span>${write ? `<span class="n-tools">${mdTools("#" + tid)}</span>` : ""}</div>
+    ${write ? `<textarea id="${tid}" class="md-edit md-area" data-ec="${field}" data-kind="${kind}" data-id="${esc(id)}" placeholder="${esc(placeholder)}" spellcheck="true">${esc(text || "")}</textarea>`
+      : `<div class="md-prev prose">${String(text || "").trim() ? md(text) : `<p class="muted">Vide pour l'instant.</p>`}</div>`}
+  </div>`;
+}
+function renduRow(r, opts = {}) {
+  const m = matiere(r.matiere); const s = renduStatut(r);
+  const late = renduOpen(r) && r.date && r.date < today();
+  const ck = (r.checklist || []); const ckDone = ck.filter((x) => x.ok).length;
+  return `<a class="r-row ${renduOpen(r) ? "" : "closed"}" href="#r-${esc(r.id)}" style="${mtc(m)}">
+    <span class="r-st st-${s}">${R_STATUTS[s]}</span>
+    <span class="r-main"><b>${esc(r.titre)}</b>${!opts.noMat && m ? `<small>${esc(m.nom)}</small>` : ""}</span>
+    ${ck.length ? `<span class="muted small">${ckDone}/${ck.length}</span>` : ""}
+    <span class="r-date ${late ? "late" : ""}">${r.date ? `${frDate(r.date)}${renduOpen(r) ? ` · ${late ? "en retard" : relDays(r.date)}` : ""}` : "date à définir"}</span>
+  </a>`;
+}
+function viewEcoleSetup() {
+  const by = {};
+  PROG.modules.forEach((m, i) => { (by[m.annee] = by[m.annee] || {}); (by[m.annee][m.ue] = by[m.annee][m.ue] || []).push([m, i]); });
+  return `<div class="wrap">
+    <div class="stack"><div class="eyebrow">${esc(PROG.formation || "MBA")} · ${esc(PROG.ecole || "")} · ${esc(PROG.promo || "")}</div><h1>Mes cours</h1>
+      <p class="lead">Je prépare tes matières à partir de ton programme. Décoche celles que tu ne veux pas (une option que tu n'as pas prise, par exemple) : tu pourras en ajouter, renommer ou supprimer plus tard. Les dates de cours, on les ajoutera avec ton emploi du temps.</p></div>
+    <form class="stack" data-form="ecSetup" style="gap:18px">
+      ${Object.entries(by).map(([an, ues]) => `<div class="card stack"><div class="row"><h2 style="margin:0">${an === "M1" ? "1re année (M1 · 2026-2027)" : "2e année (M2 · 2027-2028)"}</h2><span class="spacer"></span><button type="button" class="btn sm ghost" data-act="ecSetupAll" data-an="${an}">Tout cocher / décocher</button></div>
+        ${Object.entries(ues).map(([ue, ms]) => `<div class="stack" style="gap:6px"><div class="eyebrow">${esc(PROG.ue[ue] || ue)}</div><div class="setup-grid">${ms.map(([m, i]) => `<label class="setup-item" style="--tc: var(--t-${TYPE_COLOR[m.type] || "graphite"})"><input type="checkbox" name="m" value="${i}" data-an="${an}" checked><span><b>${esc(m.nom)}</b><small>${esc(PROG.types[m.type] || m.type)} · ${m.heures} h${m.ects ? ` · ${m.ects} ECTS` : ""}</small></span></label>`).join("")}</div></div>`).join("")}
+      </div>`).join("")}
+      <label class="row"><input type="checkbox" name="rendus" checked> Ajouter aussi les grands rendus connus (${KNOWN_RENDUS.length}, avec « date à définir ») : rapport d'entreprise, Go / No-go, TOEIC, MOOC ANSSI…</label>
+      <div class="row"><button class="btn primary">Créer mes matières</button><button type="button" class="btn ghost" data-act="ecSetupEmpty">Commencer sans rien</button></div>
+    </form>
+  </div>`;
+}
+function viewEcole() {
+  const e = ecole();
+  if (!e.setup) return viewEcoleSetup();
+  const yr = ecYear();
+  const mats = e.matieres.filter((m) => yr === "tout" || m.annee === yr || !m.annee);
+  const showAll = !!state.ui.ecAllRendus;
+  const inYear = (r) => { if (yr === "tout") return true; const m = matiere(r.matiere); return !m || !m.annee || m.annee === yr; };
+  const allR = sortRendus(rendus().filter(inYear));
+  const openR = allR.filter(renduOpen); const shownR = showAll ? allR : openR;
+  const ues = {}; mats.forEach((m) => (ues[m.ue || "_"] = ues[m.ue || "_"] || []).push(m));
+  const card = (m) => {
+    const nc = e.cours.filter((c) => c.matiere === m.id).length; const nr = rendus().filter((r) => r.matiere === m.id && renduOpen(r)).length;
+    return `<a class="mat-card" href="#mat-${esc(m.id)}" style="${mtc(m)}"><span class="mat-bar"></span><b>${esc(m.nom)}</b><small>${esc(PROG.types[m.type] || "Matière")}${m.heures ? ` · ${m.heures} h` : ""}${m.ects ? ` · ${m.ects} ECTS` : ""}</small><span class="mat-foot">${nc ? `${nc} cours` : `<span class="muted">aucun cours</span>`}${nr ? ` · <span class="warn-t">${nr} rendu${nr > 1 ? "s" : ""}</span>` : ""}</span></a>`;
+  };
+  return `<div class="wrap">
+    <div class="stack" style="gap:4px"><div class="eyebrow">${esc(PROG.formation || "MBA")} · ${esc(PROG.ecole || "")}</div><h1>Mes cours</h1>
+      <p class="lead" style="margin:0">Tes matières, tes cours (notes, liens vers tes outils) et tes rendus. Les rendus apparaissent aussi dans le <a href="#calendrier">calendrier</a>.</p></div>
+    <div class="row"><span class="seg">${["M1", "M2", "tout"].map((y) => `<button class="${yr === y ? "on" : ""}" data-act="ecYear" data-y="${y}">${y === "tout" ? "Tout" : y}</button>`).join("")}</span><span class="muted small">${mats.length} matière${mats.length > 1 ? "s" : ""}</span><span class="spacer"></span><button class="btn sm" data-act="ecNewMat">+ Matière</button></div>
+    <div class="card stack">
+      <div class="row"><h2 style="margin:0">Rendus</h2><span class="muted small">${yr === "tout" ? "" : yr + " · "}${openR.length} à faire${allR.length - openR.length ? ` · ${allR.length - openR.length} terminé${allR.length - openR.length > 1 ? "s" : ""}` : ""}</span><span class="spacer"></span>
+        ${allR.length !== openR.length ? `<button class="btn sm ghost" data-act="ecAllRendus">${showAll ? "Masquer les terminés" : "Voir aussi les terminés"}</button>` : ""}<button class="btn sm primary" data-act="ecNewRendu">+ Rendu</button></div>
+      ${(() => { const dated = shownR.filter((r) => r.date), undated = shownR.filter((r) => !r.date);
+        return `<div class="r-list">${dated.map((r) => renduRow(r)).join("") || (undated.length ? `<p class="muted small">Aucun rendu daté pour ${yr === "tout" ? "l'instant" : yr}.</p>` : `<p class="muted">Aucun rendu à faire. 🎉</p>`)}</div>
+        ${undated.length ? `<details class="r-undated" ${state.ui.ecUndated ? "open" : ""}><summary>Date à définir <span class="muted small">· ${undated.length}</span></summary><div class="r-list">${undated.map((r) => renduRow(r)).join("")}</div></details>` : ""}`; })()}
+    </div>
+    ${Object.entries(ues).map(([ue, ms]) => `<section class="stack" style="gap:8px"><div class="eyebrow">${esc(PROG.ue[ue] || (ue === "_" ? "Autres matières" : ue))}</div><div class="mat-grid">${ms.map(card).join("")}</div></section>`).join("") || `<p class="muted">Aucune matière pour ${yr}. <button class="btn sm" data-act="ecNewMat">+ Matière</button></p>`}
+  </div>`;
+}
+function viewMatiere(id) {
+  const m = matiere(id);
+  if (!m) return `<div class="wrap"><h1>Matière introuvable</h1><p><a href="#cours">Retour à mes cours</a></p></div>`;
+  const e = ecole();
+  const cs = e.cours.filter((c) => c.matiere === id).sort((a, b) => String(b.date || "~").localeCompare(String(a.date || "~")) || (b.created || 0) - (a.created || 0));
+  const rs = sortRendus(rendus().filter((r) => r.matiere === id));
+  const ateliers = (m.atelier || []).map((a) => ATELIER_ALIAS[a] || a).filter((a) => tracks().some((t) => t.id === a));
+  const confirm = state.ui.confirmDel === "mat:" + id;
+  return `<div class="wrap" style="${mtc(m)}">
+    <div class="stack" style="gap:6px"><div class="row small"><a href="#cours">Mes cours</a><span class="muted">› ${esc(m.annee || "")}${m.ue && PROG.ue[m.ue] ? " · " + esc(PROG.ue[m.ue]) : ""}</span></div>
+      <h1 class="mat-title">${esc(m.nom)}</h1>
+      <div class="row">${[PROG.types[m.type], m.heures ? m.heures + " h" : "", m.ects ? m.ects + " ECTS" : "", m.mode].filter(Boolean).map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div>
+      ${m.evaluation ? `<p><b>Évaluation :</b> ${esc(m.evaluation)}</p>` : ""}
+      ${(m.themes || []).length ? `<p class="muted small"><b>Au programme :</b> ${m.themes.map(esc).join(" · ")}</p>` : ""}
+      ${ateliers.length ? `<div class="row small"><span class="muted">S'entraîner dans l'atelier :</span>${ateliers.map((a) => `<a class="chip" style="${tc(track(a))};text-decoration:none" href="#t-${esc(a)}">${esc(track(a).short || track(a).name)}</a>`).join("")}</div>` : ""}
+    </div>
+    <div class="card stack">
+      <div class="row"><h2 style="margin:0">Cours</h2><span class="muted small">${cs.length}</span></div>
+      <form class="row" data-form="ecNewCours" data-mat="${esc(id)}"><input class="field" name="titre" placeholder="Titre du cours (ex. : Séance 1 : les personas)" required maxlength="160" style="flex:1;min-width:200px"><input class="field" type="date" name="date" title="Date (facultatif)"><button class="btn sm primary">Ajouter le cours</button></form>
+      <div class="c-list">${cs.map((c) => `<a class="c-row" href="#c-${esc(c.id)}"><span class="c-date">${c.date ? esc(frDate(c.date)) : "sans date"}</span><span class="r-main"><b>${esc(c.titre)}</b>${(c.tags || []).length ? `<small>${c.tags.map((t) => "#" + esc(t)).join(" ")}</small>` : ""}</span><span class="muted small">${(c.liens || []).length ? `${c.liens.length} lien${c.liens.length > 1 ? "s" : ""}` : ""}${String(c.notes || "").trim() ? " · notes" : ""}</span></a>`).join("") || `<p class="muted small">Aucun cours pour l'instant.</p>`}</div>
+    </div>
+    <div class="card stack">
+      <div class="row"><h2 style="margin:0">Rendus</h2><span class="spacer"></span><button class="btn sm" data-act="ecNewRendu" data-mat="${esc(id)}">+ Rendu</button></div>
+      <div class="r-list">${rs.map((r) => renduRow(r, { noMat: true })).join("") || `<p class="muted small">Aucun rendu dans cette matière.</p>`}</div>
+    </div>
+    <details class="card stack" ${state.ui.matEdit === id ? "open" : ""}><summary><b>Modifier la matière</b></summary>
+      <div class="stack" style="margin-top:12px">
+        <label class="stack" style="gap:4px"><span class="small muted">Nom</span><input class="field" data-ec="nom" data-kind="mat" data-id="${esc(id)}" value="${esc(m.nom)}" maxlength="140"></label>
+        <div class="row"><span class="small muted">Année</span><select class="field" data-ec="annee" data-kind="mat" data-id="${esc(id)}">${["M1", "M2"].map((y) => `<option ${m.annee === y ? "selected" : ""}>${y}</option>`).join("")}</select>
+          <span class="small muted">Couleur</span><span class="swatches">${COLORS.map((c) => `<button class="sw ${matColor(m) === c ? "on" : ""}" style="background:var(--t-${c})" data-act="ecColor" data-id="${esc(id)}" data-c="${c}" aria-label="Couleur ${c}"></button>`).join("")}</span></div>
+        <div class="row">${confirm ? `<span class="small">Supprimer la matière et ses ${cs.length} cours ? Les rendus sont gardés.</span><button class="btn sm danger" data-act="ecDelMat" data-id="${esc(id)}">Oui, supprimer</button><button class="btn sm ghost" data-act="ecCancelDel">Annuler</button>` : `<button class="btn sm danger" data-act="ecAskDel" data-key="mat:${esc(id)}">Supprimer la matière</button>`}</div>
+      </div>
+    </details>
+  </div>`;
+}
+function viewCoursItem(id) {
+  const c = coursItem(id);
+  if (!c) return `<div class="wrap"><h1>Cours introuvable</h1><p><a href="#cours">Retour à mes cours</a></p></div>`;
+  const m = matiere(c.matiere); const confirm = state.ui.confirmDel === "cours:" + id;
+  return `<div class="wrap" style="${mtc(m)}">
+    <div class="row small"><a href="#cours">Mes cours</a><span class="muted">›</span>${m ? `<a href="#mat-${esc(m.id)}">${esc(m.nom)}</a>` : ""}</div>
+    <input class="title-input" data-ec="titre" data-kind="cours" data-id="${esc(id)}" value="${esc(c.titre)}" maxlength="160" aria-label="Titre du cours">
+    <div class="row"><label class="row small"><span class="muted">Date</span><input class="field" type="date" data-ec="date" data-kind="cours" data-id="${esc(id)}" value="${esc(c.date || "")}"></label>
+      <label class="row small" style="flex:1"><span class="muted">Étiquettes</span><input class="field" style="flex:1;min-width:180px" data-ec="tags" data-kind="cours" data-id="${esc(id)}" value="${esc((c.tags || []).join(", "))}" placeholder="séparées par des virgules : cours, TD, révision…"></label></div>
+    <div class="card stack"><h3 style="margin:0">Liens et outils</h3>
+      ${(c.liens || []).length ? `<div class="tool-list">${linkChips(c.liens, "cours", id)}</div>` : ""}
+      ${linkForm("cours", id)}
+    </div>
+    <div class="card stack"><h3 style="margin:0">Notes de cours</h3>
+      ${mdEditor("cours", id, "notes", c.notes, "Ce que dit le prof, les définitions, les exemples…\n\n## Points clés\n- …\n\n| Terme | Définition |\n| --- | --- |")}
+    </div>
+    <div class="row">${confirm ? `<span class="small">Supprimer ce cours ?</span><button class="btn sm danger" data-act="ecDelCours" data-id="${esc(id)}">Oui, supprimer</button><button class="btn sm ghost" data-act="ecCancelDel">Annuler</button>` : `<button class="btn sm ghost danger" data-act="ecAskDel" data-key="cours:${esc(id)}">Supprimer ce cours</button>`}<span class="spacer"></span><span class="muted small">Enregistrement automatique</span></div>
+  </div>`;
+}
+function viewRendu(id) {
+  const r = renduItem(id);
+  if (!r) return `<div class="wrap"><h1>Rendu introuvable</h1><p><a href="#cours">Retour à mes cours</a></p></div>`;
+  const m = matiere(r.matiere); const s = renduStatut(r); const confirm = state.ui.confirmDel === "rendu:" + id;
+  const ck = r.checklist || [];
+  return `<div class="wrap" style="${mtc(m)}">
+    <div class="row small"><a href="#cours">Mes cours</a><span class="muted">›</span>${m ? `<a href="#mat-${esc(m.id)}">${esc(m.nom)}</a><span class="muted">›</span>` : ""}<span class="muted">Rendu</span></div>
+    <input class="title-input" data-ec="titre" data-kind="rendu" data-id="${esc(id)}" value="${esc(r.titre)}" maxlength="160" aria-label="Titre du rendu">
+    <div class="row">
+      <span class="seg">${Object.entries(R_STATUTS).map(([k, v]) => `<button class="${s === k ? "on" : ""}" data-act="ecStatut" data-id="${esc(id)}" data-s="${k}">${v}</button>`).join("")}</span>
+      <label class="row small"><span class="muted">À rendre le</span><input class="field" type="date" data-ec="date" data-kind="rendu" data-id="${esc(id)}" value="${esc(r.date || "")}"></label>
+      ${r.date && renduOpen(r) ? `<span class="r-date ${r.date < today() ? "late" : ""}">${r.date < today() ? "en retard" : relDays(r.date)}</span>` : ""}
+      ${s === "note" ? `<label class="row small"><span class="muted">Note</span><input class="field" style="width:110px" data-ec="resultat" data-kind="rendu" data-id="${esc(id)}" value="${esc(r.resultat || "")}" placeholder="ex. 15/20"></label>` : ""}
+    </div>
+    <label class="row small"><span class="muted">Matière</span><select class="field" data-ec="matiere" data-kind="rendu" data-id="${esc(id)}"><option value="">— aucune —</option>${["M1", "M2"].map((y) => `<optgroup label="${y}">${ecole().matieres.filter((x) => x.annee === y).map((x) => `<option value="${esc(x.id)}" ${x.id === r.matiere ? "selected" : ""}>${esc(x.nom)}</option>`).join("")}</optgroup>`).join("")}</select></label>
+    <div class="card stack"><div class="row"><h3 style="margin:0">Check-list</h3>${ck.length ? `<span class="muted small">${ck.filter((x) => x.ok).length}/${ck.length}</span>` : ""}</div>
+      ${ck.length ? `<ul class="ck-list">${ck.map((x, i) => `<li class="${x.ok ? "ok" : ""}"><label><input type="checkbox" data-act="ecCk" data-id="${esc(id)}" data-i="${i}" ${x.ok ? "checked" : ""}><span>${esc(x.t)}</span></label><button class="q-x" data-act="ecCkDel" data-id="${esc(id)}" data-i="${i}" aria-label="Retirer">×</button></li>`).join("")}</ul>` : ""}
+      <form class="row" data-form="ecCk" data-id="${esc(id)}"><input class="field" name="t" placeholder="Ajouter une étape : relire, exporter en PDF, déposer sur Moodle…" required maxlength="200" style="flex:1"><button class="btn sm">Ajouter</button></form>
+    </div>
+    <div class="card stack"><h3 style="margin:0">Consignes</h3>${mdEditor("rendu", id, "consignes", r.consignes, "Colle ici les consignes du prof : format, nombre de pages, critères…")}</div>
+    <div class="card stack"><h3 style="margin:0">Liens et outils</h3>
+      ${(r.liens || []).length ? `<div class="tool-list">${linkChips(r.liens, "rendu", id)}</div>` : ""}
+      ${linkForm("rendu", id)}
+    </div>
+    <div class="row">${confirm ? `<span class="small">Supprimer ce rendu ?</span><button class="btn sm danger" data-act="ecDelRendu" data-id="${esc(id)}">Oui, supprimer</button><button class="btn sm ghost" data-act="ecCancelDel">Annuler</button>` : `<button class="btn sm ghost danger" data-act="ecAskDel" data-key="rendu:${esc(id)}">Supprimer ce rendu</button>`}<span class="spacer"></span><span class="muted small">Enregistrement automatique · visible dans le calendrier</span></div>
+  </div>`;
+}
+function ecObj(kind, id) { return kind === "mat" ? matiere(id) : kind === "cours" ? coursItem(id) : kind === "rendu" ? renduItem(id) : null; }
+function ecApply(el) {
+  const { ec: field, kind, id } = el.dataset; const o = ecObj(kind, id); if (!o) return false;
+  let v = el.value;
+  if (field === "tags") v = v.split(",").map((x) => x.trim().replace(/^#/, "")).filter(Boolean).slice(0, 20);
+  else if (field === "date") v = v || null;
+  else if (field === "titre" || field === "nom") { if (!v.trim()) return false; v = v.slice(0, 160); }
+  else v = String(v).slice(0, 60000);
+  o[field] = v; o.ts = Date.now();
+  return true;
+}
+let ecTimer = null; const ecPending = new Set();
+function ecSaveKind(kind) { if (kind === "rendu") saveProgress(); else saveEcole(); }
+function ecInput(el) {
+  if (!ecApply(el)) return;
+  ecPending.add(el);
+  clearTimeout(ecTimer);
+  ecTimer = setTimeout(() => { const kinds = new Set(); for (const x of ecPending) { if (x.isConnected) ecApply(x); kinds.add(x.dataset.kind); } ecPending.clear(); kinds.forEach(ecSaveKind); renderSide(); }, 400);
+}
+function setupEcole(idx, withRendus) {
+  const e = ecole(); const now = Date.now();
+  const byNom = {};
+  idx.forEach((i) => { const p = PROG.modules[i]; if (!p) return;
+    const m = { id: "mat" + rid(), nom: p.nom, annee: p.annee, ue: p.ue, type: p.type, couleur: TYPE_COLOR[p.type] || "graphite", heures: p.heures, ects: p.ects, themes: p.themes || [], atelier: p.atelier || [], evaluation: p.evaluation || "", mode: p.mode || "", ts: now };
+    e.matieres.push(m); byNom[p.nom] = m.id; });
+  if (withRendus) for (const [nom, titre, consignes] of KNOWN_RENDUS) {
+    if (rendus().some((r) => r.titre === titre)) continue;
+    myEvents().push({ id: "ev" + rid(), type: "rendu", titre, date: null, matiere: byNom[nom] || "", statut: "a_faire", consignes: consignes ? consignes + "\n\n> Date à confirmer avec l'école." : "> Date à confirmer avec l'école.", checklist: [], liens: [], ts: now });
+  }
+  e.setup = true; saveEcole(); saveProgress();
+}
 function render() {
   const r = currentRoute();
   let html;
@@ -2824,6 +3141,10 @@ function render() {
   else if (r === "parcours") html = viewCatalog();
   else if (r === "calendrier") html = viewCalendar();
   else if (r === "notes") html = viewNotes();
+  else if (r === "cours") html = viewEcole();
+  else if (r.startsWith("mat-")) html = viewMatiere(r.slice(4));
+  else if (r.startsWith("c-")) html = viewCoursItem(r.slice(2));
+  else if (r.startsWith("r-")) html = viewRendu(r.slice(2));
   else if (r.startsWith("t-")) html = viewTrack(r.slice(2));
   else if (r.startsWith("m-")) html = viewModule(r.slice(2));
   else html = viewHome();
@@ -2869,12 +3190,29 @@ function keepDrafts() {
   draftWriter.schedule();
 }
 const ACTIONS = {
+  ecSetupAll(el) { const bs = [...document.querySelectorAll(`form[data-form=ecSetup] input[name=m][data-an="${el.dataset.an}"]`)]; const on = !bs.every((b) => b.checked); bs.forEach((b) => (b.checked = on)); },
+  ecSetupEmpty() { ecole().setup = true; saveEcole(); render(); },
+  ecYear(el) { state.ui.ecYear = el.dataset.y; render(); },
+  ecAllRendus() { state.ui.ecAllRendus = !state.ui.ecAllRendus; render(); },
+  ecNewMat() { const y = ecYear(); const m = { id: "mat" + rid(), nom: "Nouvelle matière", annee: y === "tout" ? "M1" : y, ue: "", type: "", couleur: COLORS[ecole().matieres.length % COLORS.length], heures: 0, ects: 0, themes: [], atelier: [], ts: Date.now() }; ecole().matieres.push(m); saveEcole(); state.ui.matEdit = m.id; location.hash = "#mat-" + m.id; setTimeout(() => { const i = document.querySelector('[data-ec="nom"]'); if (i) { i.focus(); i.select(); } }, 60); },
+  ecNewRendu(el) { const r = { id: "ev" + rid(), type: "rendu", titre: "Nouveau rendu", date: null, matiere: el.dataset.mat || "", statut: "a_faire", consignes: "", checklist: [], liens: [], ts: Date.now() }; myEvents().push(r); saveProgress(); location.hash = "#r-" + r.id; setTimeout(() => { const i = document.querySelector('.title-input'); if (i) { i.focus(); i.select(); } }, 60); },
+  ecColor(el) { const m = matiere(el.dataset.id); if (!m) return; m.couleur = el.dataset.c; m.ts = Date.now(); state.ui.matEdit = m.id; saveEcole(); render(); },
+  ecAskDel(el) { state.ui.confirmDel = el.dataset.key; if (el.dataset.key.startsWith("mat:")) state.ui.matEdit = el.dataset.key.slice(4); render(); },
+  ecCancelDel() { state.ui.confirmDel = null; render(); },
+  ecDelMat(el) { const e = ecole(); const id = el.dataset.id; const cs = e.cours.filter((c) => c.matiere === id).map((c) => c.id); e.deleted.push(id, ...cs); e.matieres = e.matieres.filter((m) => m.id !== id); e.cours = e.cours.filter((c) => c.matiere !== id); state.ui.confirmDel = null; saveEcole(); location.hash = "#cours"; toast("Matière supprimée."); },
+  ecDelCours(el) { const e = ecole(); const c = coursItem(el.dataset.id); e.deleted.push(el.dataset.id); e.cours = e.cours.filter((x) => x.id !== el.dataset.id); state.ui.confirmDel = null; saveEcole(); location.hash = c && matiere(c.matiere) ? "#mat-" + c.matiere : "#cours"; toast("Cours supprimé."); },
+  ecDelRendu(el) { const r = renduItem(el.dataset.id); state.progress.agenda = myEvents().filter((x) => x.id !== el.dataset.id); state.ui.confirmDel = null; saveProgress(); location.hash = r && matiere(r.matiere) ? "#mat-" + r.matiere : "#cours"; toast("Rendu supprimé."); },
+  ecStatut(el) { const r = renduItem(el.dataset.id); if (!r) return; r.statut = el.dataset.s; r.fait = r.statut === "rendu" || r.statut === "note"; r.ts = Date.now(); saveProgress(); render(); if (r.statut === "note") { const i = document.querySelector('[data-ec="resultat"]'); if (i) i.focus(); } },
+  ecCk(el) { const r = renduItem(el.dataset.id); const x = r && (r.checklist || [])[+el.dataset.i]; if (!x) return; x.ok = el.checked; r.ts = Date.now(); saveProgress(); render(); },
+  ecCkDel(el) { const r = renduItem(el.dataset.id); if (!r) return; r.checklist.splice(+el.dataset.i, 1); r.ts = Date.now(); saveProgress(); render(); },
+  ecLinkDel(el) { const o = ecObj(el.dataset.kind, el.dataset.id); if (!o) return; o.liens.splice(+el.dataset.i, 1); o.ts = Date.now(); ecSaveKind(el.dataset.kind); render(); },
+  mdMode(el) { (state.ui.mdMode = state.ui.mdMode || {})[el.dataset.key] = el.dataset.mode; render(); if (el.dataset.mode === "write") { const t = document.querySelector(".md-area"); if (t) t.focus(); } },
   fabToggle() { fabSetOpen(!fabOpen()); },
   fabNotes() { fabSetOpen(false); if (noteModuleId()) nSetOpen(true); else location.hash = "#notes"; },
   fabQ() { fabSetOpen(false); qSetOpen(true); },
   nToggle() { nSetOpen(!nUi().open); },
   nMode(el) { const ta = $("#n-text"); if (ta) setNote(ta.dataset.id, ta.value); nUi().mode = el.dataset.mode; renderN(); if (el.dataset.mode === "write") { const t = $("#n-text"); if (t) t.focus(); } },
-  nIns(el) { nInsert(el.dataset.k); },
+  nIns(el) { nInsert(el.dataset.k, null, el.dataset.target ? $(el.dataset.target) : null); },
   nQuote() { const t = nSelAtClick || mainSelection(); nSelAtClick = ""; if (!t) { toast("Surligne d'abord un passage du cours, puis clique ici."); return; } nInsert("quoteText", t); },
   nAi() { return nAi(); },
   nAiKeep() { nAiKeep(); },
@@ -3041,7 +3379,7 @@ const ACTIONS = {
   calToday() { const u = calUi(); u.day = today(); u.month = today().slice(0, 7); render(); },
   calMove(el) { const u = calUi(); const [y, m] = u.month.split("-").map(Number); const d = new Date(y, m - 1 + Number(el.dataset.n), 1); u.month = ymd(d).slice(0, 7); render(); },
   calDel(el) { const p = state.progress; p.agenda = myEvents().filter((e) => e.id !== el.dataset.id); saveLocal(); saveProgress(); render(); },
-  calDone(el) { const e = myEvents().find((x) => x.id === el.dataset.id); if (e) { e.fait = !e.fait; saveLocal(); saveProgress(); render(); } },
+  calDone(el) { const e = myEvents().find((x) => x.id === el.dataset.id); if (e) { e.fait = !e.fait; if (e.type === "rendu") e.statut = e.fait ? "rendu" : "a_faire"; e.ts = Date.now(); saveLocal(); saveProgress(); render(); } },
   toggleSideAll() { sideAll = !sideAll; try { localStorage.setItem("atelier:sideTous", sideAll ? "1" : "0"); } catch (e) {} renderSide(); },
   toggleGroup(el) {
     const id = el.dataset.id;
@@ -3075,7 +3413,11 @@ document.addEventListener("submit", (e) => {
   if (f.dataset.form === "q") { qSave(f.texte.value, e.submitter && e.submitter.value === "ask"); return; }
   if (f.dataset.form === "qNote") { const q = questions().find((x) => x.id === f.dataset.id); const v = f.note.value.trim(); if (q && v) { q.reponse = v; q.source = "moi"; q.statut = "repondue"; (qUi().keep = qUi().keep || []).push(q.id); saveProgress(); } qUi().note = null; qRefreshViews(); return; }
   if (f.dataset.form === "dbgFollow") { dbgFollowUp(f); return; }
-  if (f.dataset.form === "calAdd") { const titre = f.titre.value.trim(); if (!titre) return; myEvents().push({ id: "ev" + Date.now().toString(36), date: calUi().day, titre, type: f.type.value, note: f.note.value.trim() || undefined }); saveLocal(); saveProgress(); render(); toast("Ajouté au calendrier."); return; }
+  if (f.dataset.form === "ecSetup") { const idx = [...f.querySelectorAll("input[name=m]:checked")].map((x) => +x.value); setupEcole(idx, f.rendus.checked); render(); toast(`${idx.length} matière${idx.length > 1 ? "s" : ""} créée${idx.length > 1 ? "s" : ""}.`); return; }
+  if (f.dataset.form === "ecNewCours") { const titre = f.titre.value.trim(); if (!titre) return; const c = { id: "co" + rid(), matiere: f.dataset.mat, titre: titre.slice(0, 160), date: f.date.value || null, tags: [], notes: "", liens: [], created: Date.now(), ts: Date.now() }; ecole().cours.push(c); saveEcole(); location.hash = "#c-" + c.id; return; }
+  if (f.dataset.form === "ecLink") { let url = f.url.value.trim(); if (!url) return; if (!/^https?:\/\//i.test(url)) url = "https://" + url; try { new URL(url); } catch (err) { toast("Ce lien n'a pas l'air valide."); return; } const o = ecObj(f.dataset.kind, f.dataset.id); if (!o) return; (o.liens = o.liens || []).push({ url, titre: f.titre.value.trim().slice(0, 80) }); o.ts = Date.now(); ecSaveKind(f.dataset.kind); render(); toast(toolOf(url).name + " ajouté."); return; }
+  if (f.dataset.form === "ecCk") { const t = f.t.value.trim(); const r = renduItem(f.dataset.id); if (!t || !r) return; (r.checklist = r.checklist || []).push({ t: t.slice(0, 200), ok: false }); r.ts = Date.now(); saveProgress(); render(); const i = document.querySelector("form[data-form=ecCk] input"); if (i) i.focus(); return; }
+  if (f.dataset.form === "calAdd") { const titre = f.titre.value.trim(); if (!titre) return; myEvents().push({ id: "ev" + Date.now().toString(36), date: calUi().day, titre, type: f.type.value, note: f.note.value.trim() || undefined, ts: Date.now(), ...(f.type.value === "rendu" ? { statut: "a_faire", matiere: "", checklist: [], liens: [] } : {}) }); saveLocal(); saveProgress(); render(); toast("Ajouté au calendrier."); return; }
   if (f.dataset.form === "ask") { const q = f.q.value.trim(); if (q) aiAsk(mod(f.dataset.id), q); }
   if (f.dataset.form === "gen") { readGenForm(); aiGenerate(); }
   if (f.dataset.form === "gist") {
@@ -3090,11 +3432,13 @@ document.addEventListener("submit", (e) => {
   }
 });
 document.addEventListener("change", (e) => {
+  if (e.target.dataset && e.target.dataset.ec && (e.target.type === "date" || e.target.tagName === "SELECT")) { if (ecApply(e.target)) { ecSaveKind(e.target.dataset.kind); render(); } return; }
   if (e.target.id === "g-track") { readGenForm(); render(); }
   if (e.target.id === "sb-start") { state.ui.sbStart = e.target.value.trim() || "/"; }
 });
 document.addEventListener("toggle", (e) => {
   if (e.target.classList && e.target.classList.contains("prereq")) state.ui.prereqOpen = e.target.open;
+  if (e.target.classList && e.target.classList.contains("r-undated")) state.ui.ecUndated = e.target.open;
   if (e.target.dataset && e.target.dataset.bug) { if (e.target.open) state.ui.dbgOpen = e.target.dataset.bug; else if (state.ui.dbgOpen === e.target.dataset.bug) state.ui.dbgOpen = null; }
 }, true);
 let draftTimer;
@@ -3108,6 +3452,7 @@ document.addEventListener("input", (e) => {
   }
   if (e.target.name === "texte" && e.target.closest("#qpanel")) { qUi().texte = e.target.value; return; }
   if (e.target.id === "n-text") { noteInput(e.target); return; }
+  if (e.target.dataset && e.target.dataset.ec) { ecInput(e.target); return; }
   if (e.target.id === "n-filter") { state.ui.nFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#n-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.id === "q-filter") { state.ui.qFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#q-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.id === "dbg-filter") { state.ui.dbgFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#dbg-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
@@ -3126,19 +3471,20 @@ document.addEventListener("keydown", (e) => {
   if (fabOpen() && (e.key === "ArrowDown" || e.key === "ArrowUp") && el.closest && el.closest("#fab-menu")) { e.preventDefault(); const it = [...$("#fab-menu").querySelectorAll(".fab-item")]; const k = it.indexOf(el); it[(k + (e.key === "ArrowDown" ? 1 : it.length - 1)) % it.length].focus(); return; }
   if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyN") { e.preventDefault(); nSetOpen(!nUi().open); return; }
   if (e.key === "Escape" && nUi().open && el.closest && el.closest("#npanel")) { e.preventDefault(); nSetOpen(false); $("#qfab").focus(); return; }
-  if (el.id === "n-text" && (e.ctrlKey || e.metaKey) && !e.altKey) {
+  if ((el.id === "n-text" || (el.classList && el.classList.contains("md-area"))) && (e.ctrlKey || e.metaKey) && !e.altKey) {
     const k = { b: "b", e: "code", k: "link" }[e.key.toLowerCase()];
-    if (k) { e.preventDefault(); nInsert(k); return; }
-    if (e.key === "Enter") { e.preventDefault(); nUi().mode = "preview"; setNote(el.dataset.id, el.value); renderN(); return; }
+    if (k) { e.preventDefault(); nInsert(k, null, el); return; }
+    if (e.key === "Enter" && el.id === "n-text") { e.preventDefault(); nUi().mode = "preview"; setNote(el.dataset.id, el.value); renderN(); return; }
   }
-  if (el.id === "n-text" && e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+  if ((el.id === "n-text" || (el.classList && el.classList.contains("md-area"))) && e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
     const v = el.value, a = el.selectionStart; if (a !== el.selectionEnd) return;
     const ls = v.lastIndexOf("\n", a - 1) + 1; const line = v.slice(ls, a);
     const mm = line.match(/^(\s*)(- \[[ xX]\] |[-*] |(\d+)\. )(.*)$/); if (!mm) return;
     e.preventDefault();
-    if (!mm[4].trim()) { el.setRangeText("", ls, a, "end"); noteInput(el); return; }
+    const fire = () => el.dispatchEvent(new Event("input", { bubbles: true }));
+    if (!mm[4].trim()) { el.setRangeText("", ls, a, "end"); fire(); return; }
     const next = mm[3] ? `${Number(mm[3]) + 1}. ` : /\[/.test(mm[2]) ? "- [ ] " : mm[2];
-    el.setRangeText("\n" + mm[1] + next, a, a, "end"); noteInput(el); return;
+    el.setRangeText("\n" + mm[1] + next, a, a, "end"); fire(); return;
   }
   if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && el.closest && el.closest("#qpanel form[data-form=q]")) { e.preventDefault(); qSave(el.value, false); return; }
   if (el.classList && el.classList.contains("editor")) {
