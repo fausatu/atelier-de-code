@@ -45,7 +45,20 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .app { display: grid; grid-template-columns: 284px minmax(0, 1fr); min-height: 100%; }
 .side { align-self: start; background: var(--surface); border-right: 1px solid var(--line); padding: 18px 14px 14px; display: flex; flex-direction: column; gap: 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-.brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; text-decoration: none; color: var(--ink); }
+.brand-row { display: flex; align-items: center; gap: 6px; }
+.brand-row .brand { flex: 1; min-width: 0; }
+.side-x, .side-open { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; }
+.side-x:hover { background: var(--surface-2); color: var(--ink); }
+.side-x svg, .side-open svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.side-open { display: none; position: fixed; top: 14px; left: 14px; z-index: 35; border-color: var(--line); background: var(--surface); box-shadow: 0 2px 8px rgb(0 0 0 / 0.06); }
+.side-open:hover { color: var(--accent); border-color: var(--accent); }
+@media (min-width: 861px) {
+  body.side-off .app { grid-template-columns: minmax(0, 1fr); }
+  body.side-off .side { display: none; }
+  body.side-off .side-open { display: grid; }
+  body.side-off main { padding-left: max(64px, clamp(16px, 4vw, 48px)); }
+}
+.brand { align-items: center; gap: 10px; padding: 0 6px; text-decoration: none; color: var(--ink); }
 .brand b { font-family: var(--font-display); font-size: 1.1rem; }
 .nav-main { display: flex; flex-direction: column; gap: 2px; }
 .nav-link { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 8px; color: var(--ink); text-decoration: none; font-weight: 500; }
@@ -572,6 +585,26 @@ body.q-open .qfab { display: none; }
 .q-ans .who { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .q-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 /* Mes cours */
+.week-card { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 0; padding: 0; }
+.wk-col { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; min-width: 0; }
+.wk-col + .wk-col { border-left: 1px solid var(--line); }
+.wk-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.wk-day { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 7px 8px; border-radius: 9px; border: 1px solid var(--line); border-top: 4px solid var(--kc, var(--line)); background: color-mix(in srgb, var(--kc, transparent) 14%, var(--surface)); cursor: pointer; text-align: left; min-width: 0; }
+.wk-day:hover { border-color: var(--kc, var(--muted)); }
+.wk-day.today { box-shadow: 0 0 0 2px var(--accent); }
+.wk-d { font-size: 0.74rem; color: var(--muted); font-weight: 600; text-transform: capitalize; }
+.wk-k { font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.wk-n { font-style: normal; font-size: 0.68rem; padding: 0 5px; border-radius: 999px; background: var(--ink); color: var(--surface); vertical-align: 1px; }
+.wk-list { display: flex; flex-direction: column; gap: 6px; }
+.wk-item { display: flex; gap: 10px; align-items: center; padding: 7px 9px; border-radius: 9px; border: 1px solid var(--line); border-left: 4px solid var(--tc); background: var(--surface); text-decoration: none; color: var(--ink); }
+.wk-item:hover { border-color: var(--tc); }
+.wk-when { flex: none; width: 82px; font-size: 0.78rem; font-weight: 600; display: flex; flex-direction: column; line-height: 1.25; }
+.wk-when small { font-weight: 400; color: var(--muted); }
+.wk-when.soon { color: var(--warn); } .wk-when.late { color: var(--bad); }
+.wk-what { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.wk-what b { font-size: 0.88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wk-what small { font-size: 0.76rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 1100px) { .week-card { grid-template-columns: minmax(0, 1fr); } .wk-col + .wk-col { border-left: 0; border-top: 1px solid var(--line); } }
 .t-cours { --evc: var(--t-teal); }
 .c-day > span { display: flex; flex-direction: column; align-items: center; }
 .c-row.past { opacity: .72; }
@@ -746,6 +779,7 @@ li.done-item { color: var(--muted); text-decoration: line-through; }
   <button class="btn sm" data-act="menu" aria-label="Ouvrir le menu">Menu</button>
   <b style="font-family: var(--font-display)">Atelier de code</b>
 </div>
+<button class="side-open" data-act="sideToggle" aria-label="Afficher la barre latérale" title="Afficher la barre latérale (Alt+S)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M13 9.5l2.5 2.5-2.5 2.5"/></svg></button>
 <div class="app">
   <aside class="side" id="side" aria-label="Navigation"></aside>
   <main id="main"></main>
@@ -1186,6 +1220,14 @@ const OPEN_LS = "atelier-open-tracks";
 let openTracks = (() => { try { return new Set(JSON.parse(localStorage.getItem(OPEN_LS) || "[]")); } catch (e) { return new Set(); } })();
 function saveOpen() { try { localStorage.setItem(OPEN_LS, JSON.stringify([...openTracks])); } catch (e) {} }
 let sideAll = (() => { try { return localStorage.getItem("atelier:sideTous") === "1"; } catch (e) { return false; } })();
+const SIDE_LS = "atelier-side-off";
+try { if (localStorage.getItem(SIDE_LS) === "1") document.body.classList.add("side-off"); } catch (e) {}
+function sideToggle() {
+  if (window.matchMedia("(max-width: 860px)").matches) { document.body.classList.toggle("menu-open"); return; }
+  const off = document.body.classList.toggle("side-off");
+  try { off ? localStorage.setItem(SIDE_LS, "1") : localStorage.removeItem(SIDE_LS); } catch (e) {}
+  const f = off ? document.querySelector(".side-open") : document.querySelector(".side-x"); if (f) f.focus();
+}
 function renderSide() {
   const r = currentRoute();
   const due = dueModules().length;
@@ -1210,7 +1252,7 @@ function renderSide() {
     return `<div class="side-group ${shut ? "shut" : ""}"><button class="group-label" data-act="toggleGroup" data-id="${esc(g.id)}" aria-expanded="${!shut}"><span class="gchev" aria-hidden="true"></span>${esc(g.name)}<span class="gcount">${shut ? `${done}/${total}` : ""}</span></button>${shut ? "" : g.tracks.map(trackItem).join("")}</div>`;
   }).join("");
   $("#side").innerHTML = `
-    <a class="brand" href="#accueil"><b>Atelier de code</b></a>
+    <div class="brand-row"><a class="brand" href="#accueil"><b>Atelier de code</b></a><button class="side-x" data-act="sideToggle" aria-label="Replier la barre latérale" title="Replier la barre latérale (Alt+S)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15.5 9.5 13 12l2.5 2.5"/></svg></button></div>
     <nav class="nav-main">
       <a class="nav-link ${r === "accueil" ? "on" : ""}" href="#accueil">Tableau de bord</a>
       <a class="nav-link ${r === "revision" ? "on" : ""}" href="#revision">Révisions <span class="count ${due ? "" : "zero"}">${due}</span></a>
@@ -1346,7 +1388,7 @@ function viewHome() {
       </div>
       </div>
     </div>
-    ${calStrip()}
+    ${weekCard()}
     <div class="card stack">${mineBlock}${doneLine}</div>
     <div class="card stack act-card"><div class="row"><h3>Activité</h3><span class="spacer"></span><span class="muted small">quiz, TD, étapes et révisions</span></div>
       <div class="act-row">${heatmap(16)}
@@ -1411,6 +1453,43 @@ function calStrip() {
     ${rendu ? `<span class="cal-warn">À rendre ${relDays(rendu.date)} : ${esc(rendu.titre)}</span>` : ""}
     ${c.exams ? `<span class="muted">${esc(c.exams.titre)} ${relDays(c.exams.date)}</span>` : ""}
     <span class="spacer"></span><span class="stat-link">Calendrier →</span></a>`;
+}
+function weekCard() {
+  const t = today(); const [y, mo, d] = t.split("-").map(Number); const now = new Date(y, mo - 1, d);
+  const dow = (now.getDay() + 6) % 7; const nextWeek = dow >= 5;
+  const mon = dPlus(t, -dow + (nextWeek ? 7 : 0));
+  const days = [0, 1, 2, 3, 4].map((i) => dPlus(mon, i));
+  const e = state.ecole || {}; const setup = !!e.setup;
+  const coursOn = (k) => (Array.isArray(e.cours) ? e.cours : []).filter((c) => c.date === k && !c.annule);
+  const nE = days.filter((k) => dayKind(k) === "ecole").length;
+  const c = calSummary();
+  const label = nE === 0 ? (days.some((k) => dayKind(k) === "examens") ? "Semaine d'examens" : "Semaine en entreprise") : nE === 5 ? "Semaine à l'école" : `${nE} jour${nE > 1 ? "s" : ""} d'école, ${5 - nE - days.filter((k) => ["ferie", "examens", "rattrapages"].includes(dayKind(k))).length} en entreprise`;
+  const strip = days.map((k) => { const kind = dayKind(k); const [, , dd] = k.split("-").map(Number); const n = coursOn(k).length;
+    return `<button class="wk-day k-${kind} ${k === t ? "today" : ""}" data-act="wkDay" data-day="${k}" title="${esc(frDate(k))} : ${KIND_LABEL[kind]}${n ? ` · ${n} cours` : ""}"><span class="wk-d">${["lun", "mar", "mer", "jeu", "ven"][days.indexOf(k)]} ${dd}</span><span class="wk-k">${({ ecole: "École", entreprise: "Entr.", examens: "Exam.", rattrapages: "Ratt.", ferie: "Férié" })[kind] || "—"}${n ? ` <i class="wk-n">${n}</i>` : ""}</span></button>`; }).join("");
+  const nx = setup ? upcomingCours(3) : [];
+  const open = setup ? sortRendus(rendus().filter((r) => renduOpen(r))) : [];
+  const dated = open.filter((r) => r.date).slice(0, 3); const undated = open.filter((r) => !r.date).length;
+  const soonRendu = myEvents().filter((r) => r.type === "rendu" && !r.statut && !r.fait && r.date >= t).sort((a, b) => a.date.localeCompare(b.date))[0];
+  return `<div class="card week-card">
+    <div class="wk-col">
+      <div class="row"><h3 style="margin:0">${nextWeek ? "Semaine prochaine" : "Cette semaine"}</h3><span class="spacer"></span><span class="cal-pill k-${c.kind}">Aujourd'hui : ${KIND_LABEL[c.kind]}</span></div>
+      <div class="wk-strip">${strip}</div>
+      <p class="small" style="margin:0"><b>${esc(label)}</b>${nE === 0 && c.school ? ` · prochaine école ${esc(frDate(c.school.start))}` : ""}${c.exams ? ` <span class="muted">· ${esc(c.exams.titre)} ${relDays(c.exams.date)}</span>` : ""}</p>
+      <a class="small" href="#calendrier">Calendrier →</a>
+    </div>
+    <div class="wk-col">
+      <div class="row"><h3 style="margin:0">Prochains cours</h3><span class="spacer"></span><a class="small" href="#cours">Mes cours →</a></div>
+      ${!setup ? `<p class="muted small" style="margin:0">Prépare tes matières pour voir ici tes cours et tes rendus.</p><a class="btn sm primary" href="#cours" style="align-self:flex-start">Préparer mes cours</a>`
+        : nx.length ? `<div class="wk-list">${nx.map((x) => { const m = matiere(x.matiere); return `<a class="wk-item" href="#c-${esc(x.id)}" style="${mtc(m)}"><span class="wk-when">${esc(frDate(x.date))}<small>${esc((x.creneaux || [])[0] ? hh(x.creneaux[0][0]) : "")}</small></span><span class="wk-what"><b>${esc(m ? m.nom : x.titre)}</b><small>${esc([(x.salles || []).join(", "), (x.profs || []).join(", ")].filter(Boolean).join(" · "))}</small></span></a>`; }).join("")}</div>`
+        : `<p class="muted small" style="margin:0">Aucun cours à venir connu. Mets ton emploi du temps à jour dans Mes cours.</p>`}
+    </div>
+    <div class="wk-col">
+      <div class="row"><h3 style="margin:0">Échéances</h3><span class="spacer"></span>${setup ? `<a class="small" href="#cours">Rendus →</a>` : ""}</div>
+      ${dated.length ? `<div class="wk-list">${dated.map((r) => { const m = matiere(r.matiere); const late = r.date < t; return `<a class="wk-item" href="#r-${esc(r.id)}" style="${mtc(m)}"><span class="wk-when ${late ? "late" : daysBetween(t, r.date) <= 7 ? "soon" : ""}">${late ? "en retard" : esc(relDays(r.date))}<small>${esc(frDate(r.date))}</small></span><span class="wk-what"><b>${esc(r.titre)}</b><small>${esc(m ? m.nom : "")}${(r.checklist || []).length ? ` · ${r.checklist.filter((x) => x.ok).length}/${r.checklist.length}` : ""}</small></span></a>`; }).join("")}</div>`
+        : soonRendu ? `<p class="small" style="margin:0"><span class="cal-warn">À rendre ${relDays(soonRendu.date)} :</span> ${esc(soonRendu.titre)}</p>` : `<p class="muted small" style="margin:0">Aucun rendu daté.</p>`}
+      ${undated ? `<p class="muted small" style="margin:0">+ ${undated} rendu${undated > 1 ? "s" : ""} sans date</p>` : ""}
+    </div>
+  </div>`;
 }
 function relDays(k) { const n = daysBetween(today(), k); return n === 0 ? "aujourd'hui" : n === 1 ? "demain" : `dans ${n} jours`; }
 function calUi() { return state.ui.cal || (state.ui.cal = { month: today().slice(0, 7), day: today() }); }
@@ -3431,6 +3510,8 @@ const ACTIONS = {
     saveOpen(); renderSide();
   },
   menu() { document.body.classList.toggle("menu-open"); },
+  sideToggle() { sideToggle(); },
+  wkDay(el) { const u = calUi(); u.day = el.dataset.day; u.month = el.dataset.day.slice(0, 7); location.hash = "#calendrier"; },
   step(el) {
     keepDrafts(); const id = el.dataset.id; const s = Number(el.dataset.step);
     const cur = state.ui.step[id] ?? 0;
@@ -3699,6 +3780,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && qUi().open && (!el.closest || el.closest("#qpanel") || el === document.body)) { e.preventDefault(); qSetOpen(false); return; }
   if (fabOpen() && e.key === "Escape") { e.preventDefault(); fabSetOpen(false); $("#qfab").focus(); return; }
   if (fabOpen() && (e.key === "ArrowDown" || e.key === "ArrowUp") && el.closest && el.closest("#fab-menu")) { e.preventDefault(); const it = [...$("#fab-menu").querySelectorAll(".fab-item")]; const k = it.indexOf(el); it[(k + (e.key === "ArrowDown" ? 1 : it.length - 1)) % it.length].focus(); return; }
+  if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyS") { e.preventDefault(); sideToggle(); return; }
   if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyN") { e.preventDefault(); nSetOpen(!nUi().open); return; }
   if (e.key === "Escape" && nUi().open && el.closest && el.closest("#npanel")) { e.preventDefault(); nSetOpen(false); $("#qfab").focus(); return; }
   if ((el.id === "n-text" || (el.classList && el.classList.contains("md-area"))) && (e.ctrlKey || e.metaKey) && !e.altKey) {

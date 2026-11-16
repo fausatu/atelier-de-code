@@ -66,6 +66,12 @@ Idée pour plus tard : les cartes mémo (point 3) pourront être générées dep
   `.ics` (carte « Emploi du temps » en bas de #cours, `parseIcs`). Cours visibles dans le calendrier (type "cours") et
   « Prochains cours » en haut de #cours.
 
+## Barre latérale repliable + « Ma semaine » (fait le 16/11)
+- Bouton dans l'en-tête de la barre latérale (et Alt+S) → `body.side-off` (mémorisé dans localStorage `atelier-side-off`),
+  bouton flottant en haut à gauche pour la rouvrir ; sur mobile le même bouton ferme le menu.
+- Tableau de bord : `weekCard()` remplace `calStrip()` : semaine lun-ven école/entreprise (clic → jour du calendrier),
+  3 prochains cours, échéances (rendus datés, en retard en rouge, nombre sans date).
+
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
 2. **Espace « Mes cours » (école)** — étape 1 faite (voir ci-dessus). Reste l'étape 2 : fichiers du prof (capacité `assets` : PDF/images affichés, PPTX/DOCX téléchargeables), tableau de bord « cette semaine : école ou entreprise » + échéances, et l'emploi du temps est importé (réimporter après le 02/01/2027). — PAS seulement du code : management de projet, anglais, UX/UI, etc.
