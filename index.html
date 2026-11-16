@@ -588,6 +588,7 @@ body.q-open .qfab { display: none; }
 .file-list { display: flex; flex-direction: column; gap: 6px; }
 .file-row { display: flex; align-items: center; gap: 8px; }
 .file-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); cursor: pointer; text-align: left; color: var(--ink); }
+.file-row.off { opacity: .6; }
 .file-open:hover { border-color: var(--tc, var(--accent)); }
 .fb { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; color: #fff; font: 700 0.68rem var(--font-body); letter-spacing: .03em; }
 .dropzone { display: flex; flex-direction: column; gap: 3px; align-items: center; text-align: center; padding: 16px; border: 2px dashed color-mix(in srgb, var(--tc, var(--accent)) 35%, var(--line)); border-radius: 12px; cursor: pointer; color: var(--muted); font-size: 0.86rem; background: color-mix(in srgb, var(--tc, var(--accent)) 4%, transparent); }
@@ -2849,6 +2850,7 @@ function viewSynchro() {
     <div class="stack" style="gap:6px"><h1>Synchroniser ma progression</h1>
       <p class="lead">Modules faits, révisions, brouillons des TD et modules ajoutés. Les deux méthodes <b>fusionnent</b> : rien n'est effacé, le plus avancé l'emporte.</p></div>
     ${gistBlock}
+    ${viewGhFiles()}
     <div class="card stack">
       <h2>Exporter / importer</h2>
       <p class="small">Pour passer entre claude.ai et GitHub Pages, ou faire une sauvegarde : exporte ici, puis importe le code de l'autre côté.</p>
@@ -3435,8 +3437,8 @@ let assetsApi = null;
 const FILE_TYPES = { pdf: "application/pdf", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", svg: "image/svg+xml", mp4: "video/mp4", webm: "video/webm", txt: "text/plain", md: "text/markdown", csv: "text/csv", json: "application/json" };
 function extOf(n) { return (String(n).toLowerCase().match(/\.([a-z0-9]+)$/) || [])[1] || ""; }
 function fmtSize(b) { return b > 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " Mo" : Math.max(1, Math.round(b / 1024)) + " Ko"; }
-function fileKind(f) { const t = f.type || ""; return f.extrait ? "texte" : t === "application/pdf" ? "pdf" : t.startsWith("image/") ? "image" : t.startsWith("video/") ? "video" : "texte"; }
-const FILE_BADGE = { pdf: ["PDF", "#c0392b"], image: ["IMG", "#2f8a6e"], video: ["VID", "#6b55cc"], texte: ["TXT", "#5d6779"], pptx: ["PPT", "#d24726"], docx: ["DOC", "#2b579a"] };
+function fileKind(f) { const t = f.type || ""; return f.extrait ? (f.src === "github" ? "office" : "texte") : /officedocument/.test(t) ? "office" : t === "application/pdf" ? "pdf" : t.startsWith("image/") ? "image" : t.startsWith("video/") ? "video" : "texte"; }
+const FILE_BADGE = { office: ["DOC", "#2b579a"], pdf: ["PDF", "#c0392b"], image: ["IMG", "#2f8a6e"], video: ["VID", "#6b55cc"], texte: ["TXT", "#5d6779"], pptx: ["PPT", "#d24726"], docx: ["DOC", "#2b579a"] };
 async function unzipEntries(buf, want) {
   const u8 = new Uint8Array(buf), dv = new DataView(buf); let eocd = -1;
   for (let i = u8.length - 22; i >= Math.max(0, u8.length - 70000); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
@@ -3489,23 +3491,34 @@ async function officeToMarkdown(file) {
 }
 async function uploadFiles(kind, id, files) {
   const o = ecObj(kind, id); if (!o) return;
-  if (!assetsApi) { toast("Les fichiers s'enregistrent seulement dans claude.ai (ton compte)."); return; }
-  const list = [...files]; let ok = 0;
+  const store = fileStore();
+  if (!store) { if (standalone) { toast("Active d'abord le rangement des fichiers sur GitHub (page Synchroniser)."); location.hash = "#synchro"; } else toast("Le stockage de fichiers n'est pas disponible."); return; }
+  const list = [...files]; let ok = 0; const max = store === "github" ? 25 : 20;
   for (const f of list) {
     const ext = extOf(f.name);
     try {
-      let blob = f, type = FILE_TYPES[ext], extra = {};
-      if (ext === "pptx" || ext === "docx") {
-        toast(`Lecture de ${f.name}…`);
-        const r = await officeToMarkdown(f); blob = new Blob([r.md], { type: "text/markdown" }); type = "text/markdown"; extra = { extrait: ext, orig: f.name, info: r.count };
-      } else if (!type) { toast(`${f.name} : format non pris en charge (PDF, image, vidéo, PPTX, DOCX, texte).`); continue; }
-      if (blob.size > 20 * 1048576) { toast(`${f.name} dépasse 20 Mo.`); continue; }
-      const res = await assetsApi.upload(blob, { type });
-      (o.fichiers = o.fichiers || []).push({ id: res.id, nom: extra.orig ? extra.orig.replace(/\.(pptx|docx)$/i, "") + " (texte)" : f.name, type, taille: f.size, ajoute: today(), ...extra });
+      if (f.size > max * 1048576) { toast(`${f.name} dépasse ${max} Mo.`); continue; }
+      const office = ext === "pptx" || ext === "docx";
+      let extracted = null;
+      if (office) { toast(`Lecture de ${f.name}…`); try { extracted = await officeToMarkdown(f); } catch (err) { if (store === "claude") throw err; } }
+      if (store === "github") {
+        const type = FILE_TYPES[ext] || OFFICE_TYPES[ext] || f.type || "application/octet-stream";
+        toast(`Envoi de ${f.name} sur GitHub…`);
+        const up = await ghfUpload(f, f.name);
+        const rec = { id: up.id, sha: up.sha, src: "github", nom: f.name, type, taille: f.size, ajoute: today() };
+        if (extracted) { const t = await ghfUpload(new Blob([extracted.md], { type: "text/markdown" }), f.name.replace(/\.(pptx|docx)$/i, "") + "-texte.md"); Object.assign(rec, { texte: t.id, texteSha: t.sha, extrait: ext, info: extracted.count }); }
+        (o.fichiers = o.fichiers || []).push(rec);
+      } else {
+        let blob = f, type = FILE_TYPES[ext], extra = {};
+        if (office) { blob = new Blob([extracted.md], { type: "text/markdown" }); type = "text/markdown"; extra = { extrait: ext, orig: f.name, info: extracted.count }; }
+        else if (!type) { toast(`${f.name} : format non pris en charge ici (PDF, image, vidéo, PPTX, DOCX, texte).`); continue; }
+        const res = await assetsApi.upload(blob, { type });
+        (o.fichiers = o.fichiers || []).push({ id: res.id, src: "claude", nom: extra.orig ? extra.orig.replace(/\.(pptx|docx)$/i, "") + " (texte)" : f.name, type, taille: f.size, ajoute: today(), ...extra });
+      }
       o.ts = Date.now(); ok++;
     } catch (err) {
       const c = err && err.code;
-      toast(`${f.name} : ${c === "too_large" ? "trop lourd (20 Mo max)" : c === "unsupported_type" ? "format refusé" : c === "quota_or_state" ? "espace de stockage plein" : c === "rate_limited" ? "trop d'envois d'un coup, réessaie dans un instant" : (err && err.message) || "envoi impossible"}`);
+      toast(`${f.name} : ${c === "too_large" ? "trop lourd" : c === "unsupported_type" ? "format refusé" : c === "quota_or_state" ? "espace de stockage plein" : c === "rate_limited" ? "trop d'envois d'un coup, réessaie dans un instant" : (err && err.message) || "envoi impossible"}`);
     }
   }
   if (ok) { ecSaveKind(kind); render(); toast(`${ok} fichier${ok > 1 ? "s" : ""} ajouté${ok > 1 ? "s" : ""}.`); }
@@ -3513,11 +3526,11 @@ async function uploadFiles(kind, id, files) {
 function filesCard(kind, id, o) {
   const fs = o.fichiers || []; const confirm = state.ui.confirmDel;
   return `<div class="card stack files-card" data-drop="${kind}" data-id="${esc(id)}"><div class="row"><h3 style="margin:0">Fichiers</h3><span class="muted small">${fs.length || ""}</span></div>
-    ${fs.length ? `<div class="file-list">${fs.map((f, i) => { const k = f.extrait || fileKind(f); const [b, col] = FILE_BADGE[k] || FILE_BADGE.texte; const key = `file:${kind}:${id}:${i}`;
-      return `<div class="file-row"><button class="file-open" data-act="fileView" data-kind="${kind}" data-id="${esc(id)}" data-i="${i}"><span class="fb" style="background:${col}">${b}</span><span class="r-main"><b>${esc(f.nom)}</b><small>${f.extrait ? `texte extrait${f.info ? " · " + esc(f.info) : ""}` : esc(fmtSize(f.taille || 0))} · ajouté ${esc(frDate(f.ajoute))}</small></span></button>
-        ${confirm === key ? `<span class="small">Supprimer ?</span><button class="btn sm danger" data-act="fileDel" data-kind="${kind}" data-id="${esc(id)}" data-i="${i}">Oui</button><button class="btn sm ghost" data-act="ecCancelDel">Non</button>` : `<a class="btn sm ghost" href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">Ouvrir</a><button class="q-x" data-act="ecAskDel" data-key="${key}" aria-label="Supprimer ce fichier">×</button>`}</div>`; }).join("")}</div>` : ""}
-    ${assetsApi ? `<label class="dropzone"><input type="file" class="file-in" data-kind="${kind}" data-id="${esc(id)}" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.svg,.mp4,.webm,.pptx,.docx,.txt,.md,.csv,.json" hidden><b>Ajouter des fichiers</b><span>Glisse-les ici ou clique. PDF, images, vidéos (20 Mo max). PowerPoint et Word : j'en garde le <b>texte</b>, exporte-les aussi en PDF pour garder la mise en page.</span></label>`
-      : `<p class="muted small">${standalone ? "Les fichiers se rangent dans ton compte claude.ai : ouvre l'atelier depuis claude.ai pour en ajouter." : "Connexion au stockage de fichiers…"}</p>`}
+    ${fs.length ? `<div class="file-list">${fs.map((f, i) => { const k = f.extrait || fileKind(f); const [b, col] = FILE_BADGE[k] || FILE_BADGE.texte; const sub = f.extrait && f.src !== "github" ? `texte extrait${f.info ? " · " + esc(f.info) : ""}` : `${esc(fmtSize(f.taille || 0))}${f.extrait ? ` · texte lisible ici${f.info ? " (" + esc(f.info) + ")" : ""}` : ""}`; const key = `file:${kind}:${id}:${i}`;
+      return `<div class="file-row ${fileReachable(f) ? "" : "off"}"><button class="file-open" data-act="fileView" data-kind="${kind}" data-id="${esc(id)}" data-i="${i}"><span class="fb" style="background:${col}">${b}</span><span class="r-main"><b>${esc(f.nom)}</b><small>${sub} · ajouté ${esc(frDate(f.ajoute))}</small></span></button>
+        ${!fileReachable(f) ? `<span class="muted small">${(f.src || "claude") === "github" ? "rangé sur GitHub" : "rangé dans claude.ai"}</span>` : confirm === key ? `<span class="small">Supprimer ?</span><button class="btn sm danger" data-act="fileDel" data-kind="${kind}" data-id="${esc(id)}" data-i="${i}">Oui</button><button class="btn sm ghost" data-act="ecCancelDel">Non</button>` : `${(f.src || "claude") === "github" ? `<button class="btn sm ghost" data-act="fileDl" data-kind="${kind}" data-id="${esc(id)}" data-i="${i}">Télécharger</button>` : `<a class="btn sm ghost" href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">Ouvrir</a>`}<button class="q-x" data-act="ecAskDel" data-key="${key}" aria-label="Supprimer ce fichier">×</button>`}</div>`; }).join("")}</div>` : ""}
+    ${fileStore() ? `<label class="dropzone"><input type="file" class="file-in" data-kind="${kind}" data-id="${esc(id)}" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.svg,.mp4,.webm,.pptx,.docx,.txt,.md,.csv,.json" hidden><b>Ajouter des fichiers</b><span>${fileStore() === "github" ? `Glisse-les ici ou clique : PDF, PowerPoint, Word, images… (25 Mo max), rangés dans ton dépôt privé ${esc(ghf.repo)}. Pour PowerPoint et Word, j'extrais aussi le texte pour le lire ici.` : `Glisse-les ici ou clique. PDF, images, vidéos (20 Mo max). PowerPoint et Word : j'en garde le <b>texte</b>, exporte-les aussi en PDF pour garder la mise en page.`}</span></label>`
+      : standalone ? `<div class="dropzone" style="cursor:default"><b>Ajouter des fichiers</b><span>Sur cette version (GitHub Pages), tes fichiers se rangent dans un dépôt GitHub privé à toi.</span><a class="btn sm primary" href="#synchro" style="margin-top:6px">Configurer (2 minutes)</a></div>` : `<p class="muted small">Connexion au stockage de fichiers…</p>`}
   </div>`;
 }
 let pdfjsReady = null;
@@ -3528,17 +3541,24 @@ function loadPdfjs() {
 }
 let viewerToken = 0;
 async function openViewer(f) {
-  const tok = ++viewerToken; const url = "/_blob/" + f.id; const k = fileKind(f);
+  const tok = ++viewerToken; const k = fileKind(f); const gh = (f.src || "claude") === "github";
   let v = $("#viewer"); if (!v) { v = document.createElement("div"); v.id = "viewer"; v.className = "viewer"; v.setAttribute("role", "dialog"); v.setAttribute("aria-modal", "true"); document.body.appendChild(v); }
-  v.innerHTML = `<div class="viewer-box"><div class="viewer-head"><b>${esc(f.nom)}</b><span class="muted small" id="viewer-info"></span><span class="spacer"></span><a class="btn sm ghost" href="${esc(url)}" target="_blank" rel="noopener">Ouvrir dans un onglet</a><button class="btn sm" data-act="viewerClose">Fermer</button></div><div class="viewer-body" id="viewer-body"><p class="muted"><span class="spin"></span> Chargement…</p></div></div>`;
-  v.hidden = false; document.body.classList.add("viewer-open"); v.querySelector("[data-act=viewerClose]").focus();
+  v.innerHTML = `<div class="viewer-box"><div class="viewer-head"><b>${esc(f.nom)}</b><span class="muted small" id="viewer-info"></span><span class="spacer"></span>${fileReachable(f) ? (gh ? `<button class="btn sm ghost" data-act="viewerDl">Télécharger</button>` : `<a class="btn sm ghost" href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">Ouvrir dans un onglet</a>`) : ""}<button class="btn sm" data-act="viewerClose">Fermer</button></div><div class="viewer-body" id="viewer-body"><p class="muted"><span class="spin"></span> Chargement…</p></div></div>`;
+  v.hidden = false; v._file = f; document.body.classList.add("viewer-open"); v.querySelector("[data-act=viewerClose]").focus();
   const body = $("#viewer-body");
+  if (!fileReachable(f)) { body.innerHTML = `<p class="muted">${gh ? "Ce fichier est rangé dans ton dépôt GitHub : ouvre l'atelier depuis GitHub Pages (fausatu.github.io/atelier-de-code) pour le voir." : "Ce fichier est rangé dans ton compte claude.ai : ouvre l'atelier depuis claude.ai pour le voir."}</p>`; return; }
   try {
-    if (k === "image") body.innerHTML = `<img src="${esc(url)}" alt="${esc(f.nom)}" class="viewer-img">`;
-    else if (k === "video") body.innerHTML = `<video src="${esc(url)}" controls class="viewer-img"></video>`;
-    else if (k === "texte") { const t = await (await fetch(url)).text(); if (tok !== viewerToken) return; body.innerHTML = `<div class="prose viewer-text">${f.type === "text/markdown" ? md(t) : `<pre class="code"><code>${esc(t)}</code></pre>`}</div>`; highlight(body); }
+    if (k === "office") {
+      if (!f.texte) { body.innerHTML = `<p class="muted">Je n'ai pas pu lire le texte de ce fichier. Utilise « Télécharger » pour l'ouvrir.</p>`; return; }
+      const t = await (await ghfApi("/contents/" + f.texte.split("/").map(encodeURIComponent).join("/"), {}, true)).text(); if (tok !== viewerToken) return;
+      $("#viewer-info").textContent = "texte extrait · « Télécharger » pour l'original";
+      body.innerHTML = `<div class="prose viewer-text">${md(t)}</div>`; return;
+    }
+    const blob = await fileBlob(f); if (tok !== viewerToken) return;
+    if (k === "image" || k === "video") { const u = URL.createObjectURL(blob); v._url = u; body.innerHTML = k === "image" ? `<img src="${u}" alt="${esc(f.nom)}" class="viewer-img">` : `<video src="${u}" controls class="viewer-img"></video>`; }
+    else if (k === "texte") { const t = await blob.text(); body.innerHTML = `<div class="prose viewer-text">${f.type === "text/markdown" ? md(t) : `<pre class="code"><code>${esc(t)}</code></pre>`}</div>`; highlight(body); }
     else if (k === "pdf") {
-      const lib = await loadPdfjs(); const doc = await lib.getDocument({ url }).promise; if (tok !== viewerToken) return;
+      const lib = await loadPdfjs(); const doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise; if (tok !== viewerToken) return;
       $("#viewer-info").textContent = `${doc.numPages} page${doc.numPages > 1 ? "s" : ""}`; body.innerHTML = "";
       const w = Math.min(body.clientWidth - 24, 1000); const dpr = Math.min(2, window.devicePixelRatio || 1);
       for (let i = 1; i <= doc.numPages; i++) {
@@ -3547,10 +3567,70 @@ async function openViewer(f) {
         const c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height; c.style.width = vp.width / dpr + "px"; c.className = "pdf-page"; c.setAttribute("aria-label", `Page ${i}`);
         body.appendChild(c); await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
       }
-    }
-  } catch (err) { if (tok === viewerToken) body.innerHTML = `<p class="err">Impossible d'afficher ce fichier ici (${esc(err && err.message || "erreur")}). Essaie « Ouvrir dans un onglet ».</p>`; }
+    } else body.innerHTML = `<p class="muted">Pas d'aperçu pour ce type de fichier. Utilise « Télécharger ».</p>`;
+  } catch (err) { if (tok === viewerToken) body.innerHTML = `<p class="err">Impossible d'afficher ce fichier ici (${esc(err && err.message || "erreur")}).</p>`; }
 }
-function closeViewer() { viewerToken++; const v = $("#viewer"); if (v) { v.hidden = true; v.innerHTML = ""; } document.body.classList.remove("viewer-open"); }
+function closeViewer() { viewerToken++; const v = $("#viewer"); if (v) { if (v._url) URL.revokeObjectURL(v._url); v._url = null; v._file = null; v.hidden = true; v.innerHTML = ""; } document.body.classList.remove("viewer-open"); }
+/* ---------- Fichiers sur GitHub (version GitHub Pages) : dépôt privé d'Ana, jeton à droits limités ---------- */
+const GHF_LS = "atelier-fichiers-gh";
+const ghf = { token: "", repo: "" };
+try { const g = JSON.parse(localStorage.getItem(GHF_LS) || "{}"); ghf.token = g.token || ""; ghf.repo = g.repo || ""; } catch (e) {}
+function ghfOn() { return !!(ghf.token && ghf.repo); }
+function ghfSave() { try { ghf.token ? localStorage.setItem(GHF_LS, JSON.stringify(ghf)) : localStorage.removeItem(GHF_LS); } catch (e) {} }
+const OFFICE_TYPES = { pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
+async function ghfApi(path, opts = {}, raw) {
+  const res = await fetch("https://api.github.com/repos/" + ghf.repo + path, Object.assign({}, opts, { headers: Object.assign({ Accept: raw ? "application/vnd.github.raw" : "application/vnd.github+json", Authorization: "Bearer " + ghf.token, "X-GitHub-Api-Version": "2022-11-28" }, opts.body ? { "Content-Type": "application/json" } : {}) }));
+  if (res.status === 401) throw new Error("jeton GitHub refusé (expiré ou faux)");
+  if (res.status === 403) throw new Error("le jeton n'a pas le droit d'écrire dans ce dépôt");
+  if (res.status === 404) { const e = new Error("dépôt ou fichier introuvable"); e.notFound = true; throw e; }
+  if (!res.ok) throw new Error("GitHub a répondu " + res.status);
+  return raw ? res.blob() : res.status === 204 ? null : res.json();
+}
+function blobToBase64(blob) { return new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1] || ""); r.onerror = () => ko(r.error); r.readAsDataURL(blob); }); }
+function ghfPath(name) { const safe = String(name).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(-80) || "fichier"; return `fichiers/${today().slice(0, 7)}/${rid()}-${safe}`; }
+async function ghfUpload(blob, name) {
+  const path = ghfPath(name);
+  const r = await ghfApi("/contents/" + path.split("/").map(encodeURIComponent).join("/"), { method: "PUT", body: JSON.stringify({ message: "Ajout " + name, content: await blobToBase64(blob) }) });
+  return { id: path, sha: r && r.content && r.content.sha };
+}
+async function ghfDelete(f) {
+  const p = "/contents/" + f.id.split("/").map(encodeURIComponent).join("/");
+  let sha = f.sha; if (!sha) { const m = await ghfApi(p); sha = m.sha; }
+  try { await ghfApi(p, { method: "DELETE", body: JSON.stringify({ message: "Suppression " + f.nom, sha }) }); }
+  catch (e) { if (!e.notFound) { const m = await ghfApi(p); await ghfApi(p, { method: "DELETE", body: JSON.stringify({ message: "Suppression " + f.nom, sha: m.sha }) }); } }
+}
+async function ghfConnect(token, repo) {
+  ghf.token = token.trim(); ghf.repo = repo.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\.git$/, "").replace(/\/+$/, "");
+  if (!/^[\w.-]+\/[\w.-]+$/.test(ghf.repo)) throw new Error("écris le dépôt sous la forme compte/nom, par exemple fausatu/atelier-fichiers");
+  const info = await ghfApi("");
+  if (!info.private) throw new Error("ce dépôt est public : choisis un dépôt privé pour tes cours");
+  if (info.permissions && !info.permissions.push) throw new Error("le jeton ne peut pas écrire dans ce dépôt");
+  ghfSave();
+}
+function fileStore() { return assetsApi ? "claude" : standalone && ghfOn() ? "github" : null; }
+function fileReachable(f) { return (f.src || "claude") === "github" ? standalone && ghfOn() : !!assetsApi || !standalone; }
+async function fileBlob(f) { return (f.src || "claude") === "github" ? ghfApi("/contents/" + f.id.split("/").map(encodeURIComponent).join("/"), {}, true) : (await fetch("/_blob/" + f.id)).blob(); }
+async function fileDownload(f) {
+  try { const b = await fileBlob(f); const u = URL.createObjectURL(b); const a = document.createElement("a"); a.href = u; a.download = f.orig || f.nom; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 30000); }
+  catch (e) { toast("Téléchargement impossible : " + e.message); }
+}
+function viewGhFiles() {
+  if (!standalone) return "";
+  return `<div class="card stack">
+      <h2>Fichiers de cours sur GitHub</h2>
+      ${ghfOn() ? `<p class="small">Tes fichiers (PDF, PowerPoint, Word, images…) sont rangés dans ton dépôt privé <a href="https://github.com/${esc(ghf.repo)}" target="_blank" rel="noopener"><b>${esc(ghf.repo)}</b></a>.</p>
+        <div class="row"><button class="btn danger" data-act="ghfOff">Désactiver sur cet appareil</button></div>`
+      : `<p class="small">Pour ajouter les fichiers du prof dans tes cours depuis cette version (GitHub Pages), ils sont rangés dans un <b>dépôt privé</b> à toi. À faire une fois par appareil (2 minutes) :</p>
+        <ol class="consignes small">
+          <li><a href="https://github.com/new?name=atelier-fichiers&visibility=private&description=Fichiers%20de%20cours%20(Atelier%20de%20code)" target="_blank" rel="noopener">Créer un dépôt <b>privé</b></a> nommé <code>atelier-fichiers</code>.</li>
+          <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Créer un jeton « fine-grained »</a> : <i>Repository access</i> → <b>Only select repositories</b> → <code>atelier-fichiers</code> ; <i>Permissions</i> → <b>Contents : Read and write</b>. Rien d'autre.</li>
+          <li>Colle le jeton et le nom du dépôt ici.</li>
+        </ol>
+        <form class="stack" data-form="ghFiles" style="gap:8px"><div class="row"><input class="field" name="repo" placeholder="compte/atelier-fichiers" value="${esc(ghf.repo || "fausatu/atelier-fichiers")}" required style="flex:1;min-width:180px"><input class="field" name="token" type="password" placeholder="github_pat_..." autocomplete="off" required style="flex:2;min-width:220px"><button class="btn primary">Activer</button></div></form>
+        <p class="small" id="ghf-msg"></p>
+        <p class="small muted">Ce jeton ne donne accès qu'à ce dépôt et reste dans ce navigateur. Les fichiers ajoutés depuis claude.ai restent dans claude.ai (et inversement) : chaque version affiche les siens.</p>`}
+    </div>`;
+}
 function render() {
   const r = currentRoute();
   let html;
@@ -3655,7 +3735,10 @@ const ACTIONS = {
   sideToggle() { sideToggle(); },
   fileView(el) { const o = ecObj(el.dataset.kind, el.dataset.id); const f = o && (o.fichiers || [])[+el.dataset.i]; if (f) openViewer(f); },
   viewerClose() { closeViewer(); },
-  async fileDel(el) { const o = ecObj(el.dataset.kind, el.dataset.id); const f = o && (o.fichiers || [])[+el.dataset.i]; if (!f) return; o.fichiers.splice(+el.dataset.i, 1); o.ts = Date.now(); state.ui.confirmDel = null; ecSaveKind(el.dataset.kind); render(); try { if (assetsApi) await assetsApi.delete(f.id); } catch (e) {} toast("Fichier supprimé."); },
+  async fileDel(el) { const o = ecObj(el.dataset.kind, el.dataset.id); const f = o && (o.fichiers || [])[+el.dataset.i]; if (!f) return; o.fichiers.splice(+el.dataset.i, 1); o.ts = Date.now(); state.ui.confirmDel = null; ecSaveKind(el.dataset.kind); render(); try { if ((f.src || "claude") === "github") { await ghfDelete(f); if (f.texte) await ghfDelete({ id: f.texte, sha: f.texteSha, nom: f.nom + " (texte)" }); } else if (assetsApi) await assetsApi.delete(f.id); } catch (e) { toast("Retiré du cours, mais le fichier n'a pas pu être effacé du stockage : " + e.message); return; } toast("Fichier supprimé."); },
+  fileDl(el) { const o = ecObj(el.dataset.kind, el.dataset.id); const f = o && (o.fichiers || [])[+el.dataset.i]; if (f) fileDownload(f); },
+  viewerDl() { const v = $("#viewer"); if (v && v._file) fileDownload(v._file); },
+  ghfOff() { ghf.token = ""; ghf.repo = ""; ghfSave(); render(); toast("Fichiers GitHub désactivés sur cet appareil."); },
   wkDay(el) { const u = calUi(); u.day = el.dataset.day; u.month = el.dataset.day.slice(0, 7); location.hash = "#calendrier"; },
   step(el) {
     keepDrafts(); const id = el.dataset.id; const s = Number(el.dataset.step);
@@ -3867,6 +3950,7 @@ function handleForm(f, submitter) {
   if (f.dataset.form === "q") { qSave(f.texte.value, e.submitter && e.submitter.value === "ask"); return; }
   if (f.dataset.form === "qNote") { const q = questions().find((x) => x.id === f.dataset.id); const v = f.note.value.trim(); if (q && v) { q.reponse = v; q.source = "moi"; q.statut = "repondue"; (qUi().keep = qUi().keep || []).push(q.id); saveProgress(); } qUi().note = null; qRefreshViews(); return; }
   if (f.dataset.form === "dbgFollow") { dbgFollowUp(f); return; }
+  if (f.dataset.form === "ghFiles") { const m = $("#ghf-msg"); if (m) m.textContent = "Vérification…"; ghfConnect(f.token.value, f.repo.value).then(() => { render(); toast("Fichiers GitHub activés : tu peux en ajouter dans tes cours."); }).catch((err) => { ghf.token = ""; const mm = $("#ghf-msg"); if (mm) mm.innerHTML = `<span class="err">Ça n'a pas marché : ${esc(err.message)}.</span>`; }); return; }
   if (f.dataset.form === "ecSetup") { const idx = [...f.querySelectorAll("input[name=m]:checked")].map((x) => +x.value); setupEcole(idx, f.rendus.checked); render(); toast(`${idx.length} matière${idx.length > 1 ? "s" : ""} créée${idx.length > 1 ? "s" : ""}.`); return; }
   if (f.dataset.form === "ecNewCours") { const titre = f.titre.value.trim(); if (!titre) return; const c = { id: "co" + rid(), matiere: f.dataset.mat, titre: titre.slice(0, 160), date: f.date.value || null, tags: [], notes: "", liens: [], created: Date.now(), ts: Date.now() }; ecole().cours.push(c); saveEcole(); location.hash = "#c-" + c.id; return; }
   if (f.dataset.form === "ecLink") { let url = f.url.value.trim(); if (!url) return; if (!/^https?:\/\//i.test(url)) url = "https://" + url; try { new URL(url); } catch (err) { toast("Ce lien n'a pas l'air valide."); return; } const o = ecObj(f.dataset.kind, f.dataset.id); if (!o) return; (o.liens = o.liens || []).push({ url, titre: f.titre.value.trim().slice(0, 80) }); o.ts = Date.now(); ecSaveKind(f.dataset.kind); render(); toast(toolOf(url).name + " ajouté."); return; }
@@ -3959,9 +4043,9 @@ document.addEventListener("focusout", (e) => {
     if (v && v !== orig) handleForm(f, null); else { state.ui.sbNew = false; state.ui.sbRename = null; render(); }
   }, 120);
 });
-document.addEventListener("dragover", (e) => { const z = e.target.closest && e.target.closest("[data-drop]"); if (!z || !assetsApi) return; e.preventDefault(); z.classList.add("drag"); });
+document.addEventListener("dragover", (e) => { const z = e.target.closest && e.target.closest("[data-drop]"); if (!z || !fileStore()) return; e.preventDefault(); z.classList.add("drag"); });
 document.addEventListener("dragleave", (e) => { const z = e.target.closest && e.target.closest("[data-drop]"); if (z && !z.contains(e.relatedTarget)) z.classList.remove("drag"); });
-document.addEventListener("drop", (e) => { const z = e.target.closest && e.target.closest("[data-drop]"); if (!z) return; e.preventDefault(); z.classList.remove("drag"); if (!assetsApi) { toast("Les fichiers s'enregistrent seulement dans claude.ai."); return; } uploadFiles(z.dataset.drop, z.dataset.id, e.dataTransfer.files).catch(showError); });
+document.addEventListener("drop", (e) => { const z = e.target.closest && e.target.closest("[data-drop]"); if (!z) return; e.preventDefault(); z.classList.remove("drag"); uploadFiles(z.dataset.drop, z.dataset.id, e.dataTransfer.files).catch(showError); });
 document.addEventListener("mousedown", (e) => { if (e.target.id === "viewer") closeViewer(); });
 window.addEventListener("hashchange", () => { closeViewer(); document.body.classList.remove("menu-open"); if (fabOpen()) fabSetOpen(false); render(); });
 

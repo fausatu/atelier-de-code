@@ -80,6 +80,11 @@ Idée pour plus tard : les cartes mémo (point 3) pourront être générées dep
 - Visionneuse `#viewer` : PDF rendu page par page avec pdf.js 3.11.174 embarqué (`vendor/pdfjs/`, à publier avec la page), images,
   vidéos, texte/markdown. Suppression = `assets.delete` après confirmation.
 - Publier : `index.html` + `vendor/pdfjs/*` si modifiés.
+- **Version GitHub Pages** (Ana l'utilise) : pas de capacité `assets` → fichiers rangés dans un **dépôt privé** d'Ana
+  (`atelier-fichiers` par défaut) via l'API Contents avec un jeton fine-grained limité à ce dépôt (Contents read/write), configuré
+  sur #synchro (carte « Fichiers de cours sur GitHub », localStorage `atelier-fichiers-gh`, `ghfConnect` refuse un dépôt public).
+  Chemins `fichiers/AAAA-MM/<id>-<nom>` ; PPTX/DOCX gardés en original + texte extrait en `-texte.md` (`f.texte`).
+  Chaque fichier a `src` ("claude" | "github") : chaque version n'affiche que les siens (`fileReachable`), l'autre est indiqué.
 
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
