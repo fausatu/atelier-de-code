@@ -65,6 +65,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .cal-pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; background: color-mix(in srgb, var(--kc) 28%, transparent); color: var(--ink); border: 1px solid color-mix(in srgb, var(--kc) 70%, transparent); }
 .cal-pill.k-weekend, .cal-pill.k-libre { background: var(--surface-2); border-color: var(--line); }
 .cal-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--kc); flex: none; }
+.tool-ic .cal-dot { position: absolute; top: 4px; right: 5px; width: 7px; height: 7px; box-shadow: 0 0 0 2px var(--surface); }
 .cal-dot.k-weekend, .cal-dot.k-libre { background: var(--line); }
 .cal-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 16px; text-decoration: none; color: var(--ink); font-size: 0.9rem; }
 .cal-strip:hover { border-color: var(--accent); }
@@ -101,6 +102,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .tool-ic.on { background: var(--accent-soft); color: var(--accent); }
 .tool-ic::after { content: attr(data-tip); position: absolute; left: 50%; top: calc(100% + 6px); transform: translateX(-50%); white-space: nowrap; background: var(--ink); color: var(--surface); font-size: 0.76rem; font-weight: 500; padding: 4px 8px; border-radius: 6px; opacity: 0; pointer-events: none; transition: opacity .12s; z-index: 5; }
 .tool-ic:hover::after, .tool-ic:focus-visible::after { opacity: 1; }
+.tool-ic:first-child::after { left: 0; transform: none; }
 .side-more { margin-top: 6px; border: 0; background: none; color: var(--muted); font: 500 0.82rem var(--font-body); text-align: left; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
 .side-more:hover { color: var(--accent); background: var(--surface-2); }
 .side-empty { margin: 4px 0 0; padding: 0 10px; font-size: 0.82rem; color: var(--muted); }
@@ -1042,11 +1044,11 @@ function renderSide() {
     <nav class="nav-main">
       <a class="nav-link ${r === "accueil" ? "on" : ""}" href="#accueil">Tableau de bord</a>
       <a class="nav-link ${r === "revision" ? "on" : ""}" href="#revision">Révisions <span class="count ${due ? "" : "zero"}">${due}</span></a>
-      <a class="nav-link ${r === "calendrier" ? "on" : ""}" href="#calendrier">Calendrier <span class="cal-dot k-${dayKind(today())}" title="Aujourd'hui : ${KIND_LABEL[dayKind(today())]}"></span></a>
       <a class="nav-link ${r === "parcours" ? "on" : ""}" href="#parcours">Parcours</a>
       <a class="nav-link ${r === "questions" ? "on" : ""}" href="#questions">Mes questions <span class="count ${qOpenCount() ? "" : "zero"}">${qOpenCount()}</span></a>
     </nav>
     <div class="tool-row" role="navigation" aria-label="Outils">
+      <a class="tool-ic ${r === "calendrier" ? "on" : ""}" href="#calendrier" aria-label="Calendrier" data-tip="Calendrier (aujourd'hui : ${KIND_LABEL[dayKind(today())].toLowerCase()})"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span class="cal-dot k-${dayKind(today())}"></span></a>
       <a class="tool-ic ${r === "essayer" ? "on" : ""}" href="#essayer" aria-label="Bac à sable" data-tip="Bac à sable"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7 3 12l5 5M16 7l5 5-5 5"/></svg></a>
       <a class="tool-ic ${r === "debogueur" ? "on" : ""}" href="#debogueur" aria-label="Mon débogueur" data-tip="Mon débogueur"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="8" width="10" height="12" rx="5"/><path d="M12 8v12M9 5l1.5 2.5M15 5l-1.5 2.5M7 13H3M21 13h-4M7.5 9.5 4.5 7M16.5 9.5l3-2.5M7.5 17l-3 2.5M16.5 17l3 2.5"/></svg></a>
       <a class="tool-ic ${r === "ajouter" ? "on" : ""}" href="#ajouter" aria-label="Ajouter un module" data-tip="Ajouter un module"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
