@@ -10,13 +10,13 @@
 ## Construction et tests
 - `python3 build.py` construit `index.html` à partir de `template.html` + les modules `c_*.py` (aides dans `common.py` : P, L, D/N/E, F, TD, RUN).
 - Serveur local nécessaire pour valider : `(setsid nohup python3 -m http.server 8765 >/dev/null 2>&1 &)`.
-- `python3 validate.py [parcours|module]` exécute chaque solution de TD contre ses tests ; `STARTER=1 python3 validate.py …` vérifie que chaque code de départ échoue. Dernier passage complet : 240/240.
+- `python3 validate.py [parcours|module]` exécute chaque solution de TD contre ses tests ; `STARTER=1 python3 validate.py …` vérifie que chaque code de départ échoue. Dernier passage complet : 240/240 (16/11, après les notes).
 - Types d'exécution : php (php-wasm), react, js, next, git (git-sim), term (term-sim, bash + PowerShell), vérification TypeScript (vendor/ts).
 - Catégories de parcours : `GROUPS` dans build.py (methode, back, front, outils, + « perso »).
 - Commits : terminer par les lignes d'attribution Co-Authored-By / Claude-Session données par le système.
 
 ## État actuel (16/11/2026)
-15 parcours, 83 modules. Récemment : parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
+15 parcours, 83 modules. Récemment : notes par module ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
 tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barre latérale allégée (outils en icônes, « Mes parcours »).
 
 ## Calendrier (fait le 16/11)
@@ -26,8 +26,20 @@ Page `#calendrier` : mois par mois avec les jours école / entreprise / examens 
 rendus cochables, « prochaines semaines d'école », « à venir ». Bandeau sur le tableau de bord, pastille dans la barre latérale.
 Les futurs **rendus** de « Mes cours » doivent réutiliser `state.progress.agenda` (type "rendu") pour apparaître ici.
 
+## Mes notes (fait le 16/11)
+Une note markdown par module, stockée dans `state.progress.notes[moduleId] = { text, ts, created }` (synchronisée comme la
+progression ; à la fusion GitHub, la version la plus récente gagne). Panneau latéral `#npanel` (bouton « Mes notes » en haut du
+module ou **Alt+N**, Échap pour fermer ; sur écran ≥ 1280 px le contenu se décale), modes Écrire / Aperçu (Ctrl+Entrée),
+barre d'outils (titre, gras Ctrl+B, code Ctrl+E, bloc de code avec le langage du parcours, liste, case, tableau, citation, lien Ctrl+K,
+« Citer » = passage surligné du cours), suite automatique des listes avec Entrée, bouton « Faire une fiche avec Claude » (capacité
+`sample`, proposition à ajouter ou jeter). Page `#notes` (icône dans la barre latérale) : notes par parcours, recherche, copier une /
+toutes les notes en markdown, « Modifier » rouvre le module avec le panneau. Repère « notes » sur les modules dans la vue parcours.
+`md()` gère maintenant liens `[texte](https://…)`, `~~barré~~`, cases `- [ ]` / `- [x]` et citations sur plusieurs lignes
+(profite aussi aux leçons). Fonctions : `notesMap`, `noteOf`, `nSetOpen`, `renderN`, `nInsert`, `nAi`, `viewNotes`.
+Idée pour plus tard : les cartes mémo (point 3) pourront être générées depuis une note.
+
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
-1. **Notes par module** : panneau « Mes notes » sur chaque module (markdown, code coloré, tableaux).
+1. ~~Notes par module~~ : fait (voir ci-dessus).
 2. **Espace « Mes cours » (école)** — PAS seulement du code : management de projet, anglais, UX/UI, etc.
    - Ana est en **MBA Développeur Full Stack (MyDigitalSchool, 2026-2028, en alternance)**. La liste complète des matières
      est dans `ecole/programme.json` (44 modules, M1/M2, UE, heures, ECTS, type, thèmes, évaluations, et lien vers les

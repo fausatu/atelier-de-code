@@ -558,6 +558,49 @@ body.q-open .qfab { display: none; }
 .q-ans { border-top: 1px dashed var(--line); padding-top: 8px; font-size: 0.92rem; }
 .q-ans .who { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .q-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Mes notes : panneau latéral par module + page #notes */
+.npanel { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); z-index: 46; background: var(--bg); border-left: 1px solid var(--line); box-shadow: -10px 0 30px rgb(0 0 0 / 0.12); display: flex; flex-direction: column; }
+.npanel[hidden] { display: none; }
+.npanel .qpanel-head { flex-wrap: wrap; row-gap: 4px; }
+.npanel .n-sub { flex-basis: 100%; order: 3; font-size: 0.84rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.n-modes { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.n-modes button { border: 0; background: var(--surface); padding: 4px 10px; font-size: 0.82rem; cursor: pointer; color: var(--muted); }
+.n-modes button.on { background: var(--ink); color: var(--surface); }
+.n-tools { display: flex; flex-wrap: wrap; gap: 2px; padding: 6px 12px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.n-tools button { min-width: 30px; height: 28px; padding: 0 7px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font-size: 0.82rem; font-weight: 600; }
+.n-tools button:hover { background: var(--surface-2); color: var(--ink); }
+.n-tools .sep { width: 1px; background: var(--line); margin: 4px 4px; }
+.n-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.n-text { flex: 1; min-height: 160px; width: 100%; resize: none; border: 0; padding: 14px 16px; background: var(--surface); color: var(--ink); font: 14px/1.6 var(--font-mono); outline: none; }
+.n-text::placeholder { color: var(--muted); font-family: var(--font-body); }
+.n-preview { flex: 1; overflow-y: auto; padding: 14px 16px 30px; }
+.n-preview .prose { max-width: none; }
+.n-ai { border-top: 1px solid var(--line); background: var(--accent-soft); padding: 10px 14px; max-height: 45%; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 0.92rem; }
+.n-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--surface); font-size: 0.82rem; color: var(--muted); }
+.n-foot a { color: var(--muted); }
+.n-saved::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--good); margin-right: 6px; vertical-align: 1px; }
+.n-saved.wait::before { background: var(--warn); }
+body.n-open .qfab { display: none; }
+@media (min-width: 1280px) { body.n-open main { margin-right: 460px; } }
+.n-btn.has { border-color: var(--tc, var(--accent)); color: var(--tc, var(--accent)); }
+.n-btn svg, .rm-note svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.rm-note { display: inline-flex; align-items: center; gap: 3px; color: var(--muted); font-size: 0.8rem; }
+.points li:has(> .ck) { padding-left: 0; }
+.points li:has(> .ck)::before { display: none; }
+.npanel { --tc: var(--accent); }
+.ck { display: inline-grid; place-items: center; width: 15px; height: 15px; margin-right: 6px; border: 1.5px solid var(--muted); border-radius: 4px; vertical-align: -2px; font-size: 11px; line-height: 1; }
+.ck.on { background: var(--good); border-color: var(--good); color: #fff; }
+li.done-item { color: var(--muted); text-decoration: line-through; }
+.n-list { display: flex; flex-direction: column; gap: 18px; }
+.n-group h2 { font-size: 1.05rem; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.n-card { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.n-card + .n-card { margin-top: 8px; }
+.n-card > summary { list-style: none; cursor: pointer; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.n-card > summary::-webkit-details-marker { display: none; }
+.n-card > summary b { font-weight: 600; }
+.n-card > summary .ex { flex-basis: 100%; color: var(--muted); font-size: 0.86rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.n-card[open] > summary .ex { display: none; }
+.n-card .n-in { border-top: 1px solid var(--line); padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 12px; }
 .q-group { display: flex; flex-direction: column; gap: 10px; }
 .q-group h3 { font-size: 0.95rem; margin: 6px 0 0; }
 @media (min-width: 1100px) { body.q-open .app { margin-right: min(420px, 100vw); } }
@@ -602,6 +645,7 @@ body.q-open .qfab { display: none; }
 <div class="toast" id="toast" role="status" hidden></div>
 <button class="qfab" id="qfab" type="button" data-act="qToggle" aria-controls="qpanel" aria-expanded="false" aria-label="Noter une question (Alt+Q)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M10.2 9.6a2 2 0 1 1 2.8 1.8c-.6.3-1 .8-1 1.5v.3"/><circle cx="12" cy="15.8" r=".6" fill="currentColor" stroke="none"/></svg><span class="lbl">Une question · Alt+Q</span><span class="n zero" id="qfab-n">0</span></button>
 <aside class="qpanel" id="qpanel" aria-label="Mes questions" hidden></aside>
+<aside class="npanel" id="npanel" aria-label="Mes notes" hidden></aside>
 
 <script src="vendor/hljs/hljs.js?v=2"></script>
 <script>
@@ -645,7 +689,7 @@ function saveLocal() {
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function inl(s) {
-  return String(s ?? "").split("`").map((part, i) => i % 2 ? `<code>${esc(part)}</code>` : esc(part).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,;:!?]|$)/g, "$1<em>$2</em>")).join("");
+  return String(s ?? "").split("`").map((part, i) => i % 2 ? `<code>${esc(part)}</code>` : esc(part).replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/~~([^~\n]+)~~/g, "<s>$1</s>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,;:!?]|$)/g, "$1<em>$2</em>")).join("");
 }
 function mdCells(line) {
   const cells = []; let cur = ""; let tick = false;
@@ -667,10 +711,16 @@ function mdTable(rows) {
   const body = rows.slice(2).map((r) => { const c = mdCells(r); return `<tr>${head.map((_, j) => `<td${cls(j)}>${inl(c[j] || "")}</td>`).join("")}</tr>`; }).join("");
   return `<div class="tbl"><table><thead><tr>${head.map((h, j) => `<th${cls(j)}>${inl(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
+function mdLi(l) {
+  const c = l.match(/^\[( |x|X)\]\s+(.*)$/);
+  if (!c) return `<li>${inl(l)}</li>`;
+  const on = c[1] !== " ";
+  return `<li class="${on ? "done-item" : ""}"><span class="ck ${on ? "on" : ""}" aria-label="${on ? "fait" : "à faire"}">${on ? "✓" : ""}</span>${inl(c[2])}</li>`;
+}
 function md(text) {
   const out = []; const lines = String(text || "").split("\n"); let i = 0; let list = null; let para = [];
   const flushPara = () => { if (para.length) { out.push(`<p>${inl(para.join(" "))}</p>`); para = []; } };
-  const flushList = () => { if (list) { out.push(`<${list.ol ? "ol class=\"consignes\"" : "ul class=\"points\""}>${list.items.map((l) => `<li>${inl(l)}</li>`).join("")}</${list.ol ? "ol" : "ul"}>`); list = null; } };
+  const flushList = () => { if (list) { out.push(`<${list.ol ? "ol class=\"consignes\"" : "ul class=\"points\""}>${list.items.map(mdLi).join("")}</${list.ol ? "ol" : "ul"}>`); list = null; } };
   while (i < lines.length) {
     const line = lines[i];
     const fence = line.match(/^```\s*(\S+)?/);
@@ -694,8 +744,11 @@ function md(text) {
     if (li) { flushPara(); const ol = /\d/.test(li[1]); if (list && list.ol !== ol) flushList(); (list = list || { ol, items: [] }).items.push(li[2]); i++; continue; }
     const h = line.match(/^#{1,4}\s+(.*)$/);
     if (h) { flushPara(); flushList(); out.push(`<h4>${inl(h[1])}</h4>`); i++; continue; }
-    const quote = line.match(/^>\s?(.*)$/);
-    if (quote) { flushPara(); flushList(); out.push(`<div class="hint">${inl(quote[1])}</div>`); i++; continue; }
+    if (/^>/.test(line)) {
+      flushPara(); flushList();
+      const buf = []; while (i < lines.length && /^>/.test(lines[i])) { buf.push(lines[i].replace(/^>\s?/, "")); i++; }
+      out.push(`<div class="hint">${buf.map(inl).join("<br>")}</div>`); continue;
+    }
     if (!line.trim()) { flushPara(); flushList(); i++; continue; }
     flushList(); para.push(line.trim()); i++;
   }
@@ -1049,6 +1102,7 @@ function renderSide() {
     </nav>
     <div class="tool-row" role="navigation" aria-label="Outils">
       <a class="tool-ic ${r === "calendrier" ? "on" : ""}" href="#calendrier" aria-label="Calendrier" data-tip="Calendrier (aujourd'hui : ${KIND_LABEL[dayKind(today())].toLowerCase()})"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span class="cal-dot k-${dayKind(today())}"></span></a>
+      <a class="tool-ic ${r === "notes" ? "on" : ""}" href="#notes" aria-label="Mes notes" data-tip="Mes notes (${noteCount()})">${NOTE_ICON}</a>
       <a class="tool-ic ${r === "essayer" ? "on" : ""}" href="#essayer" aria-label="Bac à sable" data-tip="Bac à sable"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7 3 12l5 5M16 7l5 5-5 5"/></svg></a>
       <a class="tool-ic ${r === "debogueur" ? "on" : ""}" href="#debogueur" aria-label="Mon débogueur" data-tip="Mon débogueur"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="8" width="10" height="12" rx="5"/><path d="M12 8v12M9 5l1.5 2.5M15 5l-1.5 2.5M7 13H3M21 13h-4M7.5 9.5 4.5 7M16.5 9.5l3-2.5M7.5 17l-3 2.5M16.5 17l3 2.5"/></svg></a>
       <a class="tool-ic ${r === "ajouter" ? "on" : ""}" href="#ajouter" aria-label="Ajouter un module" data-tip="Ajouter un module"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
@@ -1310,7 +1364,7 @@ function viewTrack(tid) {
     return `<li class="rm-item ${side} ${st} ${here ? "here" : ""} ${p?.done ? "passed" : ""}">
       <a class="rm-card" href="#m-${esc(m.id)}">
         ${here ? `<span class="rm-flag">${st === "started" ? "Tu en es là" : st === "due" ? "À réviser" : "Prochaine étape"}</span>` : ""}
-        <span class="rm-meta"><span class="rm-num">Étape ${i + 1}</span><span>${m.minutes || 15} min</span>${isCustom(m.id) ? '<span class="pill custom">ajouté</span>' : ""}</span>
+        <span class="rm-meta"><span class="rm-num">Étape ${i + 1}</span><span>${m.minutes || 15} min</span>${noteOf(m.id) ? `<span class="rm-note" title="Tu as des notes sur ce module">${NOTE_ICON}notes</span>` : ""}${isCustom(m.id) ? '<span class="pill custom">ajouté</span>' : ""}</span>
         <span class="rm-title">${esc(m.title)}</span>
         <span class="rm-goal">${inl(m.goal)}</span>
         <span class="rm-foot"><span class="rm-steps" title="Comprendre · Exemple · Quiz · TD, puis niveaux du TD">${steps}</span><span class="pill ${st}">${STATUS_LABEL[st]}</span></span>
@@ -1438,7 +1492,7 @@ function viewModule(id) {
   const next = step < 3 ? `<button class="btn primary" data-act="step" data-id="${esc(id)}" data-step="${step + 1}">${STEPS[step + 1]} →</button>` : (idx < ms.length - 1 ? `<a class="btn" href="#m-${esc(ms[idx + 1].id)}">Module suivant →</a>` : `<a class="btn" href="#t-${esc(t.id)}">Voir le parcours</a>`);
   return `<div class="wrap" style="${tc(t)}">
     <div class="mod-head">
-      <div class="row small">${logo(t, 22)}<a href="#t-${esc(t.id)}">${esc(t.name)}</a><span class="muted">· module ${idx + 1}/${ms.length} · ${m.minutes || 15} min</span><span class="spacer"></span><span class="pill ${st}">${STATUS_LABEL[st]}</span></div>
+      <div class="row small">${logo(t, 22)}<a href="#t-${esc(t.id)}">${esc(t.name)}</a><span class="muted">· module ${idx + 1}/${ms.length} · ${m.minutes || 15} min</span><span class="spacer"></span><button class="btn sm n-btn ${noteOf(id) ? "has" : ""}" data-act="nToggle" aria-expanded="${nUi().open}" title="Mes notes sur ce module (Alt+N)">${NOTE_ICON}Mes notes</button><span class="pill ${st}">${STATUS_LABEL[st]}</span></div>
       <h1>${esc(m.title)}</h1>
       <p class="lead"><b>Objectif :</b> ${inl(m.goal)}</p>
     </div>
@@ -2152,6 +2206,7 @@ function qCtxText(c) {
 }
 function qSetOpen(open) {
   const u = qUi(); u.open = open;
+  if (open && nUi().open) nSetOpen(false);
   if (open) {
     u.ctx = qContext();
     const sel = qSelAtOpen || mainSelection();
@@ -2475,6 +2530,7 @@ function mergeData(inc) {
   for (const [d, n] of Object.entries(inc.progress.activity || {})) act[d] = Math.max(act[d] || 0, n);
   if (Array.isArray(inc.progress.bugs)) { const mine = bugs(); for (const b of inc.progress.bugs) { const cur = mine.find((x) => x.id === b.id); if (!cur) mine.push(b); else if (b.resolu) cur.resolu = true; } mine.sort((a, b) => (b.date || "").localeCompare(a.date || "")); }
   if (Array.isArray(inc.progress.questions)) { const mine = questions(); for (const q of inc.progress.questions) { const cur = mine.find((x) => x.id === q.id); if (!cur) mine.push(q); else if (q.reponse && !cur.reponse) { cur.reponse = q.reponse; cur.source = q.source; cur.statut = q.statut; } else if (q.statut === "repondue") cur.statut = "repondue"; } mine.sort((a, b) => (b.ts || 0) - (a.ts || 0)); }
+  if (inc.progress.notes && typeof inc.progress.notes === "object") { const mine = notesMap(); for (const [id, n] of Object.entries(inc.progress.notes)) if (n && typeof n.text === "string" && (!mine[id] || (n.ts || 0) > (mine[id].ts || 0))) mine[id] = n; }
   for (const [k, v] of Object.entries(inc.drafts || {})) if (state.drafts[k] === undefined) state.drafts[k] = v;
   const c = inc.custom || {};
   for (const t of c.tracks || []) if (!state.custom.tracks.some((x) => x.id === t.id)) state.custom.tracks.push(t);
@@ -2581,6 +2637,152 @@ function viewSynchro() {
 
 /* ---------- rendu principal ---------- */
 let lastRoute = null;
+/* ---------- Mes notes (une note markdown par module, dans state.progress.notes) ---------- */
+const NOTE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>`;
+function notesMap() { const p = state.progress; if (!p.notes || typeof p.notes !== "object" || Array.isArray(p.notes)) p.notes = {}; return p.notes; }
+function noteOf(id) { const n = notesMap()[id]; return n && typeof n.text === "string" && n.text.trim() ? n : null; }
+function noteCount() { return Object.keys(notesMap()).filter((id) => noteOf(id)).length; }
+function nUi() { return state.ui.n || (state.ui.n = { open: false, mode: "write", ai: null, aiBusy: false }); }
+function noteModuleId() { const r = currentRoute(); return r.startsWith("m-") && mod(r.slice(2)) ? r.slice(2) : null; }
+function noteLang(m) { const f = exFiles(m)[0]; const l = f && (f.lang || (f.path || "").split(".").pop()); return l && l !== "txt" ? l : ""; }
+function noteWhen(ts) { if (!ts) return ""; const d = new Date(ts); const k = ymd(d); return k === today() ? "aujourd'hui à " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : frDate(k); }
+function noteExcerpt(t) { return String(t).split("\n").map((l) => l.replace(/^[#>\-*\s\d.|]+|\[[ xX]\]\s*|[`*_~]/g, "").trim()).filter((l) => l && !/^-{2,}/.test(l)).join(" · ").slice(0, 160); }
+let noteTimer = null;
+function setNote(id, text) {
+  const map = notesMap();
+  if (!text.trim()) delete map[id];
+  else { const old = map[id]; map[id] = { text: text.slice(0, 60000), ts: Date.now(), created: (old && old.created) || today() }; }
+}
+function noteInput(ta) {
+  const id = ta.dataset.id; setNote(id, ta.value);
+  const st = $("#n-saved"); if (st) { st.className = "n-saved wait"; st.textContent = "Enregistrement…"; }
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(() => {
+    const cur = $("#n-text"); if (cur && cur.dataset.id === id) setNote(id, cur.value);
+    if (!noteOf(id)) delete notesMap()[id];
+    saveProgress(); logActivity();
+    const s = $("#n-saved"); if (s) { s.className = "n-saved"; s.textContent = "Enregistré"; }
+    const b = document.querySelector(".n-btn"); if (b) b.classList.toggle("has", !!noteOf(id));
+    renderSide();
+  }, 450);
+}
+function nSetOpen(open) {
+  const u = nUi();
+  if (open && !noteModuleId()) { location.hash = "#notes"; return; }
+  if (open && qUi().open) qSetOpen(false);
+  u.open = open;
+  document.body.classList.toggle("n-open", open);
+  renderN();
+  const b = document.querySelector(".n-btn"); if (b) b.setAttribute("aria-expanded", String(open));
+  if (open) { const t = $("#n-text"); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }
+}
+function renderN() {
+  const panel = $("#npanel"); if (!panel) return;
+  const u = nUi(); const id = noteModuleId();
+  if (u.open && !id) u.open = false;
+  if (u.mod !== id) { u.mod = id; if (!u.aiBusy) u.ai = null; }
+  if (!u.open || !id) { panel.hidden = true; panel.innerHTML = ""; document.body.classList.remove("n-open"); return; }
+  panel.hidden = false;
+  const m = mod(id); panel.setAttribute("style", tc(track(m.track))); const n = noteOf(id); const text = n ? n.text : "";
+  const write = u.mode !== "preview";
+  const tools = [["h", "T", "Titre"], ["b", "G", "Gras"], ["code", "`c`", "Code dans la ligne"], ["block", "{ }", "Bloc de code"], ["sep"], ["list", "•", "Liste"], ["check", "☐", "Case à cocher"], ["table", "▦", "Tableau"], ["quote", "❝", "Citation"], ["link", "🔗", "Lien"]];
+  const ai = u.ai !== null ? `<div class="n-ai" id="n-ai"><div class="prose">${u.ai ? md(u.ai) : `<p class="muted small"><span class="spin"></span> Claude prépare une fiche…</p>`}</div>${u.aiBusy ? "" : `<div class="row"><button class="btn sm primary" data-act="nAiKeep">Ajouter à mes notes</button><button class="btn sm ghost" data-act="nAiDrop">Jeter</button></div>`}</div>` : "";
+  panel.innerHTML = `
+    <div class="qpanel-head" style="${tc(track(m.track))}">
+      <h2>Mes notes</h2>
+      <span class="n-modes" role="tablist"><button role="tab" aria-selected="${write}" class="${write ? "on" : ""}" data-act="nMode" data-mode="write">Écrire</button><button role="tab" aria-selected="${!write}" class="${write ? "" : "on"}" data-act="nMode" data-mode="preview">Aperçu</button></span>
+      <button class="btn sm ghost" data-act="nToggle" aria-label="Fermer le panneau">Fermer</button>
+      <span class="n-sub">${logo(track(m.track), 16)} ${esc(m.title)}</span>
+    </div>
+    ${write ? `<div class="n-tools" role="toolbar" aria-label="Mise en forme">${tools.map((t) => t[0] === "sep" ? `<span class="sep"></span>` : `<button type="button" data-act="nIns" data-k="${t[0]}" title="${t[2]}" aria-label="${t[2]}">${t[1]}</button>`).join("")}<span class="sep"></span><button type="button" data-act="nQuote" title="Surligne un passage du cours, puis clique ici pour le citer" style="font-weight:500">Citer</button></div>` : ""}
+    <div class="n-body">
+      ${write ? `<textarea id="n-text" class="n-text" data-id="${esc(id)}" spellcheck="true" placeholder="Tes notes sur ce module, en markdown :\n\n## Ce que j'ai compris\n- …\n\n\`\`\`${noteLang(m) || "php"}\nton code\n\`\`\`\n\n| Mot | Sens |\n| --- | --- |\n\n- [ ] à revoir">${esc(text)}</textarea>`
+        : `<div class="n-preview">${text.trim() ? `<div class="prose">${md(text)}</div>` : `<p class="muted">Rien encore. Passe sur <b>Écrire</b> pour commencer.</p>`}</div>`}
+      ${ai}
+    </div>
+    <div class="n-foot">
+      <span id="n-saved" class="n-saved">${n ? "Enregistré · " + esc(noteWhen(n.ts)) : "Enregistrement automatique"}</span>
+      <span class="spacer"></span>
+      <button class="btn sm ghost ai-only" data-act="nAi" ${u.aiBusy ? "disabled" : ""}>Faire une fiche avec Claude</button>
+      <a class="btn sm ghost" href="#notes">Toutes mes notes</a>
+    </div>`;
+  highlight(panel);
+}
+function nInsert(k, quoteText) {
+  const ta = $("#n-text"); if (!ta) return;
+  const m = mod(ta.dataset.id);
+  const v = ta.value; let a = ta.selectionStart, b = ta.selectionEnd; const sel = v.slice(a, b);
+  const nl = (pos) => (pos > 0 && v[pos - 1] !== "\n" ? "\n" : "");
+  let ins, selFrom, selTo;
+  const wrap = (l, r, ph) => { const t = sel || ph; ins = l + t + r; selFrom = l.length; selTo = l.length + t.length; };
+  if (k === "b") wrap("**", "**", "important");
+  else if (k === "code") wrap("`", "`", "code");
+  else if (k === "link") { const t = sel || "texte du lien"; ins = `[${t}](https://)`; selFrom = t.length + 3; selTo = t.length + 11; }
+  else if (k === "block") { const lang = noteLang(m); const pre = nl(a) + "```" + lang + "\n"; const body = sel || ""; ins = pre + body + "\n```\n"; selFrom = pre.length; selTo = pre.length + body.length; }
+  else if (k === "table") { const pre = nl(a) + (a > 0 ? "\n" : ""); ins = pre + "| Colonne 1 | Colonne 2 |\n| --- | --- |\n|  |  |\n"; selFrom = pre.length + 2; selTo = pre.length + 11; }
+  else if (k === "quoteText") { const pre = nl(a) + (a > 0 ? "\n" : ""); ins = pre + quoteText.split("\n").map((l) => "> " + l).join("\n") + "\n\n"; selFrom = selTo = ins.length; }
+  else {
+    const prefix = { h: "## ", list: "- ", check: "- [ ] ", quote: "> " }[k]; if (!prefix) return;
+    a = v.lastIndexOf("\n", a - 1) + 1;
+    const block = v.slice(a, b) || "";
+    ins = block.split("\n").map((l) => (l.startsWith(prefix) ? l.slice(prefix.length) : prefix + l.replace(/^(#+ |- \[[ xX]\] |- |> )/, ""))).join("\n");
+    selFrom = selTo = ins.length;
+  }
+  ta.focus(); ta.setSelectionRange(a, b);
+  ta.setRangeText(ins, a, b, "end");
+  ta.setSelectionRange(a + selFrom, a + selTo);
+  noteInput(ta);
+}
+async function nAi() {
+  const id = noteModuleId(); const m = id && mod(id); const u = nUi();
+  if (!m || !sample || u.aiBusy) return;
+  const n = noteOf(id);
+  u.ai = ""; u.aiBusy = true; renderN();
+  const prompt = `${levelContext()}\n\n${moduleContext(m)}\n\n${n ? `Notes déjà prises par l'élève (ne les répète pas, complète-les) :\n${n.text.slice(0, 4000)}\n\n` : ""}Rédige une fiche de révision de ce module, en markdown, que l'élève collera dans ses notes : un titre « ## Fiche : … », 4 à 6 puces sur l'essentiel, un tableau court (2 colonnes) si une comparaison aide, un bloc de code de 10 lignes maximum avec la bonne étiquette de langage, puis « ### À revoir » avec 2 cases « - [ ] ». 220 mots maximum hors code. Pas d'introduction.`;
+  const paint = () => { const box = $("#n-ai .prose"); if (box) { box.innerHTML = md(u.ai); } };
+  try {
+    const res = await sample(prompt, { cache: false, onText: ({ text }) => { u.ai = text; paint(); } });
+    u.ai = res.text;
+  } catch (e) {
+    u.ai = null; toast(e && e.code === "rate_limited" ? "Trop de demandes d'un coup. Réessaie dans une minute." : "La fiche n'a pas pu être générée.");
+  }
+  u.aiBusy = false;
+  const ta = $("#n-text"); if (ta) setNote(ta.dataset.id, ta.value);
+  renderN();
+}
+function nAiKeep() {
+  const u = nUi(); const id = noteModuleId(); if (!id || !u.ai) return;
+  const cur = (noteOf(id) || {}).text || "";
+  setNote(id, (cur.trim() ? cur.replace(/\s+$/, "") + "\n\n" : "") + u.ai.trim() + "\n");
+  u.ai = null; saveProgress(); renderN(); renderSide();
+  const b = document.querySelector(".n-btn"); if (b) b.classList.add("has");
+  toast("Fiche ajoutée à tes notes.");
+}
+function viewNotes() {
+  const filt = (state.ui.nFilter || "").trim().toLowerCase();
+  const all = Object.keys(notesMap()).filter((id) => noteOf(id) && mod(id));
+  const total = all.length;
+  const groups = tracks().map((t) => ({ t, ms: modulesOf(t.id).filter((m) => all.includes(m.id) && (!filt || (m.title + " " + noteOf(m.id).text).toLowerCase().includes(filt))) })).filter((g) => g.ms.length);
+  const card = (m) => {
+    const n = noteOf(m.id);
+    return `<details class="n-card" ${filt || state.ui.nOpenAll ? "open" : ""}>
+      <summary><b>${esc(m.title)}</b><span class="muted small">modifiée ${esc(noteWhen(n.ts))}</span><span class="ex">${esc(noteExcerpt(n.text))}</span></summary>
+      <div class="n-in"><div class="prose">${md(n.text)}</div>
+        <div class="row"><a class="btn sm" href="#m-${esc(m.id)}" data-act="nEdit" data-id="${esc(m.id)}">Modifier</a><a class="btn sm ghost" href="#m-${esc(m.id)}">Ouvrir le module</a><button class="btn sm ghost" data-act="nCopy" data-id="${esc(m.id)}">Copier</button></div>
+      </div></details>`;
+  };
+  return `<div class="wrap">
+    <div class="stack"><h1>Mes notes</h1><p class="lead">Une note par module, écrite pendant que tu lis le cours : bouton <b>Mes notes</b> en haut de chaque module, ou <b>Alt+N</b>. Markdown accepté : titres, listes, cases à cocher, tableaux, liens et blocs de code colorés.</p></div>
+    ${total ? `<div class="row fw"><span class="muted small">${total} note${total > 1 ? "s" : ""}</span><span class="spacer"></span><button class="btn sm ghost" data-act="nOpenAll">${state.ui.nOpenAll ? "Tout replier" : "Tout déplier"}</button><button class="btn sm" data-act="nCopy">Copier toutes mes notes</button><input id="n-filter" class="dbg-filter" placeholder="Rechercher" value="${esc(state.ui.nFilter || "")}"></div>` : ""}
+    <div class="n-list">${groups.map((g) => `<section class="n-group" style="${tc(g.t)}"><h2>${logo(g.t, 20)}<a href="#t-${esc(g.t.id)}" style="color:inherit;text-decoration:none">${esc(g.t.name)}</a><span class="muted small">${g.ms.length}</span></h2>${g.ms.map(card).join("")}</section>`).join("") || `<p class="muted">${total ? "Aucune note ne correspond." : "Aucune note pour l'instant. Ouvre un module et clique sur « Mes notes »."}</p>`}</div>
+  </div>`;
+}
+async function nCopy(id) {
+  const ids = id ? [id] : tracks().flatMap((t) => modulesOf(t.id)).map((m) => m.id).filter((x) => noteOf(x));
+  const txt = ids.map((x) => { const m = mod(x); return `# ${m.title} (${track(m.track).name})\n\n${noteOf(x).text.trim()}`; }).join("\n\n---\n\n");
+  try { await navigator.clipboard.writeText(txt); toast(id ? "Note copiée." : `${ids.length} note${ids.length > 1 ? "s" : ""} copiée${ids.length > 1 ? "s" : ""} (markdown).`); }
+  catch (e) { toast("Copie impossible dans ce navigateur."); }
+}
 function render() {
   const r = currentRoute();
   let html;
@@ -2593,6 +2795,7 @@ function render() {
   else if (r === "questions") html = viewQuestions();
   else if (r === "parcours") html = viewCatalog();
   else if (r === "calendrier") html = viewCalendar();
+  else if (r === "notes") html = viewNotes();
   else if (r.startsWith("t-")) html = viewTrack(r.slice(2));
   else if (r.startsWith("m-")) html = viewModule(r.slice(2));
   else html = viewHome();
@@ -2604,10 +2807,12 @@ function render() {
   highlight(main);
   renderSide();
   qBadge();
+  renderN();
   if (lastRoute !== r) { window.scrollTo(0, 0); lastRoute = r; }
 }
 function refresh() {
   renderSide();
+  if (nUi().open && document.activeElement !== $("#n-text")) renderN();
   const a = document.activeElement;
   if (a && $("#main").contains(a) && (a.tagName === "TEXTAREA" || a.tagName === "INPUT")) return;
   if (currentRoute() === "revision" && state.ui.review) return;
@@ -2636,6 +2841,16 @@ function keepDrafts() {
   draftWriter.schedule();
 }
 const ACTIONS = {
+  nToggle() { nSetOpen(!nUi().open); },
+  nMode(el) { const ta = $("#n-text"); if (ta) setNote(ta.dataset.id, ta.value); nUi().mode = el.dataset.mode; renderN(); if (el.dataset.mode === "write") { const t = $("#n-text"); if (t) t.focus(); } },
+  nIns(el) { nInsert(el.dataset.k); },
+  nQuote() { const t = nSelAtClick || mainSelection(); nSelAtClick = ""; if (!t) { toast("Surligne d'abord un passage du cours, puis clique ici."); return; } nInsert("quoteText", t); },
+  nAi() { return nAi(); },
+  nAiKeep() { nAiKeep(); },
+  nAiDrop() { nUi().ai = null; renderN(); },
+  nEdit(el) { const u = nUi(); u.open = true; u.mode = "write"; document.body.classList.add("n-open"); location.hash = "#m-" + el.dataset.id; },
+  nCopy(el) { return nCopy(el.dataset.id); },
+  nOpenAll() { state.ui.nOpenAll = !state.ui.nOpenAll; render(); },
   toggleTrack(el) {
     const id = el.dataset.id; const r = currentRoute();
     const cur = r.startsWith("m-") ? mod(r.slice(2))?.track : r.startsWith("t-") ? r.slice(2) : null;
@@ -2860,18 +3075,37 @@ document.addEventListener("input", (e) => {
     return;
   }
   if (e.target.name === "texte" && e.target.closest("#qpanel")) { qUi().texte = e.target.value; return; }
+  if (e.target.id === "n-text") { noteInput(e.target); return; }
+  if (e.target.id === "n-filter") { state.ui.nFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#n-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.id === "q-filter") { state.ui.qFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#q-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.id === "dbg-filter") { state.ui.dbgFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#dbg-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.classList.contains("hl")) { const ta = e.target; cancelAnimationFrame(paintRaf); paintRaf = requestAnimationFrame(() => paintEditor(ta)); }
   if (e.target.classList.contains("editor")) { clearTimeout(draftTimer); draftTimer = setTimeout(keepDrafts, 600); const tab = e.target.closest(".files"); if (tab) { const idx = Array.from(tab.querySelectorAll(".fpane")).indexOf(e.target.closest(".fpane")); const t = tab.querySelector(`.ftab[data-i="${idx}"]`); if (t) t.classList.add("mod"); } }
 });
-document.addEventListener("mousedown", (e) => { if (e.target.closest && e.target.closest("#qfab")) qSelAtOpen = mainSelection(); }, true);
+let nSelAtClick = "";
+document.addEventListener("mousedown", (e) => { if (e.target.closest && e.target.closest("#qfab")) qSelAtOpen = mainSelection(); if (e.target.closest && e.target.closest('[data-act="nQuote"]')) nSelAtClick = mainSelection(); }, true);
 document.addEventListener("keydown", (e) => {
   const el = e.target;
   if (el.classList && el.classList.contains("tree-search") && e.key === "Enter") { e.preventDefault(); const r = Array.from(el.closest(".tree").querySelectorAll(".trow[data-path]")).find((x) => x.style.display !== "none"); const b = r && r.querySelector(".ftab"); if (b) b.click(); return; }
   if (el.closest && el.closest(".tree-edit") && e.key === "Escape") { e.preventDefault(); state.ui.sbNew = false; state.ui.sbRename = null; render(); return; }
   if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyQ") { e.preventDefault(); qSelAtOpen = mainSelection(); qSetOpen(!qUi().open); return; }
   if (e.key === "Escape" && qUi().open && (!el.closest || el.closest("#qpanel") || el === document.body)) { e.preventDefault(); qSetOpen(false); return; }
+  if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyN") { e.preventDefault(); nSetOpen(!nUi().open); return; }
+  if (e.key === "Escape" && nUi().open && el.closest && el.closest("#npanel")) { e.preventDefault(); nSetOpen(false); const b = document.querySelector(".n-btn"); if (b) b.focus(); return; }
+  if (el.id === "n-text" && (e.ctrlKey || e.metaKey) && !e.altKey) {
+    const k = { b: "b", e: "code", k: "link" }[e.key.toLowerCase()];
+    if (k) { e.preventDefault(); nInsert(k); return; }
+    if (e.key === "Enter") { e.preventDefault(); nUi().mode = "preview"; setNote(el.dataset.id, el.value); renderN(); return; }
+  }
+  if (el.id === "n-text" && e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+    const v = el.value, a = el.selectionStart; if (a !== el.selectionEnd) return;
+    const ls = v.lastIndexOf("\n", a - 1) + 1; const line = v.slice(ls, a);
+    const mm = line.match(/^(\s*)(- \[[ xX]\] |[-*] |(\d+)\. )(.*)$/); if (!mm) return;
+    e.preventDefault();
+    if (!mm[4].trim()) { el.setRangeText("", ls, a, "end"); noteInput(el); return; }
+    const next = mm[3] ? `${Number(mm[3]) + 1}. ` : /\[/.test(mm[2]) ? "- [ ] " : mm[2];
+    el.setRangeText("\n" + mm[1] + next, a, a, "end"); noteInput(el); return;
+  }
   if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && el.closest && el.closest("#qpanel form[data-form=q]")) { e.preventDefault(); qSave(el.value, false); return; }
   if (el.classList && el.classList.contains("editor")) {
     if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); el.setRangeText("    ", el.selectionStart, el.selectionEnd, "end"); el.dispatchEvent(new Event("input", { bubbles: true })); }
