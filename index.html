@@ -395,10 +395,16 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .lvl-tab.ok b::after { content: "✓"; color: var(--good); font-weight: 700; }
 .consignes { margin: 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 5px; }
 .editor { width: 100%; min-height: 460px; background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--code-line); border-radius: var(--r); padding: 14px 16px; font: 13.5px/1.65 var(--font-mono); tab-size: 4; resize: vertical; white-space: pre; overflow: auto; display: block; }
-.ed-wrap { position: relative; background: var(--code-bg); }
-.ed-wrap .ed-hl { position: absolute; inset: 0; margin: 0; padding: 14px 16px; border: 0; overflow: hidden; pointer-events: none; font: 13.5px/1.65 var(--font-mono); tab-size: 4; white-space: pre; color: var(--code-ink); background: transparent; }
+.ed-wrap { position: relative; background: var(--code-bg); --gut: 50px; }
+.ed-wrap .ed-ln { position: absolute; left: 1px; top: 1px; bottom: 1px; width: calc(var(--gut) - 10px); margin: 0; padding: 13px 10px 13px 0; border: 0; border-right: 1px solid var(--code-line); overflow: hidden; pointer-events: none; user-select: none; text-align: right; font: 13.5px/1.65 var(--font-mono); color: color-mix(in srgb, var(--code-ink) 34%, transparent); background: var(--code-bg); z-index: 1; border-radius: var(--r) 0 0 var(--r); }
+.files .ed-wrap .ed-ln { left: 0; top: 0; bottom: 0; padding: 14px 10px 14px 0; border-radius: 0; }
+.ed-ln span { display: block; }
+.ed-ln span.on { color: var(--code-ink); font-weight: 600; }
+pre.code.ln { position: relative; padding-left: calc(16px + var(--gut, 42px)); }
+pre.code.ln .ln-g { position: absolute; left: 0; top: 0; padding: 14px 10px 14px 0; width: calc(var(--gut, 42px) - 4px); text-align: right; color: color-mix(in srgb, var(--code-ink) 34%, transparent); border-right: 1px solid var(--code-line); user-select: none; pointer-events: none; min-height: 100%; box-sizing: border-box; }
+.ed-wrap .ed-hl { position: absolute; inset: 0; margin: 0; padding: 14px 16px 14px calc(var(--gut) + 12px); border: 0; overflow: hidden; pointer-events: none; font: 13.5px/1.65 var(--font-mono); tab-size: 4; white-space: pre; color: var(--code-ink); background: transparent; }
 .ed-wrap .ed-hl code { font: inherit; background: none; padding: 0; color: inherit; }
-.ed-wrap textarea.editor.hl { position: relative; background: transparent; color: transparent; caret-color: var(--code-ink); -webkit-text-fill-color: transparent; }
+.ed-wrap textarea.editor.hl { position: relative; padding-left: calc(var(--gut) + 12px); background: transparent; color: transparent; caret-color: var(--code-ink); -webkit-text-fill-color: transparent; }
 .ed-wrap textarea.editor.hl::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); -webkit-text-fill-color: transparent; }
 .editor:focus { outline: 2px solid var(--tc); outline-offset: -2px; }
 .hint { background: var(--warn-soft); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; }
@@ -688,7 +694,7 @@ function filesBlock(files, key, editable, modified, opts) {
   if (files.length === 1 && !files[0].path && !editable) return codeBlock(files[0].code, files[0].lang);
   const manage = !!(opts && opts.manage);
   const cur = Math.min(state.ui.ftab[key] || 0, files.length - 1);
-  const panes = files.map((f, i) => `<div class="fpane ${i === cur ? "on" : ""}" data-i="${i}">${editable ? `<div class="ed-wrap"><pre class="ed-hl" aria-hidden="true"><code></code></pre><textarea class="editor hl" data-ed="${esc(key)}" data-path="${esc(f.path)}" data-lang="${esc(edLang(f))}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="${esc(f.path)}">${esc(f.code)}</textarea></div>` : codeBlock(f.code, f.lang)}</div>`).join("");
+  const panes = files.map((f, i) => `<div class="fpane ${i === cur ? "on" : ""}" data-i="${i}">${editable ? `<div class="ed-wrap"><pre class="ed-ln" aria-hidden="true"></pre><pre class="ed-hl" aria-hidden="true"><code></code></pre><textarea class="editor hl" data-ed="${esc(key)}" data-path="${esc(f.path)}" data-lang="${esc(edLang(f))}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="${esc(f.path)}">${esc(f.code)}</textarea></div>` : codeBlock(f.code, f.lang)}</div>`).join("");
   const explorer = manage || files.length >= 3;
   if (!explorer) {
     const tabs = files.map((f, i) => { const [dir, name] = splitPath(f.path || `fichier${i + 1}`); return `<button class="ftab ${i === cur ? "on" : ""} ${modified && modified[i] ? "mod" : ""}" data-act="ftab" data-key="${esc(key)}" data-i="${i}" type="button"><span class="dir">${esc(dir)}</span>${esc(name)}</button>`; }).join("");
@@ -723,8 +729,26 @@ function paintEditor(ta) {
   const src = ta.value + (ta.value.endsWith("\n") ? " " : "\n ");
   if (window.hljs && lang && hljs.getLanguage(lang)) { try { code.innerHTML = hljs.highlight(src, { language: lang, ignoreIllegals: true }).value; } catch (e) { code.textContent = src; } }
   else code.textContent = src;
+  paintGutter(ta);
   fitEditor(ta); syncEditor(ta);
 }
+function paintGutter(ta) {
+  const g = ta.parentElement.querySelector(".ed-ln"); if (!g) return;
+  const n = ta.value.split("\n").length;
+  ta.parentElement.style.setProperty("--gut", (n >= 1000 ? 58 : n >= 100 ? 50 : 42) + "px");
+  if (g.childElementCount !== n + 1) { let h = ""; for (let i = 1; i <= n; i++) h += `<span>${i}</span>`; g.innerHTML = h + "<span>&nbsp;</span>"; g._on = -1; }
+  markLine(ta);
+}
+function markLine(ta) {
+  const g = ta.parentElement && ta.parentElement.querySelector(".ed-ln"); if (!g) return;
+  const i = document.activeElement === ta ? ta.value.slice(0, ta.selectionStart).split("\n").length - 1 : -1;
+  if (g._on === i) return;
+  if (g._on >= 0 && g.children[g._on]) g.children[g._on].classList.remove("on");
+  if (i >= 0 && g.children[i]) g.children[i].classList.add("on");
+  g._on = i;
+}
+document.addEventListener("selectionchange", () => { const a = document.activeElement; if (a && a.classList && a.classList.contains("hl")) markLine(a); });
+document.addEventListener("focusout", (e) => { if (e.target.classList && e.target.classList.contains("hl")) setTimeout(() => markLine(e.target)); });
 function fitEditor(ta) {
   const max = Math.max(460, Math.round(window.innerHeight * 0.78));
   const lines = ta.value.split("\n").length;
@@ -734,7 +758,7 @@ function fitEditor(ta) {
   if (ta.dataset.userH) return;
   ta.style.height = h + "px";
 }
-function syncEditor(ta) { const pre = ta.previousElementSibling; if (pre) { pre.scrollTop = ta.scrollTop; pre.scrollLeft = ta.scrollLeft; } }
+function syncEditor(ta) { const pre = ta.previousElementSibling; if (pre) { pre.scrollTop = ta.scrollTop; pre.scrollLeft = ta.scrollLeft; } const g = ta.parentElement && ta.parentElement.querySelector(".ed-ln"); if (g) g.scrollTop = ta.scrollTop; }
 function paintEditors(root) { (root || document).querySelectorAll(".ed-wrap textarea.editor").forEach(paintEditor); }
 document.addEventListener("scroll", (e) => { if (e.target.classList && e.target.classList.contains("hl")) syncEditor(e.target); }, true);
 document.addEventListener("mouseup", (e) => { const ta = e.target; if (ta.classList && ta.classList.contains("hl") && ta.style.height && ta.offsetHeight !== parseInt(ta.style.height, 10)) ta.dataset.userH = "1"; });
@@ -746,6 +770,13 @@ function highlight(root) {
     const lang = el.dataset.lang;
     if (!lang || !hljs.getLanguage(lang) || el.dataset.done) return;
     try { el.innerHTML = hljs.highlight(el.textContent, { language: lang, ignoreIllegals: true }).value; el.dataset.done = "1"; } catch (e) {}
+  });
+  root.querySelectorAll(".files pre.code:not(.ln)").forEach((pre) => {
+    const code = pre.querySelector("code"); if (!code) return;
+    const n = code.textContent.replace(/\n$/, "").split("\n").length; if (n < 2) return;
+    let h = ""; for (let i = 1; i <= n; i++) h += i + "\n";
+    const g = document.createElement("span"); g.className = "ln-g"; g.setAttribute("aria-hidden", "true"); g.textContent = h;
+    pre.style.setProperty("--gut", (n >= 100 ? 46 : 38) + "px"); pre.classList.add("ln"); pre.prepend(g);
   });
 }
 function today() { const d = new Date(); return ymd(d); }
