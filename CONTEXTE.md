@@ -13,6 +13,10 @@
 - `python3 validate.py [parcours|module]` exécute chaque solution de TD contre ses tests ; `STARTER=1 python3 validate.py …` vérifie que chaque code de départ échoue. Dernier passage complet : 240/240 (16/11, après les notes).
 - Types d'exécution : php (php-wasm), react, js, next, git (git-sim), term (term-sim, bash + PowerShell), vérification TypeScript (vendor/ts).
 - Catégories de parcours : `GROUPS` dans build.py (methode, back, front, outils, + « perso »).
+- **Formulaires** : claude.ai affiche l'artefact dans un cadre sandbox SANS `allow-forms` → l'événement `submit` n'est jamais
+  envoyé. Tous les `form[data-form]` passent par `handleForm(f, submitter)`, appelé par un écouteur de clic (bouton d'envoi) et de
+  touche Entrée (`runForm`, qui vérifie aussi les champs `required`). Ne jamais compter sur `submit` ni `requestSubmit()`.
+  Test : servir une page avec `<iframe sandbox="allow-scripts allow-same-origin" src="index.html">`.
 - Commits : terminer par les lignes d'attribution Co-Authored-By / Claude-Session données par le système.
 
 ## État actuel (16/11/2026)

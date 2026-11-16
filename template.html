@@ -3404,10 +3404,35 @@ function showError(err) {
   toast("Oups, une erreur : " + (err && err.message || err) + " (recharge la page si ça persiste)");
 }
 window.addEventListener("unhandledrejection", (e) => showError(e.reason));
+/* claude.ai affiche la page dans un cadre « sandbox » sans allow-forms : le navigateur n'y envoie jamais l'événement submit.
+   On traite donc nous-mêmes le clic sur le bouton d'envoi et la touche Entrée (handleForm), le submit restant pour les autres cas. */
+function formOf(el) { const f = el && el.closest && el.closest("form[data-form]"); return f || null; }
+function runForm(f, submitter) {
+  const bad = [...f.querySelectorAll("input[required], select[required], textarea[required]")].find((x) => !x.value.trim());
+  if (bad) { bad.focus(); toast("Remplis d'abord ce champ."); return; }
+  try { handleForm(f, submitter); } catch (err) { showError(err); }
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest("button, input[type=submit]");
+  if (!b || b.dataset.act || (b.type && b.type !== "submit")) return;
+  const f = b.form && b.form.matches("form[data-form]") ? b.form : null; if (!f) return;
+  e.preventDefault(); e.stopPropagation(); runForm(f, b);
+}, true);
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+  const el = e.target; if (!el || el.tagName !== "INPUT" || ["checkbox", "radio", "button", "submit", "file"].includes(el.type)) return;
+  if (el.classList.contains("tree-search")) return;
+  const f = formOf(el); if (!f) return;
+  e.preventDefault(); runForm(f, null);
+}, true);
 document.addEventListener("submit", (e) => {
   const f = e.target.closest("form[data-form]");
   if (!f) return;
   e.preventDefault();
+  handleForm(f, e.submitter);
+});
+function handleForm(f, submitter) {
+  const e = { submitter };
   if (f.dataset.form === "sbFile") { sbFileForm(f, e.submitter); return; }
   if (f.dataset.form === "dbg") { dbgAnalyse(f); return; }
   if (f.dataset.form === "q") { qSave(f.texte.value, e.submitter && e.submitter.value === "ask"); return; }
@@ -3430,7 +3455,7 @@ document.addEventListener("submit", (e) => {
     if (!k.startsWith("sk-")) { $("#key-msg").textContent = "Une clé Anthropic commence par sk-ant-."; return; }
     setKey(k); applyStandaloneAI(); render(); toast("Clé enregistrée. Les boutons Claude sont actifs.");
   }
-});
+}
 document.addEventListener("change", (e) => {
   if (e.target.dataset && e.target.dataset.ec && (e.target.type === "date" || e.target.tagName === "SELECT")) { if (ecApply(e.target)) { ecSaveKind(e.target.dataset.kind); render(); } return; }
   if (e.target.id === "g-track") { readGenForm(); render(); }
@@ -3497,7 +3522,7 @@ document.addEventListener("focusout", (e) => {
   setTimeout(() => {
     if (!f.isConnected || f.contains(document.activeElement)) return;
     const v = f.path.value.trim(); const orig = f.path.defaultValue.trim();
-    if (v && v !== orig) f.requestSubmit(); else { state.ui.sbNew = false; state.ui.sbRename = null; render(); }
+    if (v && v !== orig) handleForm(f, null); else { state.ui.sbNew = false; state.ui.sbRename = null; render(); }
   }, 120);
 });
 window.addEventListener("hashchange", () => { document.body.classList.remove("menu-open"); if (fabOpen()) fabSetOpen(false); render(); });
