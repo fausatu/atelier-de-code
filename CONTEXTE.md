@@ -20,7 +20,7 @@
 - Commits : terminer par les lignes d'attribution Co-Authored-By / Claude-Session données par le système.
 
 ## État actuel (16/11/2026)
-16 parcours, 89 modules. Récemment : Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
+16 parcours, 89 modules. Récemment : mémo des méthodes (#methodes, méthodes cliquables dans le code), Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
 tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barre latérale allégée (outils en icônes, « Mes parcours »).
 
 ## Calendrier (fait le 16/11)
@@ -122,8 +122,21 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
      `Horloge` injectée, `GET /api/continuer`)
   6. `fil-front` Le front React (types du contrat, catalogue `useQuery(['films', { q, genre }])`, fiche 403/404,
      classe `Sauvegarde` toutes les 10 s + pause, `Lecteur` « Reprendre à 6:00 »). API simulée : `BOBINE_API`.
-- **Suite (modules 7 à 9)** : 7. formulaires (créer/modifier un profil avec React Hook Form + zod, afficher les 422/409 de l'API),
+- **Suite, à faire maintenant (modules 7 à 9)** : 7. formulaires (créer/modifier un profil avec React Hook Form + zod, afficher les 422/409 de l'API),
   8. Git (une branche par tranche, Conventional Commits, PR), 9. terminal (lancer back + front, .env, ports occupés).
+
+## Mémo des méthodes (fait le 16/11)
+- Demande d'Ana : « plein de méthodes, je sais pas à quoi ça sert ni ce que ça prend en paramètre ».
+- `methodes.py` : 145 fiches `E(id, cat, nom, cles, sig, desc, params, retour, ex, res, piege)`, familles `CATS`
+  (php, doctrine, symfony, js, react, donnees, formulaires, next). Injecté dans `DATA.methodes` par `build.py`.
+  Clés de repérage : PHP `fn:count`, `->persist`, `::from`, `new:DateTimeImmutable`, `#Route`, `Assert:NotBlank` ;
+  JS `fn:useState`, `.map`, `Math.round`, `api.get`, `z.object`, `new:Set`. Concepts sans clé (`cles=[]`) : seulement dans la page.
+- `linkMethods(root)` (appelé à la fin de `highlight`) souligne en pointillés (`.mref`) les noms connus dans les blocs de code
+  en lecture seule (pas dans les éditeurs `.ed-wrap`) → clic / Entrée = bulle `#mpop` (signature, paramètres, retour, exemple +
+  résultat, piège, « Vu dans N modules » calculé par `memoSeen`), Échap / clic dehors pour fermer.
+- Page `#methodes` (icône livre dans la barre d'outils) : recherche `#m-filter`, puces de famille, fiches en `<details>`.
+  « Demander à Claude » (bloc ai-only) pour une méthode absente → « Garder dans Mes ajouts » (`state.progress.memoPerso`).
+- Pour ajouter une méthode : une entrée `E(...)` dans `methodes.py` (vérifier qu'aucune clé n'est en double).
 
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).

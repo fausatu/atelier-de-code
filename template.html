@@ -585,6 +585,33 @@ body.q-open .qfab { display: none; }
 .q-ans .who { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .q-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 /* Mes cours */
+.mref { text-decoration: underline dotted color-mix(in srgb, var(--accent) 55%, transparent); text-underline-offset: 3px; text-decoration-thickness: 1.5px; cursor: help; border-radius: 3px; }
+.mref:hover, .mref:focus-visible { background: color-mix(in srgb, var(--accent) 14%, transparent); outline: none; }
+.mpop { position: fixed; z-index: 70; max-height: 70vh; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 16px 40px rgb(31 38 51 / 0.18); padding: 16px 18px; }
+.mpop[hidden] { display: none; }
+.mpop-x { position: absolute; top: 8px; right: 12px; font-size: 1.2rem; text-decoration: none; }
+.memo-card { display: flex; flex-direction: column; gap: 10px; font-size: 0.92rem; }
+.memo-card pre.code { margin: 0; font-size: 0.82rem; }
+.memo-h { display: flex; align-items: center; gap: 8px; padding-right: 24px; }
+.memo-h b { font: 600 1.05rem var(--font-mono); }
+.memo-sec { display: flex; flex-direction: column; gap: 4px; }
+.memo-params { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; }
+.memo-params dt { margin: 0; } .memo-params dd { margin: 0; color: var(--ink); }
+.memo-res pre { margin: 2px 0 0; padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb, var(--good) 9%, var(--surface)); font: 0.82rem/1.5 var(--font-mono); white-space: pre-wrap; }
+.memo-piege { padding: 8px 12px; border-radius: 10px; background: var(--warn-soft); font-size: 0.88rem; }
+.memo-piege b { color: var(--warn); margin-right: 4px; }
+.memo-seen { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.84rem; }
+.memo-seen a { color: var(--ink); text-decoration: none; } .memo-seen a:hover { text-decoration: underline; }
+.memo-search { font-size: 1rem; padding: 12px 14px; }
+.memo-cats .btn.on { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.memo-list { display: flex; flex-direction: column; gap: 8px; }
+.memo-item { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.memo-item > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 12px; padding: 12px 16px; }
+.memo-item > summary::-webkit-details-marker { display: none; }
+.memo-item > summary code { flex: none; font-weight: 600; background: none; padding: 0; color: var(--accent); }
+.memo-item > summary span { color: var(--muted); font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.memo-item[open] > summary span { white-space: normal; }
+.memo-item > .memo-card { border-top: 1px solid var(--line); padding: 14px 16px 16px; }
 .deck { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; min-height: 130px; transition: transform .14s, box-shadow .14s, border-color .14s; }
 .deck:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgb(31 38 51 / 0.07); border-color: color-mix(in srgb, var(--tc, var(--accent)) 40%, var(--line)); }
 .deck b { font: 600 1rem/1.3 var(--font-display); }
@@ -1114,6 +1141,7 @@ function highlight(root) {
     if (!lang || !hljs.getLanguage(lang) || el.dataset.done) return;
     try { el.innerHTML = hljs.highlight(el.textContent, { language: lang, ignoreIllegals: true }).value; el.dataset.done = "1"; } catch (e) {}
   });
+  try { linkMethods(root); } catch (e) { console.error(e); }
   root.querySelectorAll(".files pre.code:not(.ln)").forEach((pre) => {
     const code = pre.querySelector("code"); if (!code) return;
     const n = code.textContent.replace(/\n$/, "").split("\n").length; if (n < 2) return;
@@ -1356,6 +1384,7 @@ function renderSide() {
     <div class="tool-row" role="navigation" aria-label="Outils">
       <a class="tool-ic ${r === "calendrier" ? "on" : ""}" href="#calendrier" aria-label="Calendrier" data-tip="Calendrier (aujourd'hui : ${KIND_LABEL[dayKind(today())].toLowerCase()})"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span class="cal-dot k-${dayKind(today())}"></span></a>
       <a class="tool-ic ${r.startsWith("cartes") || r.startsWith("paquet-") ? "on" : ""}" href="#cartes" aria-label="Cartes mémo" data-tip="Cartes mémo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="13" height="14" rx="2"/><path d="M7 3h11a3 3 0 0 1 3 3v11"/></svg></a>
+      <a class="tool-ic ${r === "methodes" ? "on" : ""}" href="#methodes" aria-label="Mémo des méthodes" data-tip="Mémo des méthodes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M10 8.5c-.8 0-1.2.5-1.3 1.3l-.4 3.4c-.1.8-.6 1.3-1.3 1.3M8.3 10.5h2.4"/></svg></a>
       <a class="tool-ic ${r === "notes" ? "on" : ""}" href="#notes" aria-label="Mes notes" data-tip="Mes notes (${noteCount()})">${NOTE_ICON}</a>
       <a class="tool-ic ${r === "essayer" ? "on" : ""}" href="#essayer" aria-label="Bac à sable" data-tip="Bac à sable"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7 3 12l5 5M16 7l5 5-5 5"/></svg></a>
       <a class="tool-ic ${r === "debogueur" ? "on" : ""}" href="#debogueur" aria-label="Mon débogueur" data-tip="Mon débogueur"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="8" width="10" height="12" rx="5"/><path d="M12 8v12M9 5l1.5 2.5M15 5l-1.5 2.5M7 13H3M21 13h-4M7.5 9.5 4.5 7M16.5 9.5l3-2.5M7.5 17l-3 2.5M16.5 17l3 2.5"/></svg></a>
@@ -3895,7 +3924,7 @@ function viewPaquet(key) {
     <div class="row small"><a href="#cartes">Cartes mémo</a><span class="muted">›</span>${m ? `<a href="#mat-${esc(m.id)}">${esc(m.nom)}</a>` : `<span class="muted">${esc(deckName(key))}</span>`}</div>
     <div class="mat-hero">${m ? matIcon(m) : ""}<div class="stack" style="gap:8px;flex:1;min-width:0"><span class="mat-type">Paquet de cartes</span><h1>${esc(deckName(key))}</h1>
       <div class="row"><span class="muted">${cs.length} carte${cs.length > 1 ? "s" : ""}${due ? ` · ${due} à revoir` : ""}</span><span class="spacer"></span>${due ? `<button class="btn primary" data-act="cardsStart" data-deck="${esc(key)}">Réviser (${due})</button>` : ""}${cs.length ? `<button class="btn" data-act="cardsPractice" data-deck="${esc(key)}">S'entraîner</button>` : ""}</div></div></div>
-    <div class="card home-card stack ai-only">
+    <div class="card home-card stack ai-block ai-only">
       <h3 style="margin:0">Générer des cartes avec Claude</h3>
       ${g && g.busy ? `<p class="muted"><span class="spin"></span> Claude lit ${esc(g.label)} et prépare des cartes…</p>` : g && g.items.length ? `<p class="small">Claude propose ${g.items.length} cartes à partir de ${esc(g.label)}. Décoche celles que tu ne veux pas.</p>
         <div class="gen-list">${g.items.map((x, i) => `<label class="gen-item"><input type="checkbox" data-act="cgKeep" data-i="${i}" ${x.keep ? "checked" : ""}><span><b>${esc(x.recto)}</b><span class="prose small">${md(x.verso)}</span>${(x.variantes || []).length ? `<small class="muted">+ ${x.variantes.length} questions variées</small>` : ""}</span></label>`).join("")}</div>
@@ -3948,6 +3977,148 @@ function coursCardsCard(c) {
   return `<div class="card stack"><div class="row"><h3 style="margin:0">Cartes mémo</h3><span class="muted small">${tot ? `${tot} dans le paquet ${esc(m.nom)}${n ? `, dont ${n} de ce cours` : ""}` : "aucune carte dans cette matière"}</span></div>
     <div class="row"><button class="btn sm primary ai-only" data-act="genFromCours" data-cours="${esc(c.id)}">Générer des cartes depuis ce cours</button><a class="btn sm" href="${deckHash(key)}">${tot ? "Voir le paquet" : "Créer des cartes à la main"}</a></div></div>`;
 }
+/* ---------- Mémo des méthodes : méthodes cliquables dans le code + page #methodes ---------- */
+const MEMO = DATA.methodes || { cats: [], items: [] };
+const MEMO_BY_ID = Object.fromEntries(MEMO.items.map((m) => [m.id, m]));
+const MEMO_FAM = Object.fromEntries(MEMO.cats.map((c) => [c.id, c.lang]));
+const MEMO_KEYS = { php: new Map(), js: new Map() };
+for (const m of MEMO.items) for (const k of m.cles || []) MEMO_KEYS[MEMO_FAM[m.cat] || "js"].set(k, m.id);
+function memoFamily(lang) { return lang === "php" ? "php" : /^(typescript|javascript|tsx|jsx|ts|js)$/.test(lang || "") ? "js" : null; }
+function memoMatches(text, fam) {
+  const K = MEMO_KEYS[fam]; const out = [];
+  const add = (start, name, key) => { const id = K.get(key); if (id) out.push([start, start + name.length, id]); };
+  let m;
+  if (fam === "php") {
+    const reA = /#\[\s*([\w\\]+)/g; while ((m = reA.exec(text))) { const full = m[1]; const last = full.split("\\").pop(); add(m.index + m[0].length - last.length, last, "#" + last); }
+    const reS = /Assert\\(\w+)/g; while ((m = reS.exec(text))) add(m.index + 7, m[1], "Assert:" + m[1]);
+    const reN = /\bnew\s+(\\?[A-Z]\w*)/g; while ((m = reN.exec(text))) { const n = m[1].replace(/^\\/, ""); add(m.index + m[0].length - n.length, n, "new:" + n); }
+    const reM = /(->|::)(\w+)\s*\(/g; while ((m = reM.exec(text))) add(m.index + m[1].length, m[2], m[1] + m[2]);
+    const reV = /->(value)\b/g; while ((m = reV.exec(text))) add(m.index + 2, "value", "->value");
+    const reF = /(?<![\w$>:\\])([a-z_]\w*)\s*\(/g; while ((m = reF.exec(text))) { if (/function\s+$/.test(text.slice(Math.max(0, m.index - 12), m.index))) continue; add(m.index, m[1], "fn:" + m[1]); }
+  } else {
+    const reN = /\bnew\s+([A-Z]\w*)/g; while ((m = reN.exec(text))) add(m.index + m[0].length - m[1].length, m[1], "new:" + m[1]);
+    const reM = /(?:([\w$]+)\s*)?\.([\w$]+)\s*\(/g;
+    while ((m = reM.exec(text))) { const name = m[2], start = m.index + m[0].indexOf("." + name) + 1; if (m[1] && K.has(m[1] + "." + name)) add(start, name, m[1] + "." + name); else add(start, name, "." + name); }
+    const reF = /(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(/g; while ((m = reF.exec(text))) { if (/function\s+$/.test(text.slice(Math.max(0, m.index - 12), m.index))) continue; add(m.index, m[1], "fn:" + m[1]); }
+  }
+  out.sort((a, b) => a[0] - b[0]);
+  const res = []; let end = -1; for (const r of out) { if (r[0] >= end) { res.push(r); end = r[1]; } }
+  return res;
+}
+function linkMethods(root) {
+  root.querySelectorAll("pre.code code").forEach((code) => {
+    if (code.dataset.ml || code.closest(".ed-wrap")) return;
+    code.dataset.ml = "1";
+    const fam = memoFamily(code.dataset.lang); if (!fam) return;
+    const nodes = []; let off = 0;
+    const w = document.createTreeWalker(code, NodeFilter.SHOW_TEXT); let n;
+    while ((n = w.nextNode())) { nodes.push([n, off]); off += n.nodeValue.length; }
+    const text = nodes.map(([x]) => x.nodeValue).join("");
+    const ranges = memoMatches(text, fam);
+    for (let i = ranges.length - 1; i >= 0; i--) {
+      const [s, e, id] = ranges[i];
+      let k = nodes.length - 1; while (k > 0 && nodes[k][1] > s) k--;
+      const [node, ns] = nodes[k];
+      if (e - ns > node.nodeValue.length) continue;
+      const after = node.splitText(e - ns); void after; const mid = node.splitText(s - ns);
+      const span = document.createElement("span"); span.className = "mref"; span.dataset.m = id; span.tabIndex = 0; span.setAttribute("role", "button");
+      mid.parentNode.insertBefore(span, mid); span.appendChild(mid);
+    }
+  });
+}
+let MEMO_SEEN = null;
+function memoKeyRegex(k) {
+  const e = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (k.startsWith("fn:")) return new RegExp("(?<![\\w$>:.\\\\])" + e(k.slice(3)) + "\\s*\\(");
+  if (k.startsWith("->") || k.startsWith("::")) return new RegExp(e(k) + "\\s*\\(");
+  if (k.startsWith("new:")) return new RegExp("\\bnew\\s+\\\\?" + e(k.slice(4)) + "\\b");
+  if (k.startsWith("#")) return new RegExp("#\\[[^\\]]*\\b" + e(k.slice(1)) + "\\b");
+  if (k.startsWith("Assert:")) return new RegExp("Assert\\\\" + e(k.slice(7)) + "\\b");
+  if (k.startsWith(".")) return new RegExp(e(k) + "\\s*\\(");
+  return new RegExp("\\b" + e(k) + "\\s*\\(");
+}
+function memoSeen(id) {
+  if (!MEMO_SEEN) {
+    MEMO_SEEN = {};
+    const codes = DATA.modules.map((m) => {
+      const parts = { php: "", js: "" };
+      const push = (code, lang) => { const f = memoFamily(LANGS[lang] === undefined ? lang : LANGS[lang]) || (lang === "php" ? "php" : null); if (f) parts[f] += "\n" + code; };
+      for (const l of m.lessons || []) for (const x of String(l.body).matchAll(/```(\w+)[^\n]*\n([\s\S]*?)```/g)) push(x[2], x[1]);
+      for (const f of (m.example && m.example.files) || []) push(f.code, f.lang || f.path.split(".").pop());
+      for (const t of m.tds || []) for (const f of [...(t.files || []), ...(t.solution || [])]) push(f.code, f.lang || f.path.split(".").pop());
+      return { m, parts };
+    });
+    for (const e of MEMO.items) {
+      const fam = MEMO_FAM[e.cat] || "js"; const res = (e.cles || []).map(memoKeyRegex);
+      MEMO_SEEN[e.id] = res.length ? codes.filter(({ parts }) => res.some((r) => r.test(parts[fam]))).map(({ m }) => m.id) : [];
+    }
+  }
+  return MEMO_SEEN[id] || [];
+}
+function memoCard(e, compact) {
+  const cat = MEMO.cats.find((c) => c.id === e.cat) || {}; const lang = MEMO_FAM[e.cat] === "php" ? "php" : "ts";
+  const seen = memoSeen(e.id);
+  return `<div class="memo-card">
+    <div class="memo-h"><b>${esc(e.nom)}</b><span class="chip">${esc(cat.nom || "")}</span></div>
+    ${codeBlock(e.sig, lang)}
+    <p>${inl(e.desc)}</p>
+    ${e.params.length ? `<div class="memo-sec"><span class="eyebrow">Paramètres</span><dl class="memo-params">${e.params.map((p) => `<dt><code>${esc(p.n)}</code></dt><dd>${inl(p.d)}</dd>`).join("")}</dl></div>` : ""}
+    ${e.retour ? `<div class="memo-sec"><span class="eyebrow">Renvoie</span><p>${inl(e.retour)}</p></div>` : ""}
+    <div class="memo-sec"><span class="eyebrow">Exemple</span>${codeBlock(e.ex, lang)}${e.res ? `<div class="memo-res"><span class="muted small">Résultat</span><pre>${esc(e.res)}</pre></div>` : ""}</div>
+    ${e.piege ? `<div class="memo-piege"><b>Piège</b> ${inl(e.piege)}</div>` : ""}
+    ${seen.length ? `<div class="memo-sec"><span class="eyebrow">Vu dans ${seen.length} module${seen.length > 1 ? "s" : ""}</span><div class="memo-seen">${seen.slice(0, compact ? 5 : 40).map((id) => { const m = mod(id); return m ? `<a href="#m-${esc(id)}" style="${tc(track(m.track))}"><i class="dot"></i>${esc(m.title)}</a>` : ""; }).join("")}${compact && seen.length > 5 ? `<a href="#methodes" data-act="memoOpen" data-id="${esc(e.id)}">+ ${seen.length - 5} autres</a>` : ""}</div></div>` : ""}
+    ${compact ? `<div class="row"><a class="btn sm ghost" href="#methodes" data-act="memoOpen" data-id="${esc(e.id)}">Ouvrir dans le mémo</a></div>` : ""}
+  </div>`;
+}
+function openMemoPop(el) {
+  const e = MEMO_BY_ID[el.dataset.m]; if (!e) return;
+  let p = $("#mpop"); if (!p) { p = document.createElement("div"); p.id = "mpop"; p.className = "mpop"; p.setAttribute("role", "dialog"); p.setAttribute("aria-label", "Mémo"); document.body.appendChild(p); }
+  p.innerHTML = `<button class="q-x mpop-x" data-act="memoClose" aria-label="Fermer">×</button>${memoCard(e, true)}`;
+  p.hidden = false; highlight(p);
+  const r = el.getBoundingClientRect(); const W = Math.min(460, window.innerWidth - 16);
+  p.style.width = W + "px";
+  const left = Math.max(8, Math.min(r.left, window.innerWidth - W - 8));
+  const below = window.innerHeight - r.bottom; const h = Math.min(p.scrollHeight, window.innerHeight * 0.7);
+  p.style.left = left + "px";
+  p.style.top = (below > h + 16 || below > r.top ? r.bottom + 6 : Math.max(8, r.top - h - 6)) + "px";
+  p._from = el;
+}
+function closeMemoPop() { const p = $("#mpop"); if (p && !p.hidden) { p.hidden = true; if (p._from && document.contains(p._from)) p._from.focus(); } }
+function memoPerso() { const p = state.progress; if (!Array.isArray(p.memoPerso)) p.memoPerso = []; return p.memoPerso; }
+function viewMemo() {
+  const q = norm(state.ui.mFilter || ""); const cat = state.ui.mCat || "";
+  const items = MEMO.items.filter((e) => (!cat || e.cat === cat) && (!q || norm(e.nom + " " + e.desc + " " + (e.cles || []).join(" ") + " " + e.sig).includes(q)));
+  const focus = state.ui.mFocus;
+  const perso = memoPerso().filter((x) => !q || norm(x.nom + " " + x.texte).includes(q));
+  const ask = state.ui.mAsk || {};
+  return `<div class="wrap home">
+    <header class="home-head"><div class="eyebrow">Référence</div><h1>Mémo des méthodes</h1><p class="lead">Les fonctions et méthodes qu'on croise dans les cours : à quoi elles servent, ce qu'elles prennent, ce qu'elles renvoient. Dans le code des cours, clique sur un nom souligné en pointillés pour ouvrir sa fiche.</p></header>
+    <div class="stack" style="gap:12px">
+      <input id="m-filter" class="field memo-search" placeholder="Chercher une méthode : array_map, useQuery, persist, filter…" value="${esc(state.ui.mFilter || "")}" autocomplete="off">
+      <div class="row memo-cats"><button class="btn sm ${!cat ? "on" : ""}" data-act="memoCat" data-c="">Tout (${MEMO.items.length})</button>${MEMO.cats.map((c) => `<button class="btn sm ${cat === c.id ? "on" : ""}" data-act="memoCat" data-c="${c.id}">${esc(c.nom)}</button>`).join("")}</div>
+    </div>
+    ${MEMO.cats.filter((c) => !cat || c.id === cat).map((c) => { const list = items.filter((e) => e.cat === c.id); if (!list.length) return "";
+      return `<section class="home-sec"><div class="sec-head"><h2>${esc(c.nom)}</h2><span class="muted small">${list.length}</span></div><div class="memo-list">${list.map((e) => `<details class="memo-item" id="memo-${esc(e.id)}" ${focus === e.id || (q && list.length <= 2) ? "open" : ""}><summary><code>${esc(e.nom)}</code><span>${inl(e.desc.split(/(?<=\.)\s/)[0])}</span></summary>${memoCard(e, false)}</details>`).join("")}</div></section>`; }).join("")
+      || `<p class="muted">Aucune méthode du mémo ne correspond à « ${esc(state.ui.mFilter)} ».</p>`}
+    <section class="home-sec"><div class="sec-head"><h2>Mes ajouts</h2><span class="muted small">expliqués par Claude, gardés pour toi</span></div>
+      ${perso.length ? `<div class="memo-list">${perso.map((x) => `<details class="memo-item"><summary><code>${esc(x.nom)}</code><span class="muted">ajouté le ${esc(frDate(x.date))}</span></summary><div class="memo-card"><div class="prose">${md(x.texte)}</div><div class="row"><button class="btn sm ghost danger" data-act="memoDel" data-id="${esc(x.id)}">Retirer</button></div></div></details>`).join("")}</div>` : ""}
+      <div class="card home-card stack ai-block ai-only">
+        <b>Une méthode qui n'est pas dans le mémo ?</b>
+        <form class="row" data-form="memoAsk"><input class="field" name="nom" placeholder="Son nom, ex. array_column, Array.from, useReducer" required style="flex:1;min-width:220px" value="${esc(ask.nom || "")}"><input class="field" name="ctx" placeholder="Où tu l'as vue (facultatif)" style="flex:1;min-width:180px"><button class="btn primary">Demander à Claude</button></form>
+        ${ask.busy ? `<p class="muted"><span class="spin"></span> Claude écrit la fiche…</p>` : ask.texte ? `<div class="memo-card"><div class="prose">${md(ask.texte)}</div><div class="row"><button class="btn sm primary" data-act="memoKeep">Garder dans Mes ajouts</button><button class="btn sm ghost" data-act="memoDrop">Effacer</button></div></div>` : ask.err ? `<p class="err small">${esc(ask.err)}</p>` : ""}
+      </div>
+      ${!perso.length ? `<p class="muted small no-ai">Active Claude pour lui demander d'expliquer une méthode qui manque ici.</p>` : ""}
+    </section>
+  </div>`;
+}
+async function memoAsk(nom, ctx) {
+  const u = state.ui.mAsk = { nom, busy: true }; render();
+  try {
+    const r = await sample(`Tu écris une fiche de mémo pour une étudiante en développement web (niveau intermédiaire, PHP/Symfony, JavaScript/React/TypeScript). Explique la fonction ou méthode « ${nom} »${ctx ? ` (vue dans : ${ctx})` : ""}, en français simple, en markdown, avec exactement ces parties :\n**Ce que ça fait** (1 à 2 phrases)\n**Signature** (bloc de code)\n**Paramètres** (liste : nom, à quoi il sert)\n**Renvoie**\n**Exemple** (bloc de code court avec le résultat en commentaire)\n**Piège** (une phrase, s'il y en a un)\nPas d'introduction. 200 mots maximum hors code.`, { cache: false });
+    u.texte = String(r.text || "").trim(); u.busy = false;
+  } catch (e) { u.busy = false; u.err = "Claude n'a pas pu répondre. Réessaie."; }
+  if (currentRoute() === "methodes") render();
+}
 function render() {
   const r = currentRoute();
   let html;
@@ -3963,6 +4134,7 @@ function render() {
   else if (r === "notes") html = viewNotes();
   else if (r === "cours") html = viewEcole();
   else if (r === "cartes") html = viewCartes();
+  else if (r === "methodes") html = viewMemo();
   else if (r === "cartes-revision") html = viewCardReview();
   else if (r.startsWith("paquet-")) html = viewPaquet(r.slice(7).replace("-", ":"));
   else if (r.startsWith("mat-")) html = viewMatiere(r.slice(4));
@@ -4013,6 +4185,12 @@ function keepDrafts() {
   draftWriter.schedule();
 }
 const ACTIONS = {
+  memoOpen(el) { closeMemoPop(); state.ui.mFocus = el.dataset.id; state.ui.mFilter = ""; state.ui.mCat = ""; if (currentRoute() !== "methodes") location.hash = "#methodes"; else render(); setTimeout(() => { const d = document.getElementById("memo-" + el.dataset.id); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); } }, 60); },
+  memoClose() { closeMemoPop(); },
+  memoCat(el) { state.ui.mCat = el.dataset.c; render(); },
+  memoKeep() { const a = state.ui.mAsk; if (!a || !a.texte) return; memoPerso().unshift({ id: rid(), nom: a.nom, texte: a.texte.slice(0, 6000), date: today() }); state.ui.mAsk = null; saveProgress(); render(); toast("Ajouté à ton mémo."); },
+  memoDrop() { state.ui.mAsk = null; render(); },
+  memoDel(el) { state.progress.memoPerso = memoPerso().filter((x) => x.id !== el.dataset.id); saveProgress(); render(); },
   cardsStart(el) { startCards(el.dataset.deck || "", false); },
   cardsPractice(el) { startCards(el.dataset.deck || "", true); },
   cardsQuit() { const r = state.ui.cardRev; state.ui.cardRev = null; if (r && r.refill && r.refill.length) refillVariants(r.refill.splice(0)); location.hash = r && r.key ? deckHash(r.key) : "#cartes"; },
@@ -4241,6 +4419,9 @@ const ACTIONS = {
 };
 
 document.addEventListener("click", (e) => {
+  const mr = e.target.closest && e.target.closest(".mref");
+  if (mr) { e.preventDefault(); openMemoPop(mr); return; }
+  if (!e.target.closest("#mpop")) closeMemoPop();
   if (fabOpen() && !e.target.closest("#fab-menu, #qfab")) fabSetOpen(false);
   const a = e.target.closest("[data-act]");
   if (e.target.closest(".side a")) document.body.classList.remove("menu-open");
@@ -4288,6 +4469,7 @@ function handleForm(f, submitter) {
   if (f.dataset.form === "q") { qSave(f.texte.value, e.submitter && e.submitter.value === "ask"); return; }
   if (f.dataset.form === "qNote") { const q = questions().find((x) => x.id === f.dataset.id); const v = f.note.value.trim(); if (q && v) { q.reponse = v; q.source = "moi"; q.statut = "repondue"; (qUi().keep = qUi().keep || []).push(q.id); saveProgress(); } qUi().note = null; qRefreshViews(); return; }
   if (f.dataset.form === "dbgFollow") { dbgFollowUp(f); return; }
+  if (f.dataset.form === "memoAsk") { const nom = f.nom.value.trim(); if (!nom || !sample) return; memoAsk(nom.slice(0, 80), f.ctx.value.trim().slice(0, 200)); return; }
   if (f.dataset.form === "cardAdd") { const c = newCard(f.dataset.deck, { recto: f.recto.value, verso: f.verso.value, exemple: f.exemple.value }, "main"); if (!c.recto || !c.verso) return; cartes().items.push(c); saveCartes(); render(); toast("Carte ajoutée."); const i = document.querySelector("form[data-form=cardAdd] input[name=recto]"); if (i) i.focus(); return; }
   if (f.dataset.form === "cardEdit") { const c = carte(f.dataset.id); if (!c) return; c.recto = f.recto.value.trim().slice(0, 400) || c.recto; c.verso = f.verso.value.trim().slice(0, 2000) || c.verso; c.exemple = f.exemple.value.trim().slice(0, 1500); c.ts = Date.now(); state.ui.cardEdit = null; saveCartes(); render(); return; }
   if (f.dataset.form === "genText") { const t = f.src.value.trim(); if (t.length < 40) { toast("Colle un texte un peu plus long."); return; } const key = currentRoute().slice(7).replace("-", ":"); genCards(key, t.slice(0, 16000), "ton texte"); return; }
@@ -4336,6 +4518,7 @@ document.addEventListener("input", (e) => {
   if (e.target.name === "texte" && e.target.closest("#qpanel")) { qUi().texte = e.target.value; return; }
   if (e.target.id === "n-text") { noteInput(e.target); return; }
   if (e.target.dataset && e.target.dataset.ec) { ecInput(e.target); return; }
+  if (e.target.id === "m-filter") { state.ui.mFilter = e.target.value; state.ui.mFocus = null; const pos = e.target.selectionStart; render(); const i = $("#m-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.id === "n-filter") { state.ui.nFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#n-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.id === "q-filter") { state.ui.qFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#q-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.id === "dbg-filter") { state.ui.dbgFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#dbg-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
@@ -4350,6 +4533,8 @@ document.addEventListener("keydown", (e) => {
   if (el.closest && el.closest(".tree-edit") && e.key === "Escape") { e.preventDefault(); state.ui.sbNew = false; state.ui.sbRename = null; render(); return; }
   if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyQ") { e.preventDefault(); qSelAtOpen = mainSelection(); qSetOpen(!qUi().open); return; }
   if (e.key === "Escape" && qUi().open && (!el.closest || el.closest("#qpanel") || el === document.body)) { e.preventDefault(); qSetOpen(false); return; }
+  if (e.key === "Escape" && $("#mpop") && !$("#mpop").hidden) { e.preventDefault(); closeMemoPop(); return; }
+  if ((e.key === "Enter" || e.key === " ") && el.classList && el.classList.contains("mref")) { e.preventDefault(); openMemoPop(el); return; }
   if (e.key === "Escape" && document.body.classList.contains("viewer-open")) { e.preventDefault(); closeViewer(); return; }
   if (fabOpen() && e.key === "Escape") { e.preventDefault(); fabSetOpen(false); $("#qfab").focus(); return; }
   if (fabOpen() && (e.key === "ArrowDown" || e.key === "ArrowUp") && el.closest && el.closest("#fab-menu")) { e.preventDefault(); const it = [...$("#fab-menu").querySelectorAll(".fab-item")]; const k = it.indexOf(el); it[(k + (e.key === "ArrowDown" ? 1 : it.length - 1)) % it.length].focus(); return; }
@@ -4389,7 +4574,7 @@ document.addEventListener("dragover", (e) => { const z = e.target.closest && e.t
 document.addEventListener("dragleave", (e) => { const z = e.target.closest && e.target.closest("[data-drop]"); if (z && !z.contains(e.relatedTarget)) z.classList.remove("drag"); });
 document.addEventListener("drop", (e) => { const z = e.target.closest && e.target.closest("[data-drop]"); if (!z) return; e.preventDefault(); z.classList.remove("drag"); uploadFiles(z.dataset.drop, z.dataset.id, e.dataTransfer.files).catch(showError); });
 document.addEventListener("mousedown", (e) => { if (e.target.id === "viewer") closeViewer(); });
-window.addEventListener("hashchange", () => { closeViewer(); document.body.classList.remove("menu-open"); if (fabOpen()) fabSetOpen(false); render(); });
+window.addEventListener("hashchange", () => { closeViewer(); closeMemoPop(); document.body.classList.remove("menu-open"); if (fabOpen()) fabSetOpen(false); render(); });
 
 /* ---------- Claude ---------- */
 function levelContext() { return "L'élève a un niveau intermédiaire en programmation. Il a besoin de comprendre COMMENT une chose fonctionne pour pouvoir la faire. Réponds en français, de façon simple, concise et concrète."; }
