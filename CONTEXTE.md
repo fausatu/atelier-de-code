@@ -92,6 +92,21 @@ Idée pour plus tard : les cartes mémo (point 3) pourront être générées dep
   `.home-sec`, `.home-grid2`, `.home-card` 24 px de marge) ; « À venir » = agenda par jour (cours + rendus, `homeAgenda`) et
   « Cette semaine » (`homeWeek` : 5 jours, légende, prochaines semaines d'école, prochaine école / examens).
 
+## Cartes mémo + révisions variées (fait le 16/11)
+Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révision.**
+- **Modules** : `modulePool(m)` = quiz + 2 QCM par mot de `prereq` (définition ↔ terme, mauvaises réponses prises dans les autres mots
+  du parcours) + questions générées par Claude (`progress.modules[id].genQ`, 15 max). `pickModuleQuestions` prend les 3 vues il y a le
+  plus longtemps (`seenQ`). Après chaque module révisé, `genModuleQuestions` demande 3 nouvelles questions à Claude pour la fois suivante.
+- **Cartes** : `state.cartes = { items, deleted }` (localStorage + doc db `.../cartes` + export/GitHub, fusion par id/ts).
+  Carte = notion `{id, deck, recto, verso, exemple, variantes[], box, due, seen[], source}` ; paquets `mat:<id>`, `perso`, `track:<id>`.
+  Forme choisie à chaque passage (`cardFormats` / `pickFormat`, la moins récemment vue) : def, terme, qcm, qcmt (QCM inversé), trou,
+  vf, et `var:<id>` = questions de Claude. Quand une carte a épuisé ses questions de Claude, `refillVariants` en redemande 2 (par lots de 4).
+  Même rythme `INTERVALS` ; « S'entraîner » ne touche pas au planning.
+- Pages : `#cartes` (paquets), `#paquet-mat-<id>` (cartes, ajout à la main, génération depuis un cours ou un texte collé),
+  `#cartes-revision`. Génération depuis un cours (`coursSourceText`) : notes + programme de séance + texte des fichiers (PPTX/DOCX
+  extraits, PDF via pdf.js `getTextContent`). Carte « Cartes mémo » sur chaque cours ; compteur Révisions = modules + cartes.
+- Attention : un ACTIONS `genSave` existait déjà (génération de modules) → les actions des cartes s'appellent `cg*` / `c*`.
+
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
 2. **Espace « Mes cours » (école)** — étape 1 faite (voir ci-dessus). Étape 2 faite aussi (fichiers, Ma semaine, emploi du temps ; réimporter l'emploi du temps après le 02/01/2027). Idée suivante possible : TD / cartes générés par Claude depuis les fichiers et notes d'un cours. — PAS seulement du code : management de projet, anglais, UX/UI, etc.
@@ -111,7 +126,8 @@ Idée pour plus tard : les cartes mémo (point 3) pourront être générées dep
      check-list ; échéances visibles sur le tableau de bord.
    - Stockage en ligne via les capacités d'artefact `assets` (fichiers) et `db` (données) pour retrouver tout sur chaque appareil
      et pour que Claude puisse lire les cours (TD ou cartes à partir d'un chapitre).
-3. **Cartes mémo** génériques (pas que code : vocabulaire d'anglais, définitions de management…) : cartes par parcours,
+3. ~~Cartes mémo~~ : fait (voir ci-dessus). Idée : cartes depuis un module de l'atelier (paquet `track:`), import de vocabulaire.
+   Ancienne description : **Cartes mémo** génériques (pas que code : vocabulaire d'anglais, définitions de management…) : cartes par parcours,
    cartes générées depuis une fiche de cours ou un PDF (capacité `sample`), cartes créées à la main ; intégrées aux révisions
    (même rythme espacé).
 4. **Projet fil rouge** : parcours qui relie découpage → PHP/API → React/formulaire → Git → terminal. À discuter avec Ana :

@@ -585,6 +585,30 @@ body.q-open .qfab { display: none; }
 .q-ans .who { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .q-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 /* Mes cours */
+.deck { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; min-height: 130px; transition: transform .14s, box-shadow .14s, border-color .14s; }
+.deck:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgb(31 38 51 / 0.07); border-color: color-mix(in srgb, var(--tc, var(--accent)) 40%, var(--line)); }
+.deck b { font: 600 1rem/1.3 var(--font-display); }
+.deck .mat-foot .due { color: var(--warn); font-weight: 600; }
+.rev-hero { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.big-n { font: 700 2.4rem/1 var(--font-display); }
+.gen-list { display: flex; flex-direction: column; gap: 8px; }
+.gen-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); cursor: pointer; }
+.gen-item input { margin-top: 4px; accent-color: var(--tc, var(--accent)); }
+.gen-item > span { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.gen-item:has(input:not(:checked)) { opacity: .5; }
+.card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.flash { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.flash.edit { gap: 10px; }
+.flash-r { font: 600 1rem/1.35 var(--font-display); }
+.flash-v { color: var(--ink); }
+.flash-f { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
+.flash-q { gap: 16px; padding: 28px 30px; }
+.flash-show { font: 600 1.25rem/1.4 var(--font-display); }
+.flash-show .prose, .flash-show p { font: inherit; }
+.flash-show pre.code { font-size: 0.85rem; font-weight: 400; }
+.flash-claim { padding: 14px 16px; border-radius: 12px; background: var(--surface-2); }
+.flash-ans { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 12px; background: color-mix(in srgb, var(--good) 8%, var(--surface)); }
+.grade { gap: 8px; }
 .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--tc, var(--muted)); margin-right: 6px; vertical-align: 1px; }
 .cal-ev::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--evc, var(--accent)); margin-right: 4px; vertical-align: 1px; }
 .cal-evlist li .cal-tag { min-width: 58px; }
@@ -869,6 +893,7 @@ const state = {
   drafts: {},
   custom: { tracks: [], modules: [] },
   ecole: { matieres: [], cours: [], deleted: [], setup: false },
+  cartes: { items: [], deleted: [] },
   ui: { step: {}, level: {}, hints: {}, showSol: {}, ftab: {}, review: null, gen: null, confirmDel: null, newTrackColor: "rose", runs: {} },
 };
 let sample = null, uid = null, refs = null;
@@ -882,11 +907,12 @@ function loadLocal() {
     if (d.drafts) state.drafts = d.drafts;
     if (d.custom) state.custom = { tracks: d.custom.tracks || [], modules: d.custom.modules || [] };
     if (d.ecole && typeof d.ecole === "object") state.ecole = d.ecole;
+    if (d.cartes && typeof d.cartes === "object") state.cartes = d.cartes;
     return true;
   } catch (e) { return false; }
 }
 function saveLocal() {
-  try { localStorage.setItem(LS_KEY, JSON.stringify({ progress: state.progress, drafts: state.drafts, custom: state.custom, ecole: state.ecole })); } catch (e) {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ progress: state.progress, drafts: state.drafts, custom: state.custom, ecole: state.ecole, cartes: state.cartes })); } catch (e) {}
   if (typeof gistPush === "function") gistPush(false);
 }
 
@@ -1245,7 +1271,7 @@ async function initCaps() {
   try { uid = await user.id(); } catch (e) { uid = null; }
   if (!uid) { setSync("local"); return; }
   const base = "data/users/" + uid;
-  refs = { prog: db.doc(base + "/progress"), drafts: db.doc(base + "/drafts"), lib: db.doc(base + "/library"), ecole: db.doc(base + "/ecole") };
+  refs = { prog: db.doc(base + "/progress"), drafts: db.doc(base + "/drafts"), lib: db.doc(base + "/library"), ecole: db.doc(base + "/ecole"), cartes: db.doc(base + "/cartes") };
   const hadLocal = Object.keys(state.progress.modules).length > 0;
   let timer = setTimeout(() => setSync("local"), 10000);
   const done = () => { if (timer) { clearTimeout(timer); timer = null; } };
@@ -1260,6 +1286,12 @@ async function initCaps() {
     if (!snap.exists || draftWriter.pending()) return;
     const d = snap.data();
     if (d && d.codes) { state.drafts = JSON.parse(JSON.stringify(d.codes)); saveLocal(); }
+  }, () => {});
+  refs.cartes.onSnapshot((snap) => {
+    if (!snap.exists) { if (cartes().items.length && snap.metadata && !snap.metadata.fromCache) saveCartes(); return; }
+    if (cartesWriter.pending()) return;
+    const d = snap.data();
+    if (d) { state.cartes = JSON.parse(JSON.stringify(d)); saveLocal(); if (currentRoute() !== "cartes-revision") refresh(); }
   }, () => {});
   refs.ecole.onSnapshot((snap) => {
     if (!snap.exists) { if (ecole().setup && snap.metadata && !snap.metadata.fromCache) saveEcole(); return; }
@@ -1316,13 +1348,14 @@ function renderSide() {
     <div class="brand-row"><a class="brand" href="#accueil"><b>Atelier de code</b></a><button class="side-x" data-act="sideToggle" aria-label="Replier la barre latérale" title="Replier la barre latérale (Alt+S)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15.5 9.5 13 12l2.5 2.5"/></svg></button></div>
     <nav class="nav-main">
       <a class="nav-link ${r === "accueil" ? "on" : ""}" href="#accueil">Tableau de bord</a>
-      <a class="nav-link ${r === "revision" ? "on" : ""}" href="#revision">Révisions <span class="count ${due ? "" : "zero"}">${due}</span></a>
+      <a class="nav-link ${r === "revision" || r.startsWith("cartes") || r.startsWith("paquet-") ? "on" : ""}" href="#revision">Révisions <span class="count ${due + dueCards().length ? "" : "zero"}">${due + dueCards().length}</span></a>
       <a class="nav-link ${r === "parcours" ? "on" : ""}" href="#parcours">Parcours</a>
       <a class="nav-link ${r === "cours" || /^(mat|c|r)-/.test(r) ? "on" : ""}" href="#cours">Mes cours <span class="count ${soonRendus(14).length ? "" : "zero"}" title="Rendus dans les 14 prochains jours">${soonRendus(14).length}</span></a>
       <a class="nav-link ${r === "questions" ? "on" : ""}" href="#questions">Mes questions <span class="count ${qOpenCount() ? "" : "zero"}">${qOpenCount()}</span></a>
     </nav>
     <div class="tool-row" role="navigation" aria-label="Outils">
       <a class="tool-ic ${r === "calendrier" ? "on" : ""}" href="#calendrier" aria-label="Calendrier" data-tip="Calendrier (aujourd'hui : ${KIND_LABEL[dayKind(today())].toLowerCase()})"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span class="cal-dot k-${dayKind(today())}"></span></a>
+      <a class="tool-ic ${r.startsWith("cartes") || r.startsWith("paquet-") ? "on" : ""}" href="#cartes" aria-label="Cartes mémo" data-tip="Cartes mémo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="13" height="14" rx="2"/><path d="M7 3h11a3 3 0 0 1 3 3v11"/></svg></a>
       <a class="tool-ic ${r === "notes" ? "on" : ""}" href="#notes" aria-label="Mes notes" data-tip="Mes notes (${noteCount()})">${NOTE_ICON}</a>
       <a class="tool-ic ${r === "essayer" ? "on" : ""}" href="#essayer" aria-label="Bac à sable" data-tip="Bac à sable"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7 3 12l5 5M16 7l5 5-5 5"/></svg></a>
       <a class="tool-ic ${r === "debogueur" ? "on" : ""}" href="#debogueur" aria-label="Mon débogueur" data-tip="Mon débogueur"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="8" width="10" height="12" rx="5"/><path d="M12 8v12M9 5l1.5 2.5M15 5l-1.5 2.5M7 13H3M21 13h-4M7.5 9.5 4.5 7M16.5 9.5l3-2.5M7.5 17l-3 2.5M16.5 17l3 2.5"/></svg></a>
@@ -1421,7 +1454,7 @@ function viewHome() {
     : `<div class="row"><h3>Pour démarrer</h3><span class="spacer"></span><a class="small" href="#parcours">Explorer tous les parcours →</a></div><p class="muted small" style="margin:0">Tu n'as pas encore commencé de parcours. Trois bons points de départ :</p><div class="tcards">${starters.map((t) => card(t, true)).join("")}</div>`;
   const doneLine = finished.length ? `<div class="done-line"><span class="muted small">Terminés (${finished.length})</span>${finished.map((t) => `<a class="chip" style="${tc(t)}" href="#t-${esc(t.id)}">${esc(t.short || t.name)} ✓</a>`).join("")}</div>` : "";
   const cs = calSummary(); const soon = (state.ecole && state.ecole.setup) ? rendus().filter((r) => renduOpen(r) && r.date && r.date >= cs.t && r.date <= dPlus(cs.t, 7)).length : 0;
-  const todayLine = `Aujourd'hui tu es <b>${cs.kind === "ecole" ? "à l'école" : cs.kind === "entreprise" ? "en entreprise" : cs.kind === "examens" ? "en examens" : cs.kind === "ferie" ? "en jour férié" : "en week-end"}</b>${soon ? ` · <b>${soon} rendu${soon > 1 ? "s" : ""}</b> cette semaine` : ""}${due.length ? ` · <b>${due.length} révision${due.length > 1 ? "s" : ""}</b> à faire` : ""}.`;
+  const todayLine = `Aujourd'hui tu es <b>${cs.kind === "ecole" ? "à l'école" : cs.kind === "entreprise" ? "en entreprise" : cs.kind === "examens" ? "en examens" : cs.kind === "ferie" ? "en jour férié" : "en week-end"}</b>${soon ? ` · <b>${soon} rendu${soon > 1 ? "s" : ""}</b> cette semaine` : ""}${due.length + dueCards().length ? ` · <b>${due.length + dueCards().length} révision${due.length + dueCards().length > 1 ? "s" : ""}</b> à faire` : ""}.`;
   return `<div class="wrap home">
     <header class="home-head"><div class="eyebrow">${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div><h1>Mon atelier</h1><p class="lead">${todayLine}</p></header>
     <section class="home-sec">
@@ -1445,7 +1478,7 @@ function viewHome() {
           ${ring(pct, 116, 11, "var(--accent)", `${Math.round(pct * 100)}%`, "acquis")}
           <div class="prog-list">
             <div><b>${doneCount}</b><span>modules acquis sur ${all.length}</span></div>
-            <a href="#revision" class="${due.length ? "warn" : ""}"><b>${due.length}</b><span>${due.length > 1 ? "révisions" : "révision"} aujourd'hui${due.length ? " →" : ""}</span></a>
+            <a href="#revision" class="${due.length + dueCards().length ? "warn" : ""}"><b>${due.length + dueCards().length}</b><span>${due.length + dueCards().length > 1 ? "révisions" : "révision"} aujourd'hui (modules et cartes)${due.length + dueCards().length ? " →" : ""}</span></a>
             <div><b>${act.streak}</b><span>jour${act.streak > 1 ? "s" : ""} d'affilée · ${act.week} action${act.week > 1 ? "s" : ""} cette semaine</span></div>
           </div>
         </div>
@@ -2611,7 +2644,7 @@ async function qCopy() {
 function startReview(ids, practice) {
   const queue = ids.map((id) => {
     const m = mod(id);
-    return { id, qs: shuffle(m.quiz.map((q, qi) => qi)).map((qi) => ({ qi, perm: shuffle(m.quiz[qi].options.map((_, i) => i)), a: undefined })), revealed: false, result: null };
+    return { id, qs: pickModuleQuestions(m, 3), revealed: false, result: null };
   });
   state.ui.review = { queue, idx: 0, practice: !!practice, finished: false };
   render();
@@ -2623,7 +2656,8 @@ function viewReview() {
     const doneMods = allModules().filter((m) => prog(m.id)?.done);
     const upcoming = doneMods.filter((m) => status(m.id) === "done").sort((a, b) => (prog(a.id).due < prog(b.id).due ? -1 : 1));
     return `<div class="wrap">
-      <div class="stack" style="gap:6px"><h1>Révisions</h1><p class="lead">Un module acquis revient ici à intervalles croissants : 1, 3, 7, 16 puis 35 jours. Une erreur le fait revenir dès le lendemain.</p></div>
+      <div class="stack" style="gap:6px"><h1>Révisions</h1><p class="lead">Un module acquis revient ici à intervalles croissants : 1, 3, 7, 16 puis 35 jours. Une erreur le fait revenir dès le lendemain. À chaque passage, les questions changent.</p></div>
+      ${(() => { const dc = dueCards().length, tot = cartes().items.length; return `<div class="card stack"><div class="row"><h3 style="margin:0">Cartes mémo</h3><span class="muted small">${dc ? `${dc} à revoir aujourd'hui` : tot ? "rien à revoir aujourd'hui" : "aucune carte pour l'instant"} · ${tot} au total</span><span class="spacer"></span>${dc ? `<button class="btn primary" data-act="cardsStart">Réviser les cartes</button>` : ""}<a class="btn" href="#cartes">${tot ? "Mes paquets" : "Créer des cartes"}</a></div></div>`; })()}
       <div class="card stack">
         ${due.length ? `<div class="row"><span class="big" style="color:var(--warn)">${due.length}</span><span>module(s) à réviser aujourd'hui</span><span class="spacer"></span><button class="btn primary" data-act="startReview">Commencer</button></div>
           <div class="due-list">${due.map((m) => `<a href="#m-${esc(m.id)}" style="${tc(track(m.track))}"><span class="st due"></span>${esc(m.title)} <span class="muted small">· ${esc(track(m.track).short)}</span></a>`).join("")}</div>`
@@ -2643,14 +2677,14 @@ function viewReview() {
   const dots = r.queue.map((x, i) => `<i class="${i < r.idx ? (x.result ? "ok" : "ko") : i === r.idx ? "on" : ""}"></i>`).join("");
   const allAnswered = it.qs.every((q) => q.a !== undefined);
   const qs = it.revealed ? it.qs.map((q, k) => {
-    const Q = m.quiz[q.qi];
+    const Q = q;
     const opts = q.perm.map((oi) => {
       let cls = "";
       if (q.a !== undefined && oi === Q.answer) cls = "right"; else if (q.a === oi) cls = "wrong";
       return `<button class="opt ${cls}" ${q.a !== undefined ? "disabled" : ""} data-act="rAnswer" data-k="${k}" data-o="${oi}">${inl(Q.options[oi])}</button>`;
     }).join("");
     const fb = q.a !== undefined ? `<div class="feedback ${q.a === Q.answer ? "right" : "wrong"}"><b>${q.a === Q.answer ? "Juste." : "Pas tout à fait."}</b>${inl(Q.why)}</div>` : "";
-    return `<div class="q"><div class="q-title"><span class="k">Q${k + 1}</span><span>${inl(Q.q)}</span></div><div class="opts">${opts}</div>${fb}</div>`;
+    return `<div class="q"><div class="q-title"><span class="k">Q${k + 1}</span><span class="qmd">${Q.gen ? `<span class="pill lvl" title="Question écrite par Claude pour cette révision">nouvelle</span> ` : ""}${/\n|```/.test(Q.q) ? md(Q.q) : inl(Q.q)}</span></div><div class="opts">${opts}</div>${fb}</div>`;
   }).join("") : "";
   return `<div class="wrap" style="${tc(t)}">
     <div class="row"><h1 style="font-size:1.4rem">${r.practice ? "Entraînement" : "Révision"}</h1><span class="spacer"></span><div class="progress-dots">${dots}</div><button class="btn sm ghost" data-act="closeReview">Quitter</button></div>
@@ -2694,7 +2728,7 @@ function viewAdd() {
       <div class="eyebrow">Aperçu</div><h3>${esc(m.title)}</h3><p class="small">${inl(m.goal)}</p>
       <ol class="recall-flow">${m.flow.map((f) => `<li>${inl(f)}</li>`).join("")}</ol>
       <p class="muted small">${(m.lessons || []).length} leçon(s) · ${m.points.length} points clés · ${m.quiz.length} questions · ${tds(m).length} TD</p>
-      <div class="row"><button class="btn primary" data-act="genSave">Ajouter au parcours</button><button class="btn" data-act="genRun">Régénérer</button></div>
+      <div class="row"><button class="btn primary" data-act="cgSave">Ajouter au parcours</button><button class="btn" data-act="genRun">Régénérer</button></div>
     </div>`;
   })() : "";
   return `<div class="wrap">
@@ -2753,7 +2787,7 @@ function viewClaude() {
 
 
 /* ---------- synchronisation : export / import + gist GitHub ---------- */
-function snapshotData() { return { v: 1, at: new Date().toISOString(), progress: state.progress, drafts: state.drafts, custom: state.custom, ecole: ecole() }; }
+function snapshotData() { return { v: 1, at: new Date().toISOString(), progress: state.progress, drafts: state.drafts, custom: state.custom, ecole: ecole(), cartes: cartes() }; }
 function encodeExport(d) { const bytes = new TextEncoder().encode(JSON.stringify(d)); let bin = ""; bytes.forEach((b) => (bin += String.fromCharCode(b))); return "ATELIER1:" + btoa(bin); }
 function decodeExport(txt) {
   txt = String(txt || "").trim();
@@ -2794,12 +2828,17 @@ function mergeData(inc) {
     for (const key of ["matieres", "cours"]) { const mine = e[key]; for (const x of inc.ecole[key] || []) { if (del.has(x.id)) continue; const i = mine.findIndex((y) => y.id === x.id); if (i < 0) mine.push(x); else if ((x.ts || 0) > (mine[i].ts || 0)) mine[i] = x; } e[key] = mine.filter((y) => !del.has(y.id)); }
     if (inc.ecole.setup) e.setup = true;
   }
+  if (inc.cartes && typeof inc.cartes === "object") {
+    const k = cartes(); const del = new Set([...k.deleted, ...(inc.cartes.deleted || [])]); k.deleted = [...del];
+    for (const x of inc.cartes.items || []) { if (del.has(x.id)) continue; const i = k.items.findIndex((y) => y.id === x.id); if (i < 0) k.items.push(x); else if ((x.ts || 0) > (k.items[i].ts || 0)) k.items[i] = x; }
+    k.items = k.items.filter((y) => !del.has(y.id));
+  }
   for (const [k, v] of Object.entries(inc.drafts || {})) if (state.drafts[k] === undefined) state.drafts[k] = v;
   const c = inc.custom || {};
   for (const t of c.tracks || []) if (!state.custom.tracks.some((x) => x.id === t.id)) state.custom.tracks.push(t);
   for (const m of c.modules || []) if (!state.custom.modules.some((x) => x.id === m.id)) state.custom.modules.push(m);
 }
-function persistAll() { saveLocal(); saveProgress(); draftWriter.schedule(); libWriter.schedule(); saveEcole(); }
+function persistAll() { saveLocal(); saveProgress(); draftWriter.schedule(); libWriter.schedule(); saveEcole(); saveCartes(); }
 
 const GIST_LS = "atelier-gist", GIST_DESC = "atelier-de-code-progression", GIST_FILE = "progression.json";
 const gist = { token: "", id: "", status: "off", last: null, timer: null, busy: false, again: false };
@@ -3278,6 +3317,7 @@ function viewCoursItem(id) {
     ${(c.creneaux || []).length || (c.salles || []).length || (c.profs || []).length ? `<div class="c-info">${c.annule ? `<span class="c-pill warn">plus dans l'emploi du temps</span>` : ""}${(c.creneaux || []).length ? `<span><b>Horaires</b> ${esc(creneauxTxt(c))}</span>` : ""}${(c.salles || []).length ? `<span><b>Salle</b> ${esc(c.salles.join(", "))}</span>` : ""}${(c.profs || []).length ? `<span><b>Prof</b> ${esc(c.profs.join(", "))}</span>` : ""}${c.edtKey ? `<span class="muted small">depuis Pronote</span>` : ""}</div>` : ""}
     ${String(c.contenu || "").trim() ? `<details class="card stack" open><summary><b>Programme de la séance</b> <span class="muted small">· donné par l'école</span></summary><div class="prose" style="margin-top:8px">${md(contenuMd(c.contenu))}</div></details>` : ""}
     ${filesCard("cours", id, c)}
+    ${coursCardsCard(c)}
     <div class="card stack"><h3 style="margin:0">Liens et outils</h3>
       ${(c.liens || []).length ? `<div class="tool-list">${linkChips(c.liens, "cours", id)}</div>` : ""}
       ${linkForm("cours", id)}
@@ -3667,6 +3707,247 @@ function viewGhFiles() {
         <p class="small muted">Ce jeton ne donne accès qu'à ce dépôt et reste dans ce navigateur. Les fichiers ajoutés depuis claude.ai restent dans claude.ai (et inversement) : chaque version affiche les siens.</p>`}
     </div>`;
 }
+/* ---------- banque de questions par module (révisions variées) ---------- */
+let PREREQ_ALL = null;
+function prereqAll() {
+  if (PREREQ_ALL) return PREREQ_ALL;
+  const seen = new Set(); PREREQ_ALL = [];
+  for (const m of allModules()) for (const x of (Array.isArray(m.prereq) ? m.prereq : [])) { const k = norm(x.term); if (!seen.has(k) && x.term && x.def) { seen.add(k); PREREQ_ALL.push({ term: x.term, def: x.def, track: m.track }); } }
+  return PREREQ_ALL;
+}
+function pickOthers(list, n, avoid) { return shuffle(list.filter((x) => !avoid(x))).slice(0, n); }
+function modulePool(m) {
+  const pool = (m.quiz || []).map((Q, i) => ({ key: "quiz:" + i, q: Q.q, options: Q.options, answer: Q.answer, why: Q.why }));
+  const all = prereqAll();
+  (Array.isArray(m.prereq) ? m.prereq : []).forEach((x, i) => {
+    const same = all.filter((y) => y.track === m.track), pool2 = same.length >= 6 ? same : all;
+    const o1 = pickOthers(pool2, 3, (y) => norm(y.term) === norm(x.term) || y.def === x.def);
+    if (o1.length === 3) {
+      const opts = shuffle([x.def, ...o1.map((y) => y.def)]);
+      pool.push({ key: "pre:" + i + ":def", q: `Que veut dire **${x.term}** ?`, options: opts, answer: opts.indexOf(x.def), why: `**${x.term}** : ${x.def}` });
+      const opts2 = shuffle([x.term, ...o1.map((y) => y.term)]);
+      pool.push({ key: "pre:" + i + ":term", q: `De quel mot parle-t-on ? « ${x.def} »`, options: opts2, answer: opts2.indexOf(x.term), why: `C'est la définition de **${x.term}**.` });
+    }
+  });
+  const p = prog(m.id) || {};
+  (p.genQ || []).forEach((g) => pool.push({ key: "gen:" + g.id, q: g.q, options: g.options, answer: g.answer, why: g.why, gen: true }));
+  return pool;
+}
+function pickModuleQuestions(m, n) {
+  const p = prog(m.id) || {}; const seen = p.seenQ || [];
+  const rank = (k) => { const i = seen.lastIndexOf(k); return i < 0 ? -1 : i; };
+  const pool = shuffle(modulePool(m)).sort((a, b) => rank(a.key) - rank(b.key) || (b.gen ? 1 : 0) - (a.gen ? 1 : 0));
+  return pool.slice(0, n).map((Q) => ({ ...Q, perm: shuffle(Q.options.map((_, i) => i)), a: undefined }));
+}
+const genQBusy = new Set();
+async function genModuleQuestions(m) {
+  if (!sample || genQBusy.has(m.id)) return; genQBusy.add(m.id);
+  try {
+    const p = ensure(m.id); const existing = modulePool(m).map((q) => "- " + q.q).join("\n").slice(0, 3000);
+    const res = await sample.json(`${levelContext()}\n\n${moduleContext(m)}\n\nQuestions déjà posées à l'élève (n'en refais aucune, même reformulée) :\n${existing}\n\nÉcris 3 NOUVELLES questions de révision à choix multiple sur ce module, de formes variées : une mise en situation concrète, une lecture de petit code ou d'un cas (bloc \`\`\` court autorisé dans la question), une sur un piège fréquent. 4 options chacune, une seule juste, options plausibles et de longueur proche. Réponds en JSON : {"questions":[{"q":"…","options":["…","…","…","…"],"answer":0,"why":"explication en 1 ou 2 phrases"}]}`);
+    const qs = (res && Array.isArray(res.questions) ? res.questions : []).filter((x) => x && x.q && Array.isArray(x.options) && x.options.length >= 3 && Number.isInteger(x.answer) && x.answer >= 0 && x.answer < x.options.length);
+    if (!qs.length) return;
+    p.genQ = (p.genQ || []).concat(qs.map((x) => ({ id: rid(), q: String(x.q).slice(0, 1200), options: x.options.map((o) => String(o).slice(0, 400)), answer: x.answer, why: String(x.why || "").slice(0, 600) }))).slice(-15);
+    saveProgress();
+  } catch (e) {} finally { genQBusy.delete(m.id); }
+}
+/* ---------- Cartes mémo : une carte = une notion, posée sous une forme différente à chaque fois ---------- */
+const FMT_LABEL = { def: "Explique", terme: "Retrouve le terme", qcm: "QCM", qcmt: "QCM", trou: "Texte à trous", vf: "Vrai ou faux", var: "Question de Claude" };
+const STOP = new Set("dans pour avec sans entre comme cette celui celle leurs alors aussi parce quand chaque toutes autres avoir faire depuis encore toujours permet permettent quelque ensemble".split(" "));
+function cartes() { const c = state.cartes || (state.cartes = {}); if (!Array.isArray(c.items)) c.items = []; if (!Array.isArray(c.deleted)) c.deleted = []; return c; }
+function carte(id) { return cartes().items.find((x) => x.id === id); }
+function deckCards(key) { return cartes().items.filter((x) => x.deck === key); }
+function deckName(key) { if (key === "perso") return "Mes cartes"; const [t, id] = key.split(":"); if (t === "mat") { const m = matiere(id); return m ? m.nom : "Matière supprimée"; } if (t === "track") return track(id).name; return key; }
+function deckStyle(key) { const [t, id] = key.split(":"); return t === "mat" ? mtc(matiere(id)) : t === "track" ? tc(track(id)) : ""; }
+function deckHash(key) { return "#paquet-" + key.replace(":", "-"); }
+function cardDue(c) { return !c.due || c.due <= today(); }
+function dueCards(key) { return cartes().items.filter((c) => (!key || c.deck === key) && cardDue(c)); }
+const cartesWriter = makeWriter(() => refs && refs.cartes, () => JSON.parse(JSON.stringify(cartes())), 800);
+function saveCartes() { cartesWriter.schedule(); }
+function newCard(deck, f, source) {
+  const c = { id: "ca" + rid(), deck, recto: String(f.recto || "").trim().slice(0, 400), verso: String(f.verso || "").trim().slice(0, 2000), exemple: String(f.exemple || "").trim().slice(0, 1500), variantes: [], box: 0, due: today(), seen: [], created: Date.now(), ts: Date.now(), source: source || "" };
+  for (const v of f.variantes || []) addVariant(c, v);
+  return c;
+}
+function addVariant(c, v) {
+  if (!v || !v.q) return;
+  if (v.type === "qcm") { if (!Array.isArray(v.options) || v.options.length < 3 || !Number.isInteger(v.answer) || v.answer < 0 || v.answer >= v.options.length) return; c.variantes.push({ id: rid(), type: "qcm", q: String(v.q).slice(0, 1200), options: v.options.map((o) => String(o).slice(0, 400)), answer: v.answer, why: String(v.why || "").slice(0, 600) }); }
+  else c.variantes.push({ id: rid(), type: "ouvert", q: String(v.q).slice(0, 1200), reponse: String(v.reponse || v.answer || "").slice(0, 1200) });
+  if (c.variantes.length > 8) c.variantes = c.variantes.slice(-8);
+}
+function clozeWord(text) {
+  const plain = String(text).replace(/`[^`]*`/g, " ").replace(/\*\*/g, "");
+  const words = [...new Set(plain.match(/[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]{5,}/g) || [])].filter((w) => !STOP.has(norm(w)));
+  if (!words.length) return null;
+  return words.sort((a, b) => b.length - a.length).slice(0, 3)[Math.floor(Math.random() * Math.min(3, words.length))];
+}
+function cardFormats(c) {
+  const others = deckCards(c.deck).filter((x) => x.id !== c.id && x.verso && norm(x.verso) !== norm(c.verso));
+  const short = c.recto.length <= 80;
+  const f = [{ key: "def", kind: "open" }];
+  if (short && c.verso.length >= 12) f.push({ key: "terme", kind: "open" });
+  if (others.length >= 3) { f.push({ key: "qcm", kind: "qcm" }); if (short) f.push({ key: "qcmt", kind: "qcm" }); }
+  if (clozeWord(c.verso)) f.push({ key: "trou", kind: "trou" });
+  if (others.length >= 1) f.push({ key: "vf", kind: "vf" });
+  for (const v of c.variantes || []) f.push({ key: "var:" + v.id, kind: v.type === "qcm" ? "qcm" : "open", v });
+  return f;
+}
+function pickFormat(c) {
+  const seen = c.seen || []; const rank = (k) => { const i = seen.lastIndexOf(k); return i < 0 ? -1 : i; };
+  const fs = shuffle(cardFormats(c)).sort((a, b) => rank(a.key) - rank(b.key) || (b.v ? 1 : 0) - (a.v ? 1 : 0));
+  return buildQuestion(c, fs[0]);
+}
+function buildQuestion(c, f) {
+  const others = shuffle(deckCards(c.deck).filter((x) => x.id !== c.id && x.verso && norm(x.verso) !== norm(c.verso)));
+  if (f.key === "def") return { key: f.key, kind: "open", ask: "Explique avec tes mots :", show: c.recto, answer: c.verso };
+  if (f.key === "terme") return { key: f.key, kind: "open", ask: "De quoi parle-t-on ?", show: c.verso, answer: c.recto };
+  if (f.key === "qcm") { const opts = shuffle([c.verso, ...others.slice(0, 3).map((x) => x.verso)]); return { key: f.key, kind: "qcm", ask: "Quelle est la bonne réponse ?", show: c.recto, options: opts, answer: opts.indexOf(c.verso), why: `**${c.recto}** : ${c.verso}` }; }
+  if (f.key === "qcmt") { const opts = shuffle([c.recto, ...others.filter((x) => norm(x.recto) !== norm(c.recto)).slice(0, 3).map((x) => x.recto)]); return { key: f.key, kind: "qcm", ask: "À quoi correspond cette définition ?", show: c.verso, options: opts, answer: opts.indexOf(c.recto), why: `C'est **${c.recto}**.` }; }
+  if (f.key === "trou") { const w = clozeWord(c.verso); const re = new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")); return { key: f.key, kind: "trou", ask: "Complète le mot manquant :", show: c.recto, text: c.verso.replace(re, "_____"), answer: w, full: c.verso }; }
+  if (f.key === "vf") { const truth = Math.random() < 0.5 || !others.length; const shown = truth ? c.verso : others[0].verso; return { key: f.key, kind: "vf", ask: "Vrai ou faux ?", show: c.recto, claim: shown, answer: truth, why: truth ? "C'est bien ça." : `Faux : **${c.recto}**, c'est ${c.verso}` }; }
+  const v = f.v;
+  if (v.type === "qcm") { const perm = shuffle(v.options.map((_, i) => i)); return { key: f.key, kind: "qcm", ask: "Question de Claude", show: v.q, options: perm.map((i) => v.options[i]), answer: perm.indexOf(v.answer), why: v.why, gen: true }; }
+  return { key: f.key, kind: "open", ask: "Question de Claude", show: v.q, answer: v.reponse || c.verso, gen: true };
+}
+function startCards(key, practice) {
+  const pool = key ? deckCards(key) : cartes().items;
+  let list = practice ? shuffle(pool).slice(0, 20) : shuffle(pool.filter(cardDue)).sort((a, b) => (a.box || 0) - (b.box || 0)).slice(0, 25);
+  if (!list.length) { toast("Aucune carte à réviser ici."); return; }
+  state.ui.cardRev = { key: key || "", practice: !!practice, idx: 0, finished: false, queue: list.map((c) => ({ id: c.id, qn: pickFormat(c), a: undefined, revealed: false, typed: "", result: null })) };
+  location.hash = "#cartes-revision"; render();
+}
+function gradeCard(it, ok, hesit) {
+  const r = state.ui.cardRev; const c = carte(it.id); it.result = ok ? (hesit ? "moyen" : "ok") : "ko";
+  if (c) {
+    c.seen = (c.seen || []).filter((k) => k !== it.qn.key).concat(it.qn.key).slice(-12);
+    if (!r.practice) {
+      if (!ok) { c.box = 1; c.due = addDays(1); c.lapses = (c.lapses || 0) + 1; }
+      else if (hesit) { c.box = Math.max(1, c.box || 1); c.due = addDays(INTERVALS[c.box - 1]); }
+      else { c.box = Math.min((c.box || 0) + 1, INTERVALS.length); c.due = addDays(INTERVALS[c.box - 1]); }
+      c.last = today();
+    }
+    c.ts = Date.now(); saveCartes(); logActivity();
+    if (sample && (c.variantes || []).every((v) => (c.seen || []).includes("var:" + v.id))) { (r.refill = r.refill || []).push(c.id); if (r.refill.length >= 4) refillVariants(r.refill.splice(0)); }
+  }
+}
+const refillBusy = new Set();
+async function refillVariants(ids) {
+  const cs = ids.map(carte).filter((c) => c && !refillBusy.has(c.id)); if (!cs.length || !sample) return;
+  cs.forEach((c) => refillBusy.add(c.id));
+  try {
+    const desc = cs.map((c) => `- id ${c.id} : « ${c.recto} » = ${c.verso}${(c.variantes || []).length ? `\n  déjà posées : ${c.variantes.map((v) => v.q.replace(/\n/g, " ").slice(0, 160)).join(" | ")}` : ""}`).join("\n");
+    const res = await sample.json(`Tu aides une étudiante en MBA développeur full stack à réviser avec des cartes mémo. Pour chaque carte ci-dessous, écris 2 NOUVELLES questions qui vérifient la même notion sous un autre angle (mise en situation concrète, exemple à reconnaître, erreur à repérer, comparaison), différentes de celles déjà posées. Une question « qcm » (4 options, une seule juste, options plausibles) et une « ouvert » (réponse attendue courte). En français, simple et concret.\n\n${desc}\n\nRéponds en JSON : {"cartes":[{"id":"…","variantes":[{"type":"qcm","q":"…","options":["…","…","…","…"],"answer":0,"why":"…"},{"type":"ouvert","q":"…","reponse":"…"}]}]}`);
+    for (const x of (res && res.cartes) || []) { const c = carte(x.id); if (c) { (x.variantes || []).forEach((v) => addVariant(c, v)); c.ts = Date.now(); } }
+    saveCartes();
+  } catch (e) {} finally { cs.forEach((c) => refillBusy.delete(c.id)); }
+}
+async function pdfText(blob, maxPages) {
+  const lib = await loadPdfjs(); const doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise; let out = "";
+  for (let i = 1; i <= Math.min(doc.numPages, maxPages || 30); i++) { const tc = await (await doc.getPage(i)).getTextContent(); out += tc.items.map((x) => x.str).join(" ") + "\n"; }
+  return out;
+}
+async function coursSourceText(c) {
+  const parts = [`Cours : ${c.titre}`]; const m = matiere(c.matiere); if (m) parts.push(`Matière : ${m.nom}${(m.themes || []).length ? " (" + m.themes.join(", ") + ")" : ""}`);
+  if (String(c.contenu || "").trim()) parts.push("Programme de la séance :\n" + c.contenu);
+  if (String(c.notes || "").trim()) parts.push("Notes de l'étudiante :\n" + c.notes);
+  for (const f of c.fichiers || []) {
+    if (!fileReachable(f)) continue;
+    try {
+      if (f.texte) parts.push(`Texte de ${f.nom} :\n` + await (await ghfApi("/contents/" + f.texte.split("/").map(encodeURIComponent).join("/"), {}, true)).text());
+      else if (fileKind(f) === "texte") parts.push(`Texte de ${f.nom} :\n` + await (await fileBlob(f)).text());
+      else if (fileKind(f) === "pdf") parts.push(`Texte du PDF ${f.nom} :\n` + await pdfText(await fileBlob(f), 30));
+    } catch (e) {}
+  }
+  return parts.join("\n\n").slice(0, 16000);
+}
+async function genCards(deck, source, label) {
+  const g = state.ui.cardGen = { deck, label, busy: true, items: [], error: "" }; render();
+  try {
+    const existing = deckCards(deck).map((c) => "- " + c.recto).join("\n").slice(0, 2500);
+    const res = await sample.json(`Tu prépares des cartes mémo pour une étudiante en MBA développeur full stack (alternance). À partir de la source ci-dessous, écris entre 6 et 14 cartes sur les notions importantes à retenir (définitions, principes, étapes, distinctions, vocabulaire). Une carte = une notion : « recto » court (le terme ou la question), « verso » clair en 1 à 3 phrases, « exemple » concret facultatif. Pour chaque carte, ajoute 2 variantes de questions sur la même notion sous un autre angle : une « qcm » (4 options, une seule juste) et une « ouvert » (mise en situation, réponse courte). En français, simple, sans recopier de longs passages.${existing ? `\n\nCartes déjà présentes (ne les refais pas) :\n${existing}` : ""}\n\nSource (${label}) :\n${source}\n\nRéponds en JSON : {"cartes":[{"recto":"…","verso":"…","exemple":"…","variantes":[{"type":"qcm","q":"…","options":["…","…","…","…"],"answer":0,"why":"…"},{"type":"ouvert","q":"…","reponse":"…"}]}]}`);
+    g.items = ((res && res.cartes) || []).filter((x) => x && x.recto && x.verso).map((x) => ({ ...x, keep: true }));
+    if (!g.items.length) g.error = "Claude n'a pas proposé de carte. Ajoute des notes ou un fichier au cours, puis réessaie.";
+  } catch (e) { g.error = e && e.code === "rate_limited" ? "Trop de demandes d'un coup, réessaie dans une minute." : "La génération n'a pas abouti. Réessaie."; }
+  g.busy = false; render();
+}
+function viewCartes() {
+  const all = cartes().items; const due = dueCards().length;
+  const keys = [...new Set(all.map((c) => c.deck))];
+  const matKeys = (ecole().matieres || []).filter((m) => m.annee === ecYear() || ecYear() === "tout").map((m) => "mat:" + m.id);
+  const decks = [...new Set(["perso", ...keys, ...matKeys])];
+  const deckCard = (k) => { const cs = deckCards(k); const d = cs.filter(cardDue).length; const [t, id] = k.split(":"); const m = t === "mat" ? matiere(id) : null;
+    return `<a class="deck" href="${deckHash(k)}" style="${deckStyle(k)}"><span class="mat-top">${t === "mat" ? matIcon(m) : t === "track" ? logo(track(id), 30) : `<span class="mat-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="13" height="15" rx="2"/><path d="M8 3h10a2 2 0 0 1 2 2v13"/></svg></span>`}</span><b>${esc(deckName(k))}</b><span class="mat-foot">${cs.length ? `${cs.length} carte${cs.length > 1 ? "s" : ""}` : "aucune carte"}${d ? ` · <span class="due">${d} à revoir</span>` : ""}</span></a>`; };
+  const withCards = decks.filter((k) => deckCards(k).length), empty = decks.filter((k) => !deckCards(k).length);
+  return `<div class="wrap home">
+    <header class="home-head"><div class="eyebrow">Révisions</div><h1>Cartes mémo</h1><p class="lead">Une carte = une notion. À chaque passage, elle revient sous une autre forme : définition, terme à retrouver, QCM, texte à trous, vrai ou faux, ou une question écrite par Claude.</p></header>
+    <div class="card home-card rev-hero"><div><div class="big-n">${due}</div><span class="muted">carte${due > 1 ? "s" : ""} à revoir aujourd'hui · ${all.length} au total</span></div><span class="spacer"></span>${due ? `<button class="btn primary" data-act="cardsStart">Réviser maintenant</button>` : ""}${all.length ? `<button class="btn" data-act="cardsPractice">S'entraîner (sans toucher au planning)</button>` : ""}</div>
+    ${withCards.length ? `<section class="home-sec"><div class="sec-head"><h2>Mes paquets</h2></div><div class="mat-grid">${withCards.map(deckCard).join("")}</div></section>` : ""}
+    <section class="home-sec"><div class="sec-head"><h2>${withCards.length ? "Créer un paquet" : "Commencer un paquet"}</h2><span class="spacer"></span><span class="muted small">par matière (${ecYear() === "tout" ? "toutes" : ecYear()}) ou perso</span></div>
+      <div class="mat-grid">${empty.map(deckCard).join("") || `<p class="muted">Toutes tes matières ont déjà des cartes.</p>`}</div></section>
+  </div>`;
+}
+function viewPaquet(key) {
+  const cs = deckCards(key).sort((a, b) => (b.created || 0) - (a.created || 0)); const due = cs.filter(cardDue).length;
+  const [t, id] = key.split(":"); const m = t === "mat" ? matiere(id) : null; const g = state.ui.cardGen && state.ui.cardGen.deck === key ? state.ui.cardGen : null;
+  const courses = m ? ecole().cours.filter((c) => c.matiere === m.id && (String(c.notes || "").trim() || String(c.contenu || "").trim() || (c.fichiers || []).length)).sort((a, b) => String(b.date || "").localeCompare(String(a.date || ""))) : [];
+  const edit = state.ui.cardEdit; const confirm = state.ui.confirmDel;
+  return `<div class="wrap" style="${deckStyle(key)}">
+    <div class="row small"><a href="#cartes">Cartes mémo</a><span class="muted">›</span>${m ? `<a href="#mat-${esc(m.id)}">${esc(m.nom)}</a>` : `<span class="muted">${esc(deckName(key))}</span>`}</div>
+    <div class="mat-hero">${m ? matIcon(m) : ""}<div class="stack" style="gap:8px;flex:1;min-width:0"><span class="mat-type">Paquet de cartes</span><h1>${esc(deckName(key))}</h1>
+      <div class="row"><span class="muted">${cs.length} carte${cs.length > 1 ? "s" : ""}${due ? ` · ${due} à revoir` : ""}</span><span class="spacer"></span>${due ? `<button class="btn primary" data-act="cardsStart" data-deck="${esc(key)}">Réviser (${due})</button>` : ""}${cs.length ? `<button class="btn" data-act="cardsPractice" data-deck="${esc(key)}">S'entraîner</button>` : ""}</div></div></div>
+    <div class="card home-card stack ai-only">
+      <h3 style="margin:0">Générer des cartes avec Claude</h3>
+      ${g && g.busy ? `<p class="muted"><span class="spin"></span> Claude lit ${esc(g.label)} et prépare des cartes…</p>` : g && g.items.length ? `<p class="small">Claude propose ${g.items.length} cartes à partir de ${esc(g.label)}. Décoche celles que tu ne veux pas.</p>
+        <div class="gen-list">${g.items.map((x, i) => `<label class="gen-item"><input type="checkbox" data-act="cgKeep" data-i="${i}" ${x.keep ? "checked" : ""}><span><b>${esc(x.recto)}</b><span class="prose small">${md(x.verso)}</span>${(x.variantes || []).length ? `<small class="muted">+ ${x.variantes.length} questions variées</small>` : ""}</span></label>`).join("")}</div>
+        <div class="row"><button class="btn primary" data-act="cgSave">Ajouter ${g.items.filter((x) => x.keep).length} carte${g.items.filter((x) => x.keep).length > 1 ? "s" : ""}</button><button class="btn ghost" data-act="cgDrop">Annuler</button></div>`
+      : `${g && g.error ? `<p class="err small">${esc(g.error)}</p>` : ""}
+        ${courses.length ? `<div class="row"><select class="field" id="gen-cours" style="flex:1;min-width:220px">${courses.map((c) => `<option value="${esc(c.id)}">${c.date ? esc(frDate(c.date)) + " · " : ""}${esc(c.titre)}</option>`).join("")}</select><button class="btn" data-act="genFromCours">Depuis ce cours</button></div>` : m ? `<p class="muted small">Ajoute des notes ou des fichiers à un cours de cette matière pour générer des cartes à partir de lui.</p>` : ""}
+        <form class="stack" data-form="genText" style="gap:8px"><textarea class="field" name="src" rows="4" placeholder="Ou colle ici un texte : extrait de cours, liste de vocabulaire d'anglais, définitions…"></textarea><button class="btn sm" style="align-self:flex-start">Générer depuis ce texte</button></form>`}
+    </div>
+    <div class="card home-card stack"><h3 style="margin:0">Ajouter une carte</h3>
+      <form class="stack" data-form="cardAdd" data-deck="${esc(key)}" style="gap:8px"><input class="field" name="recto" placeholder="Recto : le terme ou la question (ex. : Persona)" required maxlength="400"><textarea class="field" name="verso" rows="2" placeholder="Verso : la réponse en 1 à 3 phrases" required></textarea><input class="field" name="exemple" placeholder="Exemple (facultatif)"><button class="btn sm primary" style="align-self:flex-start">Ajouter</button></form>
+    </div>
+    ${cs.length ? `<section class="home-sec"><div class="sec-head"><h2>Les cartes</h2></div><div class="card-list">${cs.map((c) => edit === c.id ? `<form class="flash edit" data-form="cardEdit" data-id="${esc(c.id)}"><input class="field" name="recto" value="${esc(c.recto)}" required><textarea class="field" name="verso" rows="3" required>${esc(c.verso)}</textarea><input class="field" name="exemple" value="${esc(c.exemple || "")}" placeholder="Exemple (facultatif)"><div class="row"><button class="btn sm primary">Enregistrer</button><button type="button" class="btn sm ghost" data-act="cardEditOff">Annuler</button></div></form>`
+      : `<div class="flash"><div class="flash-r">${esc(c.recto)}</div><div class="flash-v prose small">${md(c.verso)}${c.exemple ? `<p class="muted"><i>Ex. :</i> ${inl(c.exemple)}</p>` : ""}</div><div class="flash-f"><span class="muted small">${c.box ? `palier ${c.box} · revoir ${cardDue(c) ? "aujourd'hui" : esc(frDate(c.due))}` : "nouvelle"}${(c.variantes || []).length ? ` · ${c.variantes.length} question${c.variantes.length > 1 ? "s" : ""} de Claude` : ""}</span><span class="spacer"></span>${confirm === "card:" + c.id ? `<button class="btn sm danger" data-act="cardDel" data-id="${esc(c.id)}">Supprimer</button><button class="btn sm ghost" data-act="ecCancelDel">Non</button>` : `<button class="btn sm ghost" data-act="cardEdit" data-id="${esc(c.id)}">Modifier</button><button class="q-x" data-act="ecAskDel" data-key="card:${esc(c.id)}" aria-label="Supprimer">×</button>`}</div></div>`).join("")}</div></section>` : ""}
+  </div>`;
+}
+function viewCardReview() {
+  const r = state.ui.cardRev;
+  if (!r) return `<div class="wrap"><p><a href="#cartes">← Cartes mémo</a></p></div>`;
+  if (r.finished) {
+    const n = (k) => r.queue.filter((x) => x.result === k).length;
+    return `<div class="wrap home"><header class="home-head"><div class="eyebrow">${r.practice ? "Entraînement" : "Révision"} terminée</div><h1>${n("ok") + n("moyen")}/${r.queue.length} retrouvées</h1><p class="lead">${n("ok")} sans hésiter · ${n("moyen")} en hésitant · ${n("ko")} à revoir${r.practice ? " · le planning n'a pas changé" : n("ko") ? " · elles reviennent demain" : ""}.</p></header>
+      <div class="row"><a class="btn primary" href="${r.key ? deckHash(r.key) : "#cartes"}">Retour aux cartes</a>${r.queue.some((x) => x.result === "ko") ? `<button class="btn" data-act="cardsRetry">Revoir les ratées</button>` : ""}</div></div>`;
+  }
+  const it = r.queue[r.idx]; const c = carte(it.id); const q = it.qn;
+  if (!c) { r.idx++; if (r.idx >= r.queue.length) r.finished = true; return viewCardReview(); }
+  const dots = r.queue.map((x, i) => `<i class="${i < r.idx ? (x.result === "ko" ? "ko" : "ok") : i === r.idx ? "on" : ""}"></i>`).join("");
+  const done = it.result !== null;
+  const showMd = (t) => (/\n|```|\|/.test(t) ? md(t) : `<p>${inl(t)}</p>`);
+  let body = "";
+  if (q.kind === "qcm") body = `<div class="opts">${q.options.map((o, i) => { let cls = ""; if (it.a !== undefined && i === q.answer) cls = "right"; else if (it.a === i) cls = "wrong"; return `<button class="opt ${cls}" ${it.a !== undefined ? "disabled" : ""} data-act="cAns" data-o="${i}">${inl(o)}</button>`; }).join("")}</div>${it.a !== undefined ? `<div class="feedback ${it.a === q.answer ? "right" : "wrong"}"><b>${it.a === q.answer ? "Juste." : "Pas tout à fait."}</b> ${inl(q.why || "")}</div>` : ""}`;
+  else if (q.kind === "vf") body = `<div class="flash-claim">${showMd(q.claim)}</div><div class="row">${[["Vrai", true], ["Faux", false]].map(([l, v]) => { let cls = ""; if (it.a !== undefined && v === q.answer) cls = "right"; else if (it.a === v) cls = "wrong"; return `<button class="opt ${cls}" style="flex:1" ${it.a !== undefined ? "disabled" : ""} data-act="cAns" data-o="${v}">${l}</button>`; }).join("")}</div>${it.a !== undefined ? `<div class="feedback ${it.a === q.answer ? "right" : "wrong"}"><b>${it.a === q.answer ? "Juste." : "Raté."}</b> ${inl(q.why)}</div>` : ""}`;
+  else if (q.kind === "trou") body = `<div class="flash-claim">${showMd(q.text)}</div>${it.a === undefined ? `<form class="row" data-form="cTrou"><input class="field" name="w" placeholder="Le mot manquant" autocomplete="off" style="flex:1" data-autofocus><button class="btn primary">Vérifier</button></form>` : `<div class="feedback ${it.a ? "right" : "wrong"}"><b>${it.a ? "Juste." : `Raté : c'était « ${esc(q.answer)} ».`}</b>${it.typed && !it.a ? ` Tu as écrit « ${esc(it.typed)} ».` : ""}<div class="prose small" style="margin-top:6px">${md(q.full)}</div></div>${!it.a ? `<button class="btn sm ghost" data-act="cOverride">J'avais bon (faute de frappe, synonyme)</button>` : ""}`}`;
+  else body = !it.revealed ? `<textarea class="field" rows="3" placeholder="Réponds de mémoire (facultatif), puis regarde la réponse…" aria-label="Ta réponse" data-autofocus></textarea><button class="btn primary" data-act="cReveal" style="align-self:flex-start">Voir la réponse</button>`
+    : `<div class="flash-ans"><span class="eyebrow">Réponse</span><div class="prose">${md(q.answer)}</div>${c.exemple && q.key !== "terme" ? `<p class="muted small"><i>Exemple :</i> ${inl(c.exemple)}</p>` : ""}</div>${done ? "" : `<div class="row grade"><span class="muted small">Tu l'avais ?</span><button class="btn" data-act="cGrade" data-g="ko">Non</button><button class="btn" data-act="cGrade" data-g="moyen">À moitié</button><button class="btn primary" data-act="cGrade" data-g="ok">Oui</button></div>`}`;
+  return `<div class="wrap" style="${deckStyle(c.deck)};max-width:760px">
+    <div class="row"><h1 style="font-size:1.3rem">${r.practice ? "Entraînement" : "Révision"}</h1><span class="spacer"></span><div class="progress-dots">${dots}</div><button class="btn sm ghost" data-act="cardsQuit">Quitter</button></div>
+    <div class="card home-card stack flash-q">
+      <div class="row small"><span class="chip">${esc(deckName(c.deck))}</span><span class="muted">${esc(FMT_LABEL[q.key.split(":")[0]] || "")} · ${r.idx + 1}/${r.queue.length}</span></div>
+      <span class="muted small">${esc(q.ask)}</span>
+      <div class="flash-show">${showMd(q.show)}</div>
+      ${body}
+      ${done ? `<div class="row"><button class="btn primary" data-act="cNext" data-autofocus>${r.idx < r.queue.length - 1 ? "Carte suivante" : "Terminer"} →</button></div>` : ""}
+    </div>
+  </div>`;
+}
+function cardAdvance() { const r = state.ui.cardRev; if (r.idx < r.queue.length - 1) r.idx++; else { r.finished = true; if (r.refill && r.refill.length) refillVariants(r.refill.splice(0)); } render(); const f = document.querySelector("[data-autofocus]"); if (f) f.focus(); }
+function coursCardsCard(c) {
+  const m = matiere(c.matiere); if (!m) return "";
+  const key = "mat:" + m.id; const n = deckCards(key).filter((x) => x.source === "cours:" + c.id).length; const tot = deckCards(key).length;
+  return `<div class="card stack"><div class="row"><h3 style="margin:0">Cartes mémo</h3><span class="muted small">${tot ? `${tot} dans le paquet ${esc(m.nom)}${n ? `, dont ${n} de ce cours` : ""}` : "aucune carte dans cette matière"}</span></div>
+    <div class="row"><button class="btn sm primary ai-only" data-act="genFromCours" data-cours="${esc(c.id)}">Générer des cartes depuis ce cours</button><a class="btn sm" href="${deckHash(key)}">${tot ? "Voir le paquet" : "Créer des cartes à la main"}</a></div></div>`;
+}
 function render() {
   const r = currentRoute();
   let html;
@@ -3681,6 +3962,9 @@ function render() {
   else if (r === "calendrier") html = viewCalendar();
   else if (r === "notes") html = viewNotes();
   else if (r === "cours") html = viewEcole();
+  else if (r === "cartes") html = viewCartes();
+  else if (r === "cartes-revision") html = viewCardReview();
+  else if (r.startsWith("paquet-")) html = viewPaquet(r.slice(7).replace("-", ":"));
   else if (r.startsWith("mat-")) html = viewMatiere(r.slice(4));
   else if (r.startsWith("c-")) html = viewCoursItem(r.slice(2));
   else if (r.startsWith("r-")) html = viewRendu(r.slice(2));
@@ -3729,6 +4013,22 @@ function keepDrafts() {
   draftWriter.schedule();
 }
 const ACTIONS = {
+  cardsStart(el) { startCards(el.dataset.deck || "", false); },
+  cardsPractice(el) { startCards(el.dataset.deck || "", true); },
+  cardsQuit() { const r = state.ui.cardRev; state.ui.cardRev = null; if (r && r.refill && r.refill.length) refillVariants(r.refill.splice(0)); location.hash = r && r.key ? deckHash(r.key) : "#cartes"; },
+  cardsRetry() { const r = state.ui.cardRev; const ids = r.queue.filter((x) => x.result === "ko").map((x) => x.id); state.ui.cardRev = { key: r.key, practice: true, idx: 0, finished: false, queue: ids.map((id) => ({ id, qn: pickFormat(carte(id)), a: undefined, revealed: false, typed: "", result: null })) }; render(); },
+  cAns(el) { const r = state.ui.cardRev; const it = r.queue[r.idx]; if (it.a !== undefined) return; const o = el.dataset.o; it.a = o === "true" ? true : o === "false" ? false : +o; gradeCard(it, it.a === it.qn.answer, false); render(); const n = document.querySelector("[data-act=cNext]"); if (n) n.focus(); },
+  cReveal() { const r = state.ui.cardRev; r.queue[r.idx].revealed = true; render(); },
+  cGrade(el) { const r = state.ui.cardRev; const it = r.queue[r.idx]; gradeCard(it, el.dataset.g !== "ko", el.dataset.g === "moyen"); render(); const n = document.querySelector("[data-act=cNext]"); if (n) n.focus(); },
+  cOverride() { const r = state.ui.cardRev; const it = r.queue[r.idx]; it.a = true; gradeCard(it, true, true); render(); },
+  cNext() { cardAdvance(); },
+  cgKeep(el) { const g = state.ui.cardGen; if (g && g.items[+el.dataset.i]) g.items[+el.dataset.i].keep = el.checked; const b = document.querySelector("[data-act=cgSave]"); if (b && g) { const n = g.items.filter((x) => x.keep).length; b.textContent = `Ajouter ${n} carte${n > 1 ? "s" : ""}`; } },
+  cgSave() { const g = state.ui.cardGen; if (!g) return; const keep = g.items.filter((x) => x.keep); keep.forEach((x) => cartes().items.push(newCard(g.deck, x, g.source))); state.ui.cardGen = null; saveCartes(); render(); toast(`${keep.length} carte${keep.length > 1 ? "s" : ""} ajoutée${keep.length > 1 ? "s" : ""}.`); },
+  cgDrop() { state.ui.cardGen = null; render(); },
+  async genFromCours(el) { const id = el.dataset.cours || ($("#gen-cours") || {}).value; const c = coursItem(id); if (!c || !sample) return; const deck = "mat:" + c.matiere; if (location.hash !== deckHash(deck)) location.hash = deckHash(deck); state.ui.cardGen = { deck, label: `« ${c.titre} »`, busy: true, items: [], error: "" }; render(); const txt = await coursSourceText(c); if (txt.replace(/^Cours :.*$/m, "").replace(/^Matière :.*$/m, "").trim().length < 60) { state.ui.cardGen = { deck, label: "", busy: false, items: [], error: "Ce cours est encore vide : ajoute des notes, un fichier ou le programme de séance avant de générer des cartes." }; render(); return; } await genCards(deck, txt, `« ${c.titre} »`); if (state.ui.cardGen) state.ui.cardGen.source = "cours:" + c.id; },
+  cardEdit(el) { state.ui.cardEdit = el.dataset.id; render(); },
+  cardEditOff() { state.ui.cardEdit = null; render(); },
+  cardDel(el) { const k = cartes(); k.items = k.items.filter((c) => c.id !== el.dataset.id); k.deleted.push(el.dataset.id); state.ui.confirmDel = null; saveCartes(); render(); },
   ecSetupAll(el) { const bs = [...document.querySelectorAll(`form[data-form=ecSetup] input[name=m][data-an="${el.dataset.an}"]`)]; const on = !bs.every((b) => b.checked); bs.forEach((b) => (b.checked = on)); },
   ecSetupGo() { setupEcole(PROG.modules.map((_, i) => i), true); render(); toast(`${PROG.modules.length} matières prêtes. Clique sur une matière pour l'ouvrir.`); },
   ecChoose() { state.ui.ecChoose = !state.ui.ecChoose; render(); },
@@ -3842,7 +4142,9 @@ const ACTIONS = {
   rAnswer(el) { const r = state.ui.review; r.queue[r.idx].qs[Number(el.dataset.k)].a = Number(el.dataset.o); render(); },
   rNext() {
     const r = state.ui.review; const it = r.queue[r.idx]; const m = mod(it.id);
-    it.result = it.qs.every((q) => q.a === m.quiz[q.qi].answer);
+    it.result = it.qs.every((q) => q.a === q.answer);
+    { const p = ensure(it.id); p.seenQ = (p.seenQ || []).filter((k) => !it.qs.some((q) => q.key === k)).concat(it.qs.map((q) => q.key)).slice(-30); if (r.practice) saveProgress(); }
+    genModuleQuestions(m);
     if (!r.practice) {
       const p = ensure(it.id);
       if (it.result) { p.box = Math.min((p.box || 1) + 1, INTERVALS.length); p.due = addDays(INTERVALS[p.box - 1]); }
@@ -3986,6 +4288,10 @@ function handleForm(f, submitter) {
   if (f.dataset.form === "q") { qSave(f.texte.value, e.submitter && e.submitter.value === "ask"); return; }
   if (f.dataset.form === "qNote") { const q = questions().find((x) => x.id === f.dataset.id); const v = f.note.value.trim(); if (q && v) { q.reponse = v; q.source = "moi"; q.statut = "repondue"; (qUi().keep = qUi().keep || []).push(q.id); saveProgress(); } qUi().note = null; qRefreshViews(); return; }
   if (f.dataset.form === "dbgFollow") { dbgFollowUp(f); return; }
+  if (f.dataset.form === "cardAdd") { const c = newCard(f.dataset.deck, { recto: f.recto.value, verso: f.verso.value, exemple: f.exemple.value }, "main"); if (!c.recto || !c.verso) return; cartes().items.push(c); saveCartes(); render(); toast("Carte ajoutée."); const i = document.querySelector("form[data-form=cardAdd] input[name=recto]"); if (i) i.focus(); return; }
+  if (f.dataset.form === "cardEdit") { const c = carte(f.dataset.id); if (!c) return; c.recto = f.recto.value.trim().slice(0, 400) || c.recto; c.verso = f.verso.value.trim().slice(0, 2000) || c.verso; c.exemple = f.exemple.value.trim().slice(0, 1500); c.ts = Date.now(); state.ui.cardEdit = null; saveCartes(); render(); return; }
+  if (f.dataset.form === "genText") { const t = f.src.value.trim(); if (t.length < 40) { toast("Colle un texte un peu plus long."); return; } const key = currentRoute().slice(7).replace("-", ":"); genCards(key, t.slice(0, 16000), "ton texte"); return; }
+  if (f.dataset.form === "cTrou") { const r = state.ui.cardRev; const it = r.queue[r.idx]; const v = f.w.value.trim(); if (!v) return; it.typed = v; it.a = norm(v).replace(/s$/, "") === norm(it.qn.answer).replace(/s$/, ""); gradeCard(it, it.a, false); render(); const n = document.querySelector("[data-act=cNext]"); if (n) n.focus(); return; }
   if (f.dataset.form === "ghFiles") { const m = $("#ghf-msg"); if (m) m.textContent = "Vérification…"; ghfConnect(f.token.value, f.repo.value).then(() => { render(); toast("Fichiers GitHub activés : tu peux en ajouter dans tes cours."); }).catch((err) => { ghf.token = ""; const mm = $("#ghf-msg"); if (mm) mm.innerHTML = `<span class="err">Ça n'a pas marché : ${esc(err.message)}.</span>`; }); return; }
   if (f.dataset.form === "ecSetup") { const idx = [...f.querySelectorAll("input[name=m]:checked")].map((x) => +x.value); setupEcole(idx, f.rendus.checked); render(); toast(`${idx.length} matière${idx.length > 1 ? "s" : ""} créée${idx.length > 1 ? "s" : ""}.`); return; }
   if (f.dataset.form === "ecNewCours") { const titre = f.titre.value.trim(); if (!titre) return; const c = { id: "co" + rid(), matiere: f.dataset.mat, titre: titre.slice(0, 160), date: f.date.value || null, tags: [], notes: "", liens: [], created: Date.now(), ts: Date.now() }; ecole().cours.push(c); saveEcole(); location.hash = "#c-" + c.id; return; }
