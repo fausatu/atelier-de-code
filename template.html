@@ -23,7 +23,7 @@
   --warn: #a96d00; --warn-soft: #fbf0d9;
   --bad: #c83c3c;  --bad-soft: #fbe5e5;
   --t-violet: #6b55cc; --t-orange: #cf6a1d; --t-green: #18865f; --t-cyan: #13809f; --t-graphite: #4a5263;
-  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f; --t-amber: #b7791f; --t-teal: #0f8a7e; --t-indigo: #4a4fc4; --t-plum: #8e3f8a; --t-navy: #2f5d9e;
+  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f; --t-amber: #b7791f; --t-teal: #0f8a7e; --t-indigo: #4a4fc4; --t-plum: #8e3f8a; --t-navy: #2f5d9e; --t-slate: #3d5566;
   --code-bg: #f4f7fb; --code-ink: #24292f; --code-line: #d6dfea;
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
@@ -538,13 +538,13 @@ body.q-open .qfab { display: none; }
 <button class="qfab" id="qfab" type="button" data-act="qToggle" aria-controls="qpanel" aria-expanded="false" aria-label="Noter une question (Alt+Q)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M10.2 9.6a2 2 0 1 1 2.8 1.8c-.6.3-1 .8-1 1.5v.3"/><circle cx="12" cy="15.8" r=".6" fill="currentColor" stroke="none"/></svg><span class="lbl">Une question · Alt+Q</span><span class="n zero" id="qfab-n">0</span></button>
 <aside class="qpanel" id="qpanel" aria-label="Mes questions" hidden></aside>
 
-<script src="vendor/hljs/hljs.js"></script>
+<script src="vendor/hljs/hljs.js?v=2"></script>
 <script>
 "use strict";
 const DATA = /*__CONTENT__*/null;
 const INTERVALS = [1, 3, 7, 16, 35];
-const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick", "amber", "teal", "indigo", "plum", "navy"];
-const LANGS = { php: "php", tsx: "typescript", ts: "typescript", typescript: "typescript", js: "javascript", jsx: "javascript", javascript: "javascript", sql: "sql", bash: "bash", shell: "bash", yaml: "yaml", json: "json", python: "python", css: "css", html: "xml", xml: "xml", twig: "xml", plaintext: null };
+const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick", "amber", "teal", "indigo", "plum", "navy", "slate"];
+const LANGS = { php: "php", tsx: "typescript", ts: "typescript", typescript: "typescript", js: "javascript", jsx: "javascript", javascript: "javascript", sql: "sql", bash: "bash", shell: "bash", powershell: "powershell", ps1: "powershell", yaml: "yaml", json: "json", python: "python", css: "css", html: "xml", xml: "xml", twig: "xml", plaintext: null };
 const STEPS = ["Comprendre", "Exemple", "Quiz", "TD"];
 const LEVEL_NAMES = { 1: "Niveau 1 · Appliquer", 2: "Niveau 2 · Adapter", 3: "Niveau 3 · Approfondir" };
 const LEVEL_DESC = { 1: "Refait directement ce que montre le cours.", 2: "Un cas un peu différent : il faut adapter.", 3: "Combine avec les modules précédents." };
@@ -642,7 +642,7 @@ function codeBlock(src, lang) {
   return `<pre class="code"><code data-lang="${esc(l || "")}">${esc(src)}</code></pre>`;
 }
 function splitPath(p) { const i = p.lastIndexOf("/"); return i < 0 ? ["", p] : [p.slice(0, i + 1), p.slice(i + 1)]; }
-const FILE_ICONS = { php: ["PHP", "#7a6fd0"], tsx: ["TSX", "#2f7fc1"], ts: ["TS", "#2f7fc1"], jsx: ["JSX", "#c99a0a"], js: ["JS", "#c99a0a"], mjs: ["JS", "#c99a0a"], json: ["{}", "#8a6d1f"], css: ["CSS", "#9b4dca"], html: ["<>", "#d1592a"], twig: ["TW", "#5c8a2e"], yaml: ["YML", "#b8432f"], yml: ["YML", "#b8432f"], sql: ["SQL", "#2f8a6e"], md: ["MD", "#6b7280"], sh: ["$", "#4a5263"], env: ["ENV", "#6b7280"], gitignore: ["GIT", "#b8432f"], txt: ["TXT", "#6b7280"] };
+const FILE_ICONS = { php: ["PHP", "#7a6fd0"], tsx: ["TSX", "#2f7fc1"], ts: ["TS", "#2f7fc1"], jsx: ["JSX", "#c99a0a"], js: ["JS", "#c99a0a"], mjs: ["JS", "#c99a0a"], json: ["{}", "#8a6d1f"], css: ["CSS", "#9b4dca"], html: ["<>", "#d1592a"], twig: ["TW", "#5c8a2e"], yaml: ["YML", "#b8432f"], yml: ["YML", "#b8432f"], sql: ["SQL", "#2f8a6e"], md: ["MD", "#6b7280"], sh: ["$", "#4a5263"], ps1: ["PS", "#2f5d9e"], env: ["ENV", "#6b7280"], gitignore: ["GIT", "#b8432f"], txt: ["TXT", "#6b7280"] };
 function fileIcon(name) {
   const ext = /\.([a-z0-9]+)$/i.exec(name); const k = ext ? ext[1].toLowerCase() : name.replace(/^\./, "").toLowerCase();
   const [label, color] = FILE_ICONS[k] || ["•", "#8a93a3"];
@@ -712,7 +712,7 @@ function filesBlock(files, key, editable, modified, opts) {
     </div>
   </div>`;
 }
-const EXT_LANG = { php: "php", tsx: "typescript", ts: "typescript", jsx: "javascript", js: "javascript", mjs: "javascript", cjs: "javascript", json: "json", yaml: "yaml", yml: "yaml", sql: "sql", sh: "bash", bash: "bash", css: "css", html: "xml", twig: "xml", xml: "xml", md: "markdown", py: "python", env: "ini", ini: "ini" };
+const EXT_LANG = { php: "php", tsx: "typescript", ts: "typescript", jsx: "javascript", js: "javascript", mjs: "javascript", cjs: "javascript", json: "json", yaml: "yaml", yml: "yaml", sql: "sql", sh: "bash", bash: "bash", ps1: "powershell", css: "css", html: "xml", twig: "xml", xml: "xml", md: "markdown", py: "python", env: "ini", ini: "ini" };
 function edLang(f) {
   const m = /\.([a-z0-9]+)$/i.exec(f.path || ""); const byExt = m && EXT_LANG[m[1].toLowerCase()];
   return byExt || (LANGS[f.lang] !== undefined ? LANGS[f.lang] || "" : "") || "";
@@ -1301,8 +1301,8 @@ function panelTD(m) {
   const levelTabs = list.length > 1 ? `<div class="levels">${list.map((x) => `<button class="lvl-tab ${x.level === td.level ? "on" : ""} ${levelDone(p, x.level) ? "ok" : ""}" data-act="level" data-id="${esc(m.id)}" data-level="${x.level}"><b>${LEVEL_NAMES[x.level] || "Niveau " + x.level}</b><span>${esc(x.title)}</span></button>`).join("")}</div>` : "";
   const runnerUI = run ? `
       <div class="runout">
-        <div class="row"><button class="btn run" data-act="run" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>${runState.busy ? '<span class="spin"></span> Exécution…' : (run === "php" ? "▶ Exécuter le PHP" : run === "git" ? "▶ Lancer les commandes" : "▶ Exécuter")}</button>${td.run.tests ? `<button class="btn" data-act="runTests" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>Lancer les tests</button>` : ""}<span class="muted small">${run === "php" ? "PHP 8.4 tourne dans ton navigateur." : run === "git" ? "Git simulé : tes commandes s'exécutent dans un dépôt de test, recréé à chaque lancement." : "Ton code tourne dans ton navigateur."}</span></div>
-        ${run !== "php" ? `<div class="preview${run === "git" ? " tall" : ""}" ${(runState.html === undefined && !runState.frame) || run === "js" ? 'style="display:none"' : ""}><iframe id="prev-${esc(key)}" sandbox="allow-scripts allow-forms" title="Aperçu"></iframe></div>` : ""}
+        <div class="row"><button class="btn run" data-act="run" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>${runState.busy ? '<span class="spin"></span> Exécution…' : (run === "php" ? "▶ Exécuter le PHP" : run === "git" || run === "term" ? "▶ Lancer les commandes" : "▶ Exécuter")}</button>${td.run.tests ? `<button class="btn" data-act="runTests" data-id="${esc(m.id)}" data-level="${td.level}" ${runState.busy ? "disabled" : ""}>Lancer les tests</button>` : ""}<span class="muted small">${run === "php" ? "PHP 8.4 tourne dans ton navigateur." : run === "term" ? "Terminal simulé : tes commandes s'exécutent ligne par ligne dans un dossier de test, recréé à chaque lancement ; tu peux ensuite taper d'autres commandes dans le terminal." : run === "git" ? "Git simulé : tes commandes s'exécutent dans un dépôt de test, recréé à chaque lancement." : "Ton code tourne dans ton navigateur."}</span></div>
+        ${run !== "php" ? `<div class="preview${run === "git" || run === "term" ? " tall" : ""}" ${(runState.html === undefined && !runState.frame) || run === "js" ? 'style="display:none"' : ""}><iframe id="prev-${esc(key)}" sandbox="allow-scripts allow-forms" title="Aperçu"></iframe></div>` : ""}
         <div class="out-head">Sortie</div>
         <pre class="console" id="con-${esc(key)}">${runState.console !== undefined ? runState.console : '<span class="dim">Clique sur Exécuter pour voir le résultat ici.</span>'}</pre>
         ${runState.tests ? renderTests(runState.tests) : ""}
@@ -1591,6 +1591,7 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start, opts) => `<!
   const h = {
     get next() { return window.__next; },
     get git() { return window.__git; },
+    get term() { return window.__term; },
     typeErrors: (file) => TS_DIAG.filter((d) => d.file !== "verif-types.tsx" && (!file || d.file === file)),
     sleep, tick, root, require: req, source: (p) => files[p] || "",
     $: (s) => root.querySelector(s), $$: (s) => Array.from(root.querySelectorAll(s)),
@@ -1620,7 +1621,7 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start, opts) => `<!
   try {
     const entry = ${JSON.stringify(entry)};
     const KIND = ${JSON.stringify(kind || "react")};
-    const mounted = KIND === "js" ? (req("./" + entry), false) : KIND === "next" ? (window.NextSim({ req, files, root, post }), window.__next.render(${JSON.stringify(start || "/")}), true) : KIND === "git" ? (function () { const g = window.GitSim({ root, post }); const setup = ${JSON.stringify(kind === "git" ? start || "" : "")}; if (setup) g.setup(new Function("git", setup)); g.sh(files[entry] || ""); const f = g.failed(); post({ type: "console", level: f.length ? "warn" : "info", text: g.commands().length + " commande(s) exécutée(s)" + (f.length ? ", " + f.length + " en erreur : " + f.join(" · ") : "") }); return true; })() : mount(entry);
+    const mounted = KIND === "js" ? (req("./" + entry), false) : KIND === "next" ? (window.NextSim({ req, files, root, post }), window.__next.render(${JSON.stringify(start || "/")}), true) : KIND === "term" ? (function () { const tm = window.TermSim({ root, post }); tm.setMode(/\.ps1$/i.test(entry) ? "pwsh" : "bash"); const setup = ${JSON.stringify(kind === "term" ? start || "" : "")}; if (setup) tm.setup(new Function("t", setup)); for (const [p, c] of Object.entries(files)) if (p !== entry) tm.ecrire(p, c); tm.script(files[entry] || ""); return true; })() : KIND === "git" ? (function () { const g = window.GitSim({ root, post }); const setup = ${JSON.stringify(kind === "git" ? start || "" : "")}; if (setup) g.setup(new Function("git", setup)); g.sh(files[entry] || ""); const f = g.failed(); post({ type: "console", level: f.length ? "warn" : "info", text: g.commands().length + " commande(s) exécutée(s)" + (f.length ? ", " + f.length + " en erreur : " + f.join(" · ") : "") }); return true; })() : mount(entry);
     if (!mounted) post({ type: "console", level: "info", text: "(le fichier d'entrée n'exporte pas de composant : code exécuté)" });
     setTimeout(() => post({ type: "ready", html: root.innerHTML }), 80);
     ${tests ? `setTimeout(() => runTests(${JSON.stringify(tests)}), 160);` : ""}
@@ -1639,8 +1640,9 @@ function runJs(m, td, key, withTests) {
   if (Object.values(files).some((c) => /from ['"](react-hook-form|@tanstack\/react-form|zod|@hookform\/resolvers\/zod)['"]/.test(c))) libs.forms = BASE + "vendor/forms/forms.js?v=1";
   if (td.run.kind === "next") libs.next = BASE + "vendor/next-sim/next-sim.js?v=4";
   if (td.run.kind === "git") libs.git = BASE + "vendor/git-sim/git-sim.js?v=1";
+  if (td.run.kind === "term") libs.term = BASE + "vendor/term-sim/term-sim.js?v=1";
   if (td.run.typecheck) { libs.ts = BASE + "vendor/ts/typescript.js?v=1"; libs.tslibs = BASE + "vendor/ts/libs.js?v=1"; }
-  const order = ["react", "reactDom", "babel", "tanstack", "forms", "next", "git", "ts", "tslibs"].filter((k) => libs[k]);
+  const order = ["react", "reactDom", "babel", "tanstack", "forms", "next", "git", "term", "ts", "tslibs"].filter((k) => libs[k]);
   Promise.all(order.map((k) => libText(libs[k]))).then((code) => {
     libs.code = code;
     runJsFrame(m, td, key, withTests, rs, files, entry, libs);
@@ -1663,7 +1665,7 @@ function runJsFrame(m, td, key, withTests, rs, files, entry, libs) {
     if (d.type === "console") lines.push(`<span class="${d.level === "error" ? "err" : d.level === "warn" ? "warnl" : ""}">${esc(d.text)}</span>`);
     if (d.type === "net") lines.push(`<span class="dim">${esc(d.text)}</span>`);
     if (d.type === "error") lines.push(`<span class="err">Erreur : ${esc(d.text)}</span>`);
-    if (d.type === "ready") { rs.busy = false; rs.html = d.html || ""; const b = document.querySelector(`[data-act="run"][data-id="${CSS.escape(m.id)}"]`); if (b) { b.disabled = false; b.innerHTML = td.run.kind === "php" ? "▶ Exécuter le PHP" : td.run.kind === "git" ? "▶ Lancer les commandes" : "▶ Exécuter"; } const tb = document.querySelector(`[data-act="runTests"][data-id="${CSS.escape(m.id)}"]`); if (tb) tb.disabled = false; }
+    if (d.type === "ready") { rs.busy = false; rs.html = d.html || ""; const b = document.querySelector(`[data-act="run"][data-id="${CSS.escape(m.id)}"]`); if (b) { b.disabled = false; b.innerHTML = td.run.kind === "php" ? "▶ Exécuter le PHP" : td.run.kind === "git" || td.run.kind === "term" ? "▶ Lancer les commandes" : "▶ Exécuter"; } const tb = document.querySelector(`[data-act="runTests"][data-id="${CSS.escape(m.id)}"]`); if (tb) tb.disabled = false; }
     if (d.type === "tests") { rs.tests = { cases: d.cases || [], error: d.error }; if (!d.error && d.cases.length && d.cases.every((c) => c.ok)) logActivity(); const box = (document.getElementById("prev-" + key) || iframe).closest(".runout"); const old = box && box.querySelector(".tests"); if (old) old.remove(); if (box) box.insertAdjacentHTML("beforeend", renderTests(rs.tests)); }
     rs.console = lines.join("\n") || '<span class="dim">(aucune sortie console)</span>';
     const c = $("#con-" + CSS.escape(key)); if (c) c.innerHTML = rs.console;
@@ -1714,6 +1716,18 @@ const SB_ENGINES = {
       { path: "app/compteur/Compteur.tsx", lang: "tsx", code: "'use client';\nimport { useState } from 'react';\n\nexport default function Compteur({ depart }: { depart: number }) {\n  const [n, setN] = useState(depart);\n  return <button onClick={() => setN(n + 1)}>{n}</button>;\n}\n" },
     ],
   },
+  terminal: {
+    name: "Terminal Linux", kind: "term", entry: "commandes.sh", placeholder: "notes.txt",
+    tip: "bash simulé (Linux / macOS) : un dossier de projet d'exemple est créé, puis tes commandes s'exécutent ligne par ligne. Tu peux ensuite taper dans le terminal (↑ historique, Tab complète). `pwsh` passe en PowerShell.",
+    start: "t.fichier('projet/README.md', '# Projet\\n'); t.fichier('projet/src/app.js', \"console.log('bonjour');\\n// TODO : routes\\n\"); t.fichier('projet/package.json', JSON.stringify({ name: 'projet', version: '1.0.0', scripts: { dev: 'node serveur.js', test: 'echo tests ok' } }, null, 2)); t.fichier('projet/serveur.js', \"require('http').createServer((req, res) => res.end('Bonjour')).listen(3000);\\n\"); t.cd('projet');",
+    files: [{ path: "commandes.sh", lang: "bash", code: "pwd\nls -la\ncat README.md\ngrep -rn TODO src\nmkdir -p docs\necho \"# Documentation\" > docs/index.md\nls docs\n" }],
+  },
+  powershell: {
+    name: "PowerShell", kind: "term", entry: "commandes.ps1", placeholder: "notes.txt",
+    tip: "PowerShell simulé (Windows) : mêmes fichiers d'exemple, dans C:\\Users\\ana\\projet. Tape ensuite dans le terminal (↑ historique, Tab complète). `bash` repasse en Linux.",
+    start: "t.fichier('projet/README.md', '# Projet\\n'); t.fichier('projet/src/app.js', \"console.log('bonjour');\\n// TODO : routes\\n\"); t.fichier('projet/package.json', JSON.stringify({ name: 'projet', version: '1.0.0', scripts: { dev: 'node serveur.js', test: 'echo tests ok' } }, null, 2)); t.fichier('projet/serveur.js', \"require('http').createServer((req, res) => res.end('Bonjour')).listen(3000);\\n\"); t.cd('projet');",
+    files: [{ path: "commandes.ps1", lang: "powershell", code: "Get-Location\nGet-ChildItem\nGet-Content README.md\nGet-ChildItem -Recurse -Filter *.js | Select-String TODO\nNew-Item -ItemType Directory -Path docs\nSet-Content docs\\index.md \"# Documentation\"\nGet-ChildItem docs\n" }],
+  },
   git: {
     name: "Git", kind: "git", entry: "commandes.sh", placeholder: "autre-scenario.sh",
     tip: "Git simulé : le dépôt est recréé à chaque lancement à partir de zéro, puis le script s'exécute ligne par ligne. Fichiers : `echo \"x\" > f`, `>> f`, `printf`, `cat`. `rebase -i` s'écrit avec un bloc `<<EOF … EOF`.",
@@ -1732,7 +1746,8 @@ function sbTd(e) {
   const files = all.filter((f) => f !== apiFile).map((f) => ({ ...f }));
   let entry = E.entry && files.some((f) => f.path === E.entry) ? E.entry : undefined;
   if (E.kind === "git") entry = (files.find((f) => f.path.endsWith(".sh")) || files[0] || {}).path;
-  return { level: 1, files, run: { kind: E.kind, entry, api: apiFile ? apiFile.code : "", start: E.kind === "next" ? (state.ui.sbStart || "/") : undefined } };
+  if (E.kind === "term") entry = (files.find((f) => /\.(sh|ps1)$/.test(f.path)) || files[0] || {}).path;
+  return { level: 1, files, run: { kind: E.kind, entry, api: apiFile ? apiFile.code : "", start: E.kind === "next" ? (state.ui.sbStart || "/") : E.kind === "term" ? E.start : undefined } };
 }
 function runSandbox(e) {
   if (!SB_ENGINES[e]) return;
@@ -1756,8 +1771,8 @@ function viewSandbox() {
         ${run === "next" ? `<label class="row small">URL à afficher <input id="sb-start" value="${esc(state.ui.sbStart || "/")}" style="max-width:240px"></label>` : ""}
       </div>
       <div class="runout">
-        <div class="row"><button class="btn run" data-act="run" data-id="${key}" data-level="1" ${rs.busy ? "disabled" : ""}>${rs.busy ? '<span class="spin"></span> Exécution…' : run === "php" ? "▶ Exécuter le PHP" : run === "git" ? "▶ Lancer les commandes" : "▶ Exécuter"}</button></div>
-        ${run !== "php" ? `<div class="preview${run === "git" ? " tall" : ""}" ${rs.html === undefined && !rs.frame ? 'style="display:none"' : ""}><iframe id="prev-${key}" sandbox="allow-scripts allow-forms" title="Aperçu"></iframe></div>` : ""}
+        <div class="row"><button class="btn run" data-act="run" data-id="${key}" data-level="1" ${rs.busy ? "disabled" : ""}>${rs.busy ? '<span class="spin"></span> Exécution…' : run === "php" ? "▶ Exécuter le PHP" : run === "git" || run === "term" ? "▶ Lancer les commandes" : "▶ Exécuter"}</button></div>
+        ${run !== "php" ? `<div class="preview${run === "git" || run === "term" ? " tall" : ""}" ${rs.html === undefined && !rs.frame ? 'style="display:none"' : ""}><iframe id="prev-${key}" sandbox="allow-scripts allow-forms" title="Aperçu"></iframe></div>` : ""}
         <div class="out-head">Sortie</div>
         <pre class="console" id="con-${key}">${rs.console !== undefined ? rs.console : '<span class="dim">Clique sur Exécuter pour voir le résultat ici.</span>'}</pre>
       </div>

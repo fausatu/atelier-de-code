@@ -13,6 +13,7 @@ from c_debug import MODULES as DEBUG
 from c_api import MODULES as API
 from c_forms import MODULES as FORMS
 from c_decoupe import MODULES as DECOUPE
+from c_term import MODULES as TERM
 from c_ts import MODULES as TSM
 
 TRACKS = [
@@ -38,6 +39,8 @@ TRACKS = [
      "desc": "Routes, Server/Client Components, cache, Server Actions, API."},
     {"id": "git", "group": "outils", "name": "Git & GitHub", "short": "Git & GitHub", "color": "brick",
      "desc": "Le modèle de Git, merge, rebase, revenir en arrière, Conventional Commits, Pull Requests, outils."},
+    {"id": "terminal", "group": "outils", "name": "Terminal (Linux & Windows)", "short": "Terminal", "color": "slate",
+     "desc": "bash et PowerShell : se déplacer, fichiers, chercher, PATH et scripts, ports occupés, installer un projet."},
     {"id": "decoupe", "group": "methode", "name": "Découper une fonctionnalité", "short": "Découper", "color": "plum",
      "desc": "Du ticket au code : scénarios, variables (comment je le sais ?), étapes, tranches."},
     {"id": "debug", "group": "methode", "name": "Déboguer", "short": "Débogage", "color": "amber",
@@ -46,7 +49,7 @@ TRACKS = [
      "desc": "Créer une API (REST, erreurs, auth, cache, idempotence, limites) et la consommer en PHP et en JS."},
 ]
 
-modules = PHP + DOC + DTO + ARCH + DDD + TSM + REACT + DATA_ + FORMS + NEXT + GIT + API + DECOUPE + DEBUG
+modules = PHP + DOC + DTO + ARCH + DDD + TSM + REACT + DATA_ + FORMS + NEXT + GIT + TERM + API + DECOUPE + DEBUG
 ids = set()
 for m in modules:
     assert m["id"] not in ids, m["id"]
