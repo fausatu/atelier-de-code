@@ -218,6 +218,11 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 - `state.ui.step` (onglet Comprendre/Exemple/Quiz/TD) et `state.ui.level` (niveau de TD) sont gardés dans `localStorage["atelier-position"]`
   (`uiPos`, `saveUiPos`) : après un rechargement, on retombe sur le même onglet et le même TD.
 
+## Erreurs expliquées en français (17/11)
+- `frErreur(text)` + table `ERR_FR` (template.html, avant `runJsFrame`) : coupe le texte anglais de Babel (« Add @babel… »)
+  et ajoute une ligne « → … » en français (console et erreurs de tests). Cas vécu : `?? throw` (habitude PHP) en TypeScript.
+  Ajouter une ligne à `ERR_FR` pour chaque nouvelle erreur qu'Ana ne comprend pas.
+
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
 2. **Espace « Mes cours » (école)** — étape 1 faite (voir ci-dessus). Étape 2 faite aussi (fichiers, Ma semaine, emploi du temps ; réimporter l'emploi du temps après le 02/01/2027). Idée suivante possible : TD / cartes générés par Claude depuis les fichiers et notes d'un cours. — PAS seulement du code : management de projet, anglais, UX/UI, etc.

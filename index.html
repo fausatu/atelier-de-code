@@ -606,6 +606,8 @@ body.q-open .qfab { display: none; }
 .ed-hover { z-index: 78; max-width: min(460px, calc(100vw - 16px)); }
 .ed-sig code span.on { font-weight: 700; color: var(--accent); text-decoration: underline; }
 .ed-sig p { margin: 0; }
+.err-aide { color: var(--warn, #b7791f); white-space: pre-wrap; }
+.err-aide code { background: rgb(255 255 255 / 0.08); color: inherit; }
 /* En entreprise */
 .ent-nudge { width: 100%; text-align: left; font: inherit; cursor: pointer; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
 .ent-nudge:hover { border-color: var(--accent); }
@@ -1985,7 +1987,7 @@ function panelTD(m) {
 }
 function renderTests(t) {
   const pass = t.cases.filter((c) => c.ok).length;
-  return `<div class="tests"><div class="tsum ${pass === t.cases.length && !t.error ? "ok" : "ko"}">${t.error ? "Les tests n'ont pas pu tourner" : `${pass}/${t.cases.length} test${t.cases.length > 1 ? "s" : ""} réussi${pass > 1 ? "s" : ""}`}</div>${t.error ? `<div class="tcase fail"><span>${esc(t.error)}</span></div>` : ""}${t.cases.map((c) => `<div class="tcase ${c.ok ? "pass" : "fail"}"><span>${esc(c.name)}${c.detail ? `<span class="detail">${esc(c.detail)}</span>` : ""}</span></div>`).join("")}</div>`;
+  return `<div class="tests"><div class="tsum ${pass === t.cases.length && !t.error ? "ok" : "ko"}">${t.error ? "Les tests n'ont pas pu tourner" : `${pass}/${t.cases.length} test${t.cases.length > 1 ? "s" : ""} réussi${pass > 1 ? "s" : ""}`}</div>${t.error ? (() => { const fe = frErreur(t.error); return `<div class="tcase fail"><span>${esc(fe.court)}${fe.aide ? `<span class="detail">${inl(fe.aide)}</span>` : ""}</span></div>`; })() : ""}${t.cases.map((c) => `<div class="tcase ${c.ok ? "pass" : "fail"}"><span>${esc(c.name)}${c.detail ? `<span class="detail">${esc(c.detail)}</span>` : ""}</span></div>`).join("")}</div>`;
 }
 
 /* ---------- exécution du code ---------- */
@@ -2308,6 +2310,32 @@ const LIB_CACHE = {};
 function libText(url) {
   return LIB_CACHE[url] || (LIB_CACHE[url] = fetch(url).then((r) => { if (!r.ok) throw new Error(url + " (" + r.status + ")"); return r.text(); }).catch((e) => { delete LIB_CACHE[url]; throw e; }));
 }
+/* Erreurs de compilation / d'exécution : on coupe le blabla anglais de Babel et on ajoute une explication en français. */
+const ERR_FR = [
+  [/experimental syntax 'throwExpressions'/, "En JavaScript/TypeScript, `throw` ne peut pas se placer au milieu d'une expression (après `??`, dans un `? :` ou après `=>` sans accolades), contrairement à PHP où `$x ?? throw new …` est permis. Écris un `if` avant : `if (x === undefined) throw new Error('…');`, ou une fonction fléchée avec accolades : `() => { throw new Error('…'); }`."],
+  [/experimental syntax '(\w+)'/, "Cette syntaxe n'existe pas (encore) en JavaScript/TypeScript. Souvent une habitude de PHP : vérifie la ligne indiquée."],
+  [/Unexpected token,? expected "([^"]+)"/, "Il manque « $1 » à l'endroit indiqué (ligne:colonne). Regarde aussi la ligne juste au-dessus : une parenthèse, une accolade ou une virgule oubliée."],
+  [/Unexpected token/, "Caractère inattendu à l'endroit indiqué : souvent une parenthèse, une accolade, une virgule ou un guillemet oublié juste avant."],
+  [/Missing semicolon/, "Deux instructions se suivent sans séparation : il manque sans doute un `;`, une virgule, ou un opérateur entre les deux."],
+  [/Unterminated (string|template)/, "Un texte n'est pas fermé : il manque le guillemet (ou l'accent grave) de fin."],
+  [/Unexpected keyword '(\w+)'/, "Le mot-clé « $1 » n'est pas permis à cet endroit."],
+  [/'return' outside of function/, "Un `return` est en dehors de toute fonction : vérifie les accolades `{ }` au-dessus."],
+  [/Identifier '(\w+)' has already been declared/, "« $1 » est déclaré deux fois (deux `const`/`let`/`function` avec le même nom dans le même bloc)."],
+  [/Unexpected reserved word 'await'/, "`await` s'utilise seulement dans une fonction `async` : ajoute `async` devant la fonction qui le contient."],
+  [/Expected corresponding JSX closing tag for <(\w+)>/, "La balise `<$1>` n'est pas fermée (il faut `</$1>`, ou `<$1 />` si elle est vide)."],
+  [/Adjacent JSX elements must be wrapped/, "Un composant ne peut renvoyer qu'un seul élément : entoure-les d'un `<div>` ou d'un fragment `<>…</>`."],
+  [/(\w+) is not defined/, "« $1 » n'existe pas ici : faute de frappe, `import` oublié, ou variable déclarée dans un autre bloc."],
+  [/Cannot read propert(?:y|ies) of (undefined|null) \(reading '([^']+)'\)/, "Tu lis `.$2` sur une valeur `$1` : l'objet n'existe pas (encore). Vérifie d'où il vient, ou utilise `?.`."],
+  [/(\S+) is not a function/, "« $1 » n'est pas une fonction : mauvais nom, mauvais import (`{ x }` au lieu de `x`), ou la valeur n'est pas celle que tu crois."],
+  [/Assignment to constant variable/, "Tu modifies une variable déclarée avec `const` : utilise `let` si elle doit changer."],
+  [/Module introuvable/, "Le chemin de l'`import` ne correspond à aucun fichier : vérifie le nom et les `./` ou `../`."],
+];
+function frErreur(text) {
+  let court = String(text || "");
+  court = court.split(/\n(?:Add @babel|If you (?:already|want)|You can re-run Babel)/)[0].replace(/\s*\(https?:\/\/[^)]+\)/g, "").trim();
+  for (const [re, aide] of ERR_FR) { const m = court.match(re); if (m) return { court, aide: aide.replace(/\$(\d)/g, (_, i) => m[+i] || "") }; }
+  return { court, aide: "" };
+}
 function runJsFrame(m, td, key, withTests, rs, files, entry, libs) {
   const html = JS_RUNNER(files, entry, td.run.api || "", withTests ? td.run.tests || "" : "", libs, td.run.kind, td.run.start, { typecheck: !!td.run.typecheck, typetests: withTests ? td.run.typetests || "" : "" });
   const iframe = $("#prev-" + CSS.escape(key));
@@ -2316,7 +2344,7 @@ function runJsFrame(m, td, key, withTests, rs, files, entry, libs) {
   pendingRuns[key] = { onMsg(d) {
     if (d.type === "console") lines.push(`<span class="${d.level === "error" ? "err" : d.level === "warn" ? "warnl" : ""}">${esc(d.text)}</span>`);
     if (d.type === "net") lines.push(`<span class="dim">${esc(d.text)}</span>`);
-    if (d.type === "error") lines.push(`<span class="err">Erreur : ${esc(d.text)}</span>`);
+    if (d.type === "error") { const fe = frErreur(d.text); lines.push(`<span class="err">Erreur : ${esc(fe.court)}</span>${fe.aide ? `\n<span class="err-aide">→ ${inl(fe.aide)}</span>` : ""}`); }
     if (d.type === "ready") { rs.busy = false; rs.html = d.html || ""; const b = document.querySelector(`[data-act="run"][data-id="${CSS.escape(m.id)}"]`); if (b) { b.disabled = false; b.innerHTML = td.run.kind === "php" ? "▶ Exécuter le PHP" : td.run.kind === "git" || td.run.kind === "term" ? "▶ Lancer les commandes" : "▶ Exécuter"; } const tb = document.querySelector(`[data-act="runTests"][data-id="${CSS.escape(m.id)}"]`); if (tb) tb.disabled = false; }
     if (d.type === "tests") { rs.tests = { cases: d.cases || [], error: d.error }; if (!d.error && d.cases.length && d.cases.every((c) => c.ok)) logActivity(); const box = (document.getElementById("prev-" + key) || iframe).closest(".runout"); const old = box && box.querySelector(".tests"); if (old) old.remove(); if (box) box.insertAdjacentHTML("beforeend", renderTests(rs.tests)); }
     rs.console = lines.join("\n") || '<span class="dim">(aucune sortie console)</span>';
