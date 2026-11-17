@@ -587,6 +587,24 @@ body.q-open .qfab { display: none; }
 .q-ans { border-top: 1px dashed var(--line); padding-top: 8px; font-size: 0.92rem; }
 .q-ans .who { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .q-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Éditeur : complétion et aide aux paramètres */
+.ed-ac { position: fixed; z-index: 80; display: flex; align-items: flex-start; gap: 0; max-width: min(720px, calc(100vw - 16px)); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgb(31 38 51 / 0.2); overflow: hidden; font-size: 0.84rem; }
+.ed-ac[hidden], .ed-sig[hidden] { display: none; }
+.ed-ac ul { list-style: none; margin: 0; padding: 4px; min-width: 220px; max-width: 300px; }
+.ed-ac li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-family: var(--font-mono); white-space: nowrap; }
+.ed-ac li.on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.ac-ic { width: 16px; text-align: center; font-weight: 700; flex: none; }
+.ac-l { overflow: hidden; text-overflow: ellipsis; }
+.ac-fr { margin-left: auto; font: 600 0.68rem var(--font-sans, inherit); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); padding: 1px 5px; border-radius: 4px; }
+.ac-doc { border-left: 1px solid var(--line); padding: 10px 12px; width: 340px; max-height: 300px; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+.ac-doc code { font-size: 0.78rem; white-space: pre-wrap; word-break: break-word; background: none; padding: 0; color: var(--ink); }
+.ac-doc p { margin: 0; line-height: 1.45; }
+.ac-doc dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 8px; margin: 0; }
+.ac-doc dt, .ac-doc dd { margin: 0; font-size: 0.8rem; }
+.ed-sig { position: fixed; z-index: 79; max-width: min(560px, calc(100vw - 16px)); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgb(31 38 51 / 0.16); padding: 8px 12px; font-size: 0.82rem; display: flex; flex-direction: column; gap: 4px; }
+.ed-sig code { white-space: pre-wrap; background: none; padding: 0; color: var(--ink); font-size: 0.8rem; }
+.ed-sig code span.on { font-weight: 700; color: var(--accent); text-decoration: underline; }
+.ed-sig p { margin: 0; }
 /* En entreprise */
 .ent-nudge { width: 100%; text-align: left; font: inherit; cursor: pointer; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
 .ent-nudge:hover { border-color: var(--accent); }
@@ -4299,6 +4317,326 @@ function viewMission(id) {
     ${delRow("mission", id, "cette mission")}
   </div>`;
 }
+/* ---------- Éditeur : paires automatiques, indentation, complétion (comme VS Code), aide aux paramètres ---------- */
+const ED_PAIRS = { "(": ")", "[": "]", "{": "}", "'": "'", '"': '"', "`": "`" };
+const ED_QUOTES = new Set(["'", '"', "`"]);
+const ED_VOID = new Set(["input", "br", "img", "hr", "meta", "link", "source", "area", "col", "wbr"]);
+const PHP_KW = "abstract array as bool break case catch class clone const continue declare default do echo else elseif enum extends false final finally float fn for foreach function global if implements include instanceof insteadof int interface isset match mixed namespace new null parent private protected public readonly require require_once return self static string switch throw trait true try unset use void while yield".split(" ");
+function edFam(ta) { const l = ta.dataset.lang; return l === "php" ? "php" : l === "typescript" || l === "javascript" ? "js" : l; }
+function edPath(ta) { const p = ta.dataset.path || ""; return p || (ta.dataset.lang === "php" ? "index.php" : ta.dataset.lang === "typescript" ? "main.tsx" : ta.dataset.lang === "javascript" ? "main.js" : "fichier.txt"); }
+function edIns(ta, text, from, to, caret) {
+  ta.setSelectionRange(from, to);
+  let ok = false; try { ok = document.execCommand("insertText", false, text); } catch (e) {}
+  if (!ok || ta.value.slice(from, from + text.length) !== text) { ta.setRangeText(text, from, to, "end"); ta.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: text })); }
+  if (caret !== undefined) ta.setSelectionRange(from + caret, from + caret);
+}
+function edLineStart(v, i) { return v.lastIndexOf("\n", i - 1) + 1; }
+function edIndentOf(v, i) { const ls = edLineStart(v, i); return (v.slice(ls).match(/^[ \t]*/) || [""])[0]; }
+function edComment(ta) { const f = edFam(ta); return f === "js" || f === "php" || ta.dataset.lang === "java" || ta.dataset.lang === "scss" ? "//" : /^(bash|yaml|python|ini|powershell|dockerfile)$/.test(ta.dataset.lang || "") ? "#" : null; }
+function edLines(ta, fn) {
+  const v = ta.value, a = ta.selectionStart, b = ta.selectionEnd;
+  const s = edLineStart(v, a); let e = v.indexOf("\n", b > a && v[b - 1] === "\n" ? b - 1 : b); if (e < 0) e = v.length;
+  const lines = v.slice(s, e).split("\n"); const out = fn(lines);
+  const text = out.join("\n"); if (text === v.slice(s, e)) return;
+  edIns(ta, text, s, e); ta.setSelectionRange(s, s + text.length);
+}
+/* ---- touches ---- */
+function edKeydown(e, ta) {
+  const v = ta.value, a = ta.selectionStart, b = ta.selectionEnd, prev = v[a - 1] || "", next = v[a] || "";
+  if (edAc.open && edAc.ta === ta) {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); edAc.sel = (edAc.sel + (e.key === "ArrowDown" ? 1 : -1) + edAc.items.length) % edAc.items.length; edAcRender(); return true; }
+    if ((e.key === "Enter" || e.key === "Tab") && !e.shiftKey && !e.ctrlKey && !e.metaKey) { e.preventDefault(); edAccept(edAc.items[edAc.sel]); return true; }
+    if (e.key === "Escape") { e.preventDefault(); edAcClose(); return true; }
+  }
+  if (e.key === "Escape" && edSig.open) { e.preventDefault(); edSigClose(); return true; }
+  if ((e.ctrlKey || e.metaKey) && (e.key === " " || e.code === "Space")) { e.preventDefault(); edComplete(ta, true); return true; }
+  if ((e.ctrlKey || e.metaKey) && (e.key === "/" || e.code === "Slash")) {
+    const c = edComment(ta); if (!c) return false; e.preventDefault();
+    edLines(ta, (ls) => { const on = ls.filter((l) => l.trim()).every((l) => l.trimStart().startsWith(c)); return ls.map((l) => !l.trim() ? l : on ? l.replace(new RegExp("^(\\s*)" + c + " ?"), "$1") : l.replace(/^(\s*)/, "$1" + c + " ")); }); return true;
+  }
+  if (e.ctrlKey || e.metaKey || e.altKey) return false;
+  if (e.key === "Tab") {
+    e.preventDefault();
+    if (e.shiftKey) { edLines(ta, (ls) => ls.map((l) => l.replace(/^( {1,4}|\t)/, ""))); return true; }
+    if (v.slice(a, b).includes("\n")) { edLines(ta, (ls) => ls.map((l) => l.trim() ? "    " + l : l)); return true; }
+    edIns(ta, "    ", a, b); return true;
+  }
+  if (e.key === "Enter" && !e.shiftKey) {
+    if (a !== b) return false;
+    const ind = edIndentOf(v, a); const before = v.slice(edLineStart(v, a), a).trimEnd(); const opener = before.slice(-1);
+    const more = /[{[(]$/.test(before) || (edFam(ta) === "php" && /:\s*$/.test(before) && /\b(case|default)\b/.test(before)) || (/^(python|yaml)$/.test(ta.dataset.lang || "") && /:$/.test(before)) ? "    " : "";
+    e.preventDefault();
+    if (more && ED_PAIRS[opener] && next === ED_PAIRS[opener]) { const ins = "\n" + ind + more + "\n" + ind; edIns(ta, ins, a, b, 1 + ind.length + more.length); }
+    else edIns(ta, "\n" + ind + more, a, b);
+    return true;
+  }
+  if (e.key === "Backspace" && a === b && a > 0) {
+    if (ED_PAIRS[prev] && next === ED_PAIRS[prev] && (prev !== next || ED_QUOTES.has(prev))) { e.preventDefault(); edIns(ta, "", a - 1, a + 1); return true; }
+    const lead = v.slice(edLineStart(v, a), a);
+    if (lead.length >= 4 && /^ +$/.test(lead)) { e.preventDefault(); const n = lead.length % 4 || 4; edIns(ta, "", a - n, a); return true; }
+    return false;
+  }
+  if (e.key.length !== 1) return false;
+  const k = e.key;
+  if (ED_PAIRS[k] && a !== b && !(k === "'" && edFam(ta) === "bash")) { e.preventDefault(); const sel = v.slice(a, b); edIns(ta, k + sel + ED_PAIRS[k], a, b); ta.setSelectionRange(a + 1, a + 1 + sel.length); return true; }
+  if (ED_QUOTES.has(k)) {
+    if (next === k) { e.preventDefault(); ta.setSelectionRange(a + 1, a + 1); return true; }
+    if (/[\w\\]/.test(prev) || /\w/.test(next) || (k === "`" && !/^(js|markdown)$/.test(edFam(ta)))) return false;
+    if (edInString(v, a)) return false;
+    e.preventDefault(); edIns(ta, k + k, a, b, 1); return true;
+  }
+  if (k === "(" || k === "[" || k === "{") {
+    if (next && !/[\s)\]};,:]/.test(next)) return false;
+    e.preventDefault(); edIns(ta, k + ED_PAIRS[k], a, b, 1); return true;
+  }
+  if (k === ")" || k === "]" || k === "}") {
+    if (next === k) { e.preventDefault(); ta.setSelectionRange(a + 1, a + 1); if (k === ")") edSigUpdate(ta); return true; }
+    const lead = v.slice(edLineStart(v, a), a);
+    if (k === "}" && /^ {4,}$/.test(lead)) { e.preventDefault(); edIns(ta, "}", a - 4, a); return true; }
+    return false;
+  }
+  if (k === ">" && /\.(tsx|jsx|html|twig|xml|vue)$/.test(ta.dataset.path || "")) {
+    const before = v.slice(Math.max(0, a - 300), a); const m = before.match(/<([A-Za-z][\w.:-]*)(?:\s(?:[^<>{}]|\{[^{}]*\})*)?$/);
+    if (m && !before.endsWith("/") && !ED_VOID.has(m[1].toLowerCase()) && !/=$/.test(before)) { e.preventDefault(); edIns(ta, "></" + m[1] + ">", a, b, 1); return true; }
+  }
+  return false;
+}
+function edInString(v, a) {
+  const ls = edLineStart(v, a); const line = v.slice(ls, a); let q = null;
+  for (let i = 0; i < line.length; i++) { const c = line[i]; if (c === "\\") { i++; continue; } if (q) { if (c === q) q = null; } else if (ED_QUOTES.has(c)) q = c; }
+  return !!q;
+}
+/* ---- position du curseur à l'écran ---- */
+let edCw = 0;
+function edCaret(ta, pos) {
+  const cs = getComputedStyle(ta);
+  if (!edCw) { const c = document.createElement("canvas").getContext("2d"); c.font = cs.font; edCw = c.measureText("0000000000").width / 10 || 8.1; }
+  const v = ta.value; const ls = edLineStart(v, pos); const line = v.slice(0, ls).split("\n").length - 1; const col = pos - ls;
+  const r = ta.getBoundingClientRect(); const lh = parseFloat(cs.lineHeight) || 22;
+  return { x: r.left + parseFloat(cs.paddingLeft) + col * edCw - ta.scrollLeft, y: r.top + parseFloat(cs.paddingTop) + line * lh - ta.scrollTop, lh, r };
+}
+/* ---- service TypeScript (chargé au besoin) ---- */
+let edTsLoading = null;
+function edTsLoad() {
+  if (window.ts && window.__TS_LIBS && window.__TS_EXTRA) return Promise.resolve(true);
+  if (edTsLoading) return edTsLoading;
+  const load = (src) => new Promise((ok, ko) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = ko; document.head.appendChild(s); });
+  edTsLoading = (window.ts ? Promise.resolve() : load(BASE + "vendor/ts/typescript.js?v=1")).then(() => window.__TS_LIBS ? null : load(BASE + "vendor/ts/libs.js?v=1")).then(() => window.__TS_EXTRA ? null : load(BASE + "vendor/ts/atelier-types.js?v=1")).then(() => true).catch(() => { edTsLoading = null; return false; });
+  return edTsLoading;
+}
+const edTs = { ls: null, files: {}, ver: {} };
+function edTsService(ta) {
+  const ts = window.ts; if (!ts) return null;
+  const key = ta.dataset.ed; const tas = [...document.querySelectorAll("textarea.editor")].filter((x) => x.dataset.ed === key);
+  const files = {};
+  for (const x of tas) { if (edFam(x) !== "js" && !/\.(tsx?|jsx?|mjs)$/.test(x.dataset.path || "")) continue; files["/" + edPath(x).replace(/^\/+/, "")] = x.value; }
+  for (const [k, t] of Object.entries(files)) if (edTs.files[k] !== t) { edTs.files[k] = t; edTs.ver[k] = (edTs.ver[k] || 0) + 1; }
+  edTs.current = Object.keys(files);
+  if (!edTs.ls) {
+    const all = (f) => edTs.files[f] !== undefined && edTs.current.includes(f) ? edTs.files[f] : window.__TS_EXTRA[f] !== undefined ? window.__TS_EXTRA[f] : window.__TS_LIBS[f];
+    const host = {
+      getScriptFileNames: () => [...Object.keys(window.__TS_EXTRA), ...edTs.current],
+      getScriptVersion: (f) => String(edTs.ver[f] || 0),
+      getScriptSnapshot: (f) => { const t = all(f); return t === undefined ? undefined : ts.ScriptSnapshot.fromString(t); },
+      getCurrentDirectory: () => "/", getDefaultLibFileName: () => "/lib.d.ts",
+      getCompilationSettings: () => ({ strict: true, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true, skipLibCheck: true, allowJs: true, types: [], noEmit: true }),
+      fileExists: (f) => all(f) !== undefined, readFile: (f) => all(f), directoryExists: () => true, getDirectories: () => [],
+    };
+    edTs.ls = ts.createLanguageService(host, ts.createDocumentRegistry());
+  }
+  return { ls: edTs.ls, file: "/" + edPath(ta).replace(/^\/+/, "") };
+}
+const TS_KIND = { method: "m", function: "f", "local function": "f", property: "p", getter: "p", setter: "p", var: "v", let: "v", const: "v", "local var": "v", parameter: "v", class: "c", interface: "i", type: "t", enum: "e", "enum member": "e", module: "M", keyword: "k", alias: "a", "JSX attribute": "p", string: "s" };
+function memoFor(name, fam, member, recv) {
+  const pref = fam === "php" ? (member === "::" ? ["::"] : member ? ["->"] : ["fn:", "new:", "#"]) : member ? ["."] : ["fn:", "new:"];
+  return MEMO.items.find((e) => (MEMO_FAM[e.cat] || "js") === fam && (e.cles || []).some((k) => pref.some((p) => k === p + name) || (fam === "js" && member && recv && k === recv + "." + name))) || null;
+}
+function edRecv(v, dotPos) { const m = v.slice(Math.max(0, dotPos - 60), dotPos).match(/([\w$]+)\s*$/); return m ? m[1] : ""; }
+/* ---- complétion ---- */
+const edAc = { open: false, ta: null, items: [], sel: 0, start: 0, member: "", seq: 0 };
+function edContext(ta) {
+  const v = ta.value, pos = ta.selectionStart; const fam = edFam(ta);
+  const prefix = (v.slice(0, pos).match(fam === "php" ? /\$?[\w]*$/ : /[\w$]*$/) || [""])[0]; const start = pos - prefix.length;
+  const b4 = v.slice(Math.max(0, start - 3), start);
+  const member = fam === "php" ? (/(\?->|->)$/.test(b4) ? "->" : /::$/.test(b4) ? "::" : /#\[$/.test(v.slice(Math.max(0, start - 2), start)) ? "#" : "") : /\.$/.test(b4) && !/\.\.\.$/.test(v.slice(Math.max(0, start - 3), start)) ? "." : "";
+  const recv = member === "." ? edRecv(v, start - 1) : "";
+  return { v, pos, fam, prefix, start, member, recv };
+}
+function edWords(v, re, min) { const out = new Set(); let m; while ((m = re.exec(v))) if (m[1].length >= (min || 3)) out.add(m[1]); return [...out]; }
+function edPhpItems(ta, c) {
+  const all = [...document.querySelectorAll("textarea.editor")].filter((x) => x.dataset.ed === ta.dataset.ed && edFam(x) === "php").map((x) => x.value).join("\n");
+  const items = [];
+  const add = (label, kind, detail, doc, memo) => { if (!items.some((x) => x.label === label)) items.push({ label, kind, detail, doc, memo }); };
+  const sigOf = (re) => { const m = all.match(re); return m ? m[0].trim().replace(/\s*\{?\s*$/, "") : ""; };
+  if (c.member === "->") {
+    for (const n of edWords(all, /function\s+(\w+)\s*\(/g, 2)) if (!/^__/.test(n)) add(n, "m", sigOf(new RegExp("(?:public|protected|private)?\\s*(?:static\\s+)?function\\s+" + n + "\\s*\\([^)]*\\)[^{;]*")));
+    for (const n of edWords(all, /(?:public|protected|private)\s+(?:readonly\s+)?(?:\??[\w\\|]+\s+)?\$(\w+)/g, 1)) add(n, "p", "propriété $" + n);
+    for (const e of MEMO.items) if (MEMO_FAM[e.cat] === "php") for (const k of e.cles || []) if (k.startsWith("->")) add(k.slice(2), "m", e.sig, e.desc, e);
+  } else if (c.member === "::") {
+    for (const n of edWords(all, /\bcase\s+(\w+)/g, 1)) add(n, "e", "case " + n);
+    for (const n of edWords(all, /\bconst\s+(\w+)/g, 1)) add(n, "v", "const " + n);
+    for (const n of edWords(all, /static\s+function\s+(\w+)/g, 2)) add(n, "f", sigOf(new RegExp("static\\s+function\\s+" + n + "\\s*\\([^)]*\\)[^{;]*")));
+    add("class", "k", "le nom complet de la classe (texte)");
+    for (const e of MEMO.items) if (MEMO_FAM[e.cat] === "php") for (const k of e.cles || []) if (k.startsWith("::")) add(k.slice(2), "f", e.sig, e.desc, e);
+  } else if (c.member === "#") {
+    for (const e of MEMO.items) if (MEMO_FAM[e.cat] === "php") for (const k of e.cles || []) if (k.startsWith("#")) add(k.slice(1), "a", e.sig, e.desc, e);
+  } else if (c.prefix.startsWith("$")) {
+    for (const n of edWords(all, /(\$\w+)/g, 2)) add(n, "v", "variable");
+    add("$this", "v", "l'objet courant");
+  } else {
+    for (const e of MEMO.items) if (MEMO_FAM[e.cat] === "php") for (const k of e.cles || []) { if (k.startsWith("fn:")) add(k.slice(3), "f", e.sig, e.desc, e); else if (k.startsWith("new:")) add(k.slice(4), "c", e.sig, e.desc, e); }
+    for (const n of edWords(all, /\b(?:class|interface|enum|trait)\s+(\w+)/g, 2)) add(n, "c", "classe du projet");
+    for (const n of edWords(all, /\bfunction\s+(\w+)/g, 2)) add(n, "f", sigOf(new RegExp("function\\s+" + n + "\\s*\\([^)]*\\)[^{;]*")));
+    for (const k of PHP_KW) add(k, "k", "mot-clé PHP");
+    for (const n of edWords(all, /\b([A-Za-z_]\w{3,})\b/g, 4)) add(n, "w", "");
+  }
+  return items;
+}
+function edWordItems(ta, c) {
+  const all = [...document.querySelectorAll("textarea.editor")].filter((x) => x.dataset.ed === ta.dataset.ed).map((x) => x.value).join("\n");
+  return edWords(all, /\b([A-Za-z_][\w-]{2,})\b/g, 3).map((w) => ({ label: w, kind: "w", detail: "" }));
+}
+function edJsFallback(ta, c) {
+  const items = edWordItems(ta, c);
+  const extra = [];
+  for (const e of MEMO.items) if ((MEMO_FAM[e.cat] || "js") === "js") for (const k of e.cles || []) {
+    if (c.member && (k.startsWith(".") || k.startsWith(c.recv + "."))) extra.push({ label: k.split(".").pop(), kind: "m", detail: e.sig, doc: e.desc, memo: e });
+    if (!c.member && k.startsWith("fn:")) extra.push({ label: k.slice(3), kind: "f", detail: e.sig, doc: e.desc, memo: e });
+  }
+  return c.member ? extra : extra.concat(items);
+}
+function edFilter(items, prefix) {
+  const seen = new Set(); items = items.filter((x) => !seen.has(x.label) && seen.add(x.label));
+  const p = prefix.toLowerCase(); if (!p) return items.slice(0, 60);
+  const scored = [];
+  for (const it of items) {
+    const l = it.label.toLowerCase(); if (l === p && it.label === prefix && it.kind === "w") continue;
+    let s = l.startsWith(p) ? (it.label.startsWith(prefix) ? 0 : 1) : l.includes(p) ? 3 : null;
+    if (s === null) { let i = 0; for (const ch of l) if (ch === p[i]) i++; if (i === p.length) s = 5; }
+    if (s !== null) scored.push([s + (it.kind === "w" ? 2 : 0) + (it.sort || 0), it]);
+  }
+  return scored.sort((x, y) => x[0] - y[0] || x[1].label.length - y[1].label.length).slice(0, 60).map((x) => x[1]);
+}
+async function edComplete(ta, manual) {
+  const seq = ++edAc.seq; const c = edContext(ta);
+  if (!manual && !c.member && c.prefix.replace(/^\$/, "").length < (c.prefix.startsWith("$") ? 1 : 2)) { edAcClose(); return; }
+  if (edInString(c.v, c.start) && c.fam !== "php" && !c.member) { edAcClose(); return; }
+  let items = [];
+  if (c.fam === "js") {
+    const ready = await edTsLoad(); if (seq !== edAc.seq) return;
+    const sv = ready && edTsService(ta);
+    if (sv) {
+      let res = null; try { res = sv.ls.getCompletionsAtPosition(sv.file, c.pos, { includeCompletionsWithInsertText: true, includeCompletionsForModuleExports: false }); } catch (e) {}
+      if (res && res.entries.length) items = res.entries.filter((x) => x.kind !== "warning" && (!x.name.startsWith("_") || c.prefix.startsWith("_"))).map((x) => ({ label: x.name, kind: TS_KIND[x.kind] || "v", ts: x, sort: x.sortText && x.sortText > "11" ? 1 : 0, insert: x.insertText }));
+      if (c.member && !items.length) items = edJsFallback(ta, c);
+      if (!c.member && !c.prefix && !manual) items = [];
+    } else items = edJsFallback(ta, c);
+  } else if (c.fam === "php") items = edPhpItems(ta, c);
+  else items = edWordItems(ta, c);
+  if (seq !== edAc.seq) return;
+  const list = edFilter(items, c.prefix);
+  if (!list.length || (list.length === 1 && list[0].label === c.prefix && !manual)) { edAcClose(); return; }
+  Object.assign(edAc, { open: true, ta, items: list, sel: 0, start: c.start, member: c.member, recv: c.recv, fam: c.fam, pos: c.pos });
+  edAcRender();
+}
+function edDetail(it) {
+  if (it._d) return it._d;
+  let sig = it.detail || "", doc = it.doc || "", memo = it.memo || null;
+  if (it.ts && window.ts && edAc.ta) {
+    const sv = edTsService(edAc.ta);
+    try { const d = sv.ls.getCompletionEntryDetails(sv.file, edAc.pos, it.ts.name, {}, it.ts.source, undefined, it.ts.data); if (d) { sig = window.ts.displayPartsToString(d.displayParts); doc = window.ts.displayPartsToString(d.documentation); } } catch (e) {}
+    if (!memo) memo = memoFor(it.label, "js", edAc.member, edAc.recv);
+  }
+  if (memo && (!doc || /[a-z] the |Returns|Calls|Creates|Determines|Adds/.test(doc))) doc = memo.desc;
+  return (it._d = { sig, doc, memo });
+}
+const AC_ICON = { m: ["ƒ", "#7c4dbd"], f: ["ƒ", "#7c4dbd"], p: ["◆", "#2d72c4"], v: ["x", "#2d72c4"], c: ["C", "#c7792b"], i: ["I", "#2a8a7a"], t: ["T", "#2a8a7a"], e: ["E", "#c7792b"], M: ["{}", "#5d6779"], k: ["k", "#5d6779"], a: ["@", "#b5487a"], s: ["“", "#2f8a4f"], w: ["≡", "#8a93a3"] };
+function edAcRender() {
+  let box = $("#ed-ac"); if (!box) { box = document.createElement("div"); box.id = "ed-ac"; box.className = "ed-ac"; box.setAttribute("role", "listbox"); document.body.appendChild(box); }
+  const it = edAc.items[edAc.sel]; const d = edDetail(it);
+  const from = Math.max(0, Math.min(edAc.sel - 4, edAc.items.length - 9)); const shown = edAc.items.slice(from, from + 9);
+  box.innerHTML = `<ul>${shown.map((x, i) => { const [ic, col] = AC_ICON[x.kind] || AC_ICON.w; const k = from + i; return `<li class="${k === edAc.sel ? "on" : ""}" data-i="${k}" role="option" aria-selected="${k === edAc.sel}"><span class="ac-ic" style="color:${col}">${ic}</span><span class="ac-l">${esc(x.label)}</span></li>`; }).join("")}</ul>
+    ${d.sig || d.doc ? `<div class="ac-doc">${d.sig ? `<code>${esc(d.sig.length > 220 ? d.sig.slice(0, 220) + "…" : d.sig)}</code>` : ""}${d.doc ? `<p>${inl(d.doc.length > 400 ? d.doc.slice(0, 400) + "…" : d.doc)}</p>` : ""}${d.memo && d.memo.params && d.memo.params.length ? `<dl>${d.memo.params.slice(0, 4).map((p) => `<dt><code>${esc(p.n)}</code></dt><dd>${inl(p.d)}</dd>`).join("")}</dl>` : ""}<small class="muted">Entrée ou Tab pour insérer · Échap pour fermer</small></div>` : ""}`;
+  const p = edCaret(edAc.ta, edAc.start); box.hidden = false;
+  const W = box.offsetWidth, H = box.offsetHeight;
+  let x = Math.min(p.x, window.innerWidth - W - 8), y = p.y + p.lh;
+  if (y + H > window.innerHeight - 8) y = Math.max(8, p.y - H);
+  box.style.left = Math.max(8, x) + "px"; box.style.top = y + "px";
+}
+function edAcClose() { edAc.open = false; edAc.seq++; const b = $("#ed-ac"); if (b) b.hidden = true; }
+function edAccept(it) {
+  const ta = edAc.ta; if (!it || !ta) return;
+  const pos = ta.selectionStart; let text = it.insert || it.label;
+  const fn = it.kind === "m" || it.kind === "f"; const nextCh = ta.value[pos] || "";
+  edAcClose();
+  if (fn && nextCh !== "(" && !text.includes("(")) { edIns(ta, text + "()", edAc.start, pos, text.length + 1); edSigShow(ta); }
+  else edIns(ta, text, edAc.start, pos);
+}
+document.addEventListener("mousedown", (e) => {
+  const li = e.target.closest && e.target.closest("#ed-ac li"); if (li) { e.preventDefault(); edAc.sel = +li.dataset.i; edAccept(edAc.items[edAc.sel]); return; }
+  if (e.target.closest && e.target.closest("#ed-ac, #ed-sig")) { e.preventDefault(); return; }
+});
+/* ---- aide aux paramètres ---- */
+const edSig = { open: false, ta: null };
+function edCallAt(v, pos) {
+  let depth = 0, commas = 0, q = null;
+  for (let i = pos - 1; i >= 0 && pos - i < 2000; i--) {
+    const ch = v[i];
+    if (q) { if (ch === q && v[i - 1] !== "\\") q = null; continue; }
+    if (ED_QUOTES.has(ch)) { q = ch; continue; }
+    if (ch === ")" || ch === "]" || ch === "}") depth++;
+    else if (ch === "(" || ch === "[" || ch === "{") { if (depth === 0) { if (ch !== "(") return null; const m = v.slice(Math.max(0, i - 120), i).match(/(?:([\w$]+)\s*)?(new\s+\\?|->|::|\.|\?->)?\s*([\w$]+)\s*(?:<[^()]*?>)?\s*$/); return m ? { open: i, name: m[3], recv: m[1] || "", via: (m[2] || "").replace(/\s+/g, " ").trim(), arg: commas } : null; } depth--; }
+    else if (ch === "," && depth === 0) commas++;
+    else if (ch === ";" && depth === 0) return null;
+  }
+  return null;
+}
+async function edSigShow(ta) {
+  const pos = ta.selectionStart; const v = ta.value; const fam = edFam(ta); const call = edCallAt(v, pos);
+  if (!call) { edSigClose(); return; }
+  let html = "";
+  if (fam === "js" && (await edTsLoad())) {
+    const sv = edTsService(ta); let h = null;
+    try { h = sv.ls.getSignatureHelpItems(sv.file, pos, {}); } catch (e) {}
+    if (h && h.items.length) {
+      const it = h.items[h.selectedItemIndex] || h.items[0]; const ts = window.ts; const ai = h.argumentIndex;
+      const params = it.parameters.map((p, i) => `<span class="${i === ai ? "on" : ""}">${esc(ts.displayPartsToString(p.displayParts))}</span>`).join(esc(ts.displayPartsToString(it.separatorDisplayParts)));
+      const pd = it.parameters[ai] ? ts.displayPartsToString(it.parameters[ai].documentation) : ""; const memo = memoFor(call.name, "js", call.via === ".", call.recv);
+      const mp = memo && memo.params && memo.params[ai];
+      html = `<code>${esc(ts.displayPartsToString(it.prefixDisplayParts))}${params}${esc(ts.displayPartsToString(it.suffixDisplayParts))}</code>${mp ? `<p><b>${esc(mp.n)}</b> : ${inl(mp.d)}</p>` : pd ? `<p>${inl(pd)}</p>` : ""}${!mp && memo ? `<p class="muted">${inl(memo.desc.split(/(?<=\.)\s/)[0])}</p>` : !mp && !pd && it.documentation.length ? `<p class="muted">${inl(ts.displayPartsToString(it.documentation).slice(0, 200))}</p>` : ""}`;
+    }
+  }
+  if (!html) {
+    const via = call.via.startsWith("new") ? "new" : call.via === "->" || call.via === "?->" ? "->" : call.via === "::" ? "::" : call.via === "." ? "." : "";
+    const memo = MEMO.items.find((e) => (MEMO_FAM[e.cat] || "js") === (fam === "php" ? "php" : "js") && (e.cles || []).some((k) => k === (via === "new" ? "new:" : via === "->" ? "->" : via === "::" ? "::" : via === "." ? "." : "fn:") + call.name || (via === "." && k === call.recv + "." + call.name)));
+    let sig = memo ? memo.sig : "";
+    if (!sig && fam === "php") { const all = [...document.querySelectorAll("textarea.editor")].filter((x) => x.dataset.ed === ta.dataset.ed).map((x) => x.value).join("\n"); const m = all.match(new RegExp("function\\s+" + call.name + "\\s*\\(([^)]*)\\)[^{;]*")); if (m) sig = m[0].trim(); }
+    if (!sig) { edSigClose(); return; }
+    const mp = memo && memo.params && memo.params[call.arg];
+    html = `<code>${esc(sig.split("  ·  ")[0])}</code>${mp ? `<p><b>${esc(mp.n)}</b> : ${inl(mp.d)}</p>` : memo ? `<p class="muted">${inl(memo.desc.split(/(?<=\.)\s/)[0])}</p>` : ""}${memo && memo.params && memo.params.length > 1 ? `<small class="muted">paramètre ${call.arg + 1} sur ${memo.params.length}</small>` : ""}`;
+  }
+  if (document.activeElement !== ta) return;
+  let box = $("#ed-sig"); if (!box) { box = document.createElement("div"); box.id = "ed-sig"; box.className = "ed-sig"; document.body.appendChild(box); }
+  box.innerHTML = html; box.hidden = false; Object.assign(edSig, { open: true, ta, open_: call.open });
+  const p = edCaret(ta, call.open); const H = box.offsetHeight; const W = box.offsetWidth;
+  box.style.left = Math.max(8, Math.min(p.x, window.innerWidth - W - 8)) + "px"; box.style.top = (p.y - H - 4 > 8 ? p.y - H - 4 : p.y + p.lh + 4) + "px";
+}
+function edSigUpdate(ta) { if (edSig.open || edCallAt(ta.value, ta.selectionStart)) edSigShow(ta); }
+function edSigClose() { edSig.open = false; const b = $("#ed-sig"); if (b) b.hidden = true; }
+let edTimer = null;
+function edAfterInput(ta, e) {
+  const d = e.data || ""; const t = e.inputType || "";
+  if (t.startsWith("delete")) { if (edAc.open) edComplete(ta, false); if (edSig.open) edSigShow(ta); return; }
+  if (!t.startsWith("insert")) { edAcClose(); return; }
+  if (/[(,]/.test(d)) { edAcClose(); edSigShow(ta); return; }
+  if (d === ")" ) { edSigShow(ta); return; }
+  const last = d.slice(-1);
+  if (/[\w$.>:\[]/.test(last) && d.length <= 2) { clearTimeout(edTimer); edTimer = setTimeout(() => edComplete(ta, false), edFam(ta) === "js" ? 40 : 0); if (edSig.open) edSigShow(ta); }
+  else { edAcClose(); if (edSig.open) edSigShow(ta); }
+}
+document.addEventListener("focusout", (e) => { if (e.target.classList && e.target.classList.contains("editor")) setTimeout(() => { if (document.activeElement !== e.target) { edAcClose(); edSigClose(); } }, 120); });
+document.addEventListener("scroll", (e) => { if (!edAc.open && !edSig.open) return; if (e.target === edAc.ta || e.target === edSig.ta) { if (edAc.open) edAcRender(); if (edSig.open) edSigShow(e.target); } else { edAcClose(); edSigClose(); } }, true);
+document.addEventListener("focusin", (e) => { if (e.target.classList && e.target.classList.contains("editor") && edFam(e.target) === "js") edTsLoad(); });
 function render() {
   const r = currentRoute();
   let html;
@@ -4714,7 +5052,7 @@ document.addEventListener("input", (e) => {
   if (e.target.id === "q-filter") { state.ui.qFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#q-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.id === "dbg-filter") { state.ui.dbgFilter = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#dbg-filter"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
   if (e.target.classList.contains("hl")) { const ta = e.target; cancelAnimationFrame(paintRaf); paintRaf = requestAnimationFrame(() => paintEditor(ta)); }
-  if (e.target.classList.contains("editor")) { clearTimeout(draftTimer); draftTimer = setTimeout(keepDrafts, 600); const tab = e.target.closest(".files"); if (tab) { const idx = Array.from(tab.querySelectorAll(".fpane")).indexOf(e.target.closest(".fpane")); const t = tab.querySelector(`.ftab[data-i="${idx}"]`); if (t) t.classList.add("mod"); } }
+  if (e.target.classList.contains("editor")) { try { edAfterInput(e.target, e); } catch (err) { console.error(err); } clearTimeout(draftTimer); draftTimer = setTimeout(keepDrafts, 600); const tab = e.target.closest(".files"); if (tab) { const idx = Array.from(tab.querySelectorAll(".fpane")).indexOf(e.target.closest(".fpane")); const t = tab.querySelector(`.ftab[data-i="${idx}"]`); if (t) t.classList.add("mod"); } }
 });
 let nSelAtClick = "";
 document.addEventListener("mousedown", (e) => { if (e.target.closest && e.target.closest("#qfab")) qSelAtOpen = mainSelection(); if (e.target.closest && e.target.closest('[data-act="nQuote"]')) nSelAtClick = mainSelection(); }, true);
@@ -4749,7 +5087,7 @@ document.addEventListener("keydown", (e) => {
   }
   if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && el.closest && el.closest("#qpanel form[data-form=q]")) { e.preventDefault(); qSave(el.value, false); return; }
   if (el.classList && el.classList.contains("editor")) {
-    if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); el.setRangeText("    ", el.selectionStart, el.selectionEnd, "end"); el.dispatchEvent(new Event("input", { bubbles: true })); }
+    if (!((e.ctrlKey || e.metaKey) && e.key === "Enter") && !e.isComposing && edKeydown(e, el)) return;
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { const box = el.closest(".workbench"); const b = box && box.querySelector('[data-act="run"]'); if (b) { e.preventDefault(); b.click(); } }
   }
 });

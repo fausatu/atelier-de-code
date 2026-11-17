@@ -20,7 +20,7 @@
 - Commits : terminer par les lignes d'attribution Co-Authored-By / Claude-Session données par le système.
 
 ## État actuel (17/11/2026)
-17 parcours, 95 modules. Récemment : espace En entreprise (journal, missions, documents, captures Ctrl+V), règle « expliquer avant d'utiliser » (encadré auto), module axios, parcours Organiser un projet React, fil rouge complet (9 modules), mémo des méthodes (#methodes, méthodes cliquables dans le code), Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
+17 parcours, 95 modules. Récemment : éditeur avec paires auto, complétion et aide aux paramètres, espace En entreprise (journal, missions, documents, captures Ctrl+V), règle « expliquer avant d'utiliser » (encadré auto), module axios, parcours Organiser un projet React, fil rouge complet (9 modules), mémo des méthodes (#methodes, méthodes cliquables dans le code), Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
 tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barre latérale allégée (outils en icônes, « Mes parcours »).
 
 ## Calendrier (fait le 16/11)
@@ -195,6 +195,21 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 - Idées suivantes (proposées à Ana le 17/11, pas encore faites) : suivi tuteur (points d'étape, objectifs, prépa des questions),
   rapport d'entreprise et mémoire (plan + aide à la rédaction par Claude depuis le journal et les missions, problématiques pour la
   note d'intention), glossaire de l'entreprise (→ cartes mémo), grille de compétences. Ana n'a pas encore dit quel type d'entreprise.
+
+## Éditeur comme VS Code (fait le 17/11)
+- Bloc « Éditeur : paires automatiques… » de template.html : `edKeydown` (appelé par le keydown des `textarea.editor`) et
+  `edAfterInput` (appelé par leur input). Les insertions passent par `edIns` (`execCommand("insertText")` → Ctrl+Z marche).
+- Paires auto `() [] {} '' "" \`\`` (pas devant un mot, pas dans une chaîne), sauter le fermant, Retour arrière entre une paire
+  vide, entourer une sélection ; Entrée garde l'indentation (+4 après `{ [ (`, bloc ouvert entre `{}`), `}` désindente ;
+  Tab/Maj+Tab sur plusieurs lignes ; Ctrl+/ commente ; `>` ferme la balise JSX/HTML (`.tsx/.jsx/.html`).
+- Complétion (popup `#ed-ac`, ↑↓ Entrée/Tab Échap, Ctrl+Espace pour forcer) :
+  - TS/JS : vrai service de langage TypeScript (`vendor/ts/typescript.js` + `libs.js` chargés au 1er focus, ~4,6 Mo en cache)
+    sur les fichiers du même TD, + **types simplifiés en français** pour axios, TanStack Query, zod, React Hook Form,
+    @hookform/resolvers/zod dans `vendor/ts/atelier-types.js` (sources : `declare module` ; régénérer ce fichier si on les modifie).
+    Si TS ne trouve rien après un `.`, repli sur le mémo. Fiche du mémo (français) prioritaire sur la doc anglaise de lib.d.ts.
+  - PHP : méthodes/propriétés/classes/fonctions déclarées dans les fichiers, `$variables`, fiches du mémo (`fn:`, `->`, `::`, `#`), mots-clés.
+- Aide aux paramètres (`#ed-sig`) à `(` et `,` : TS `getSignatureHelpItems`, sinon signature du mémo / de la fonction du fichier,
+  paramètre courant en gras + explication du mémo. `memoFor(name, fam, member, recv)` exige le bon objet pour les clés `Math.min`, `api.get`…
 
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
