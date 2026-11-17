@@ -2275,8 +2275,10 @@ const JS_RUNNER = (files, entry, apiCode, tests, libs, kind, start, opts) => `<!
   async function runTests(src) {
     const cases = []; let error = null;
     const assert = (cond, name, detail) => { cases.push({ ok: !!cond, name: name || "assertion", detail: cond ? "" : (detail || "") }); };
-    assert.equal = (a, b, name) => assert(a === b, name, "attendu : " + JSON.stringify(b) + " · obtenu : " + JSON.stringify(a));
-    assert.includes = (hay, needle, name) => assert(String(hay).includes(needle), name, "introuvable : " + JSON.stringify(needle));
+    // « … » (un seul caractère) et « ... » (trois points) comptent pareil : personne ne tape … au clavier.
+    const dots = (x) => typeof x === "string" ? x.split("...").join("…") : x;
+    assert.equal = (a, b, name) => assert(a === b || (typeof a === "string" && typeof b === "string" && dots(a) === dots(b)), name, "attendu : " + JSON.stringify(b) + " · obtenu : " + JSON.stringify(a));
+    assert.includes = (hay, needle, name) => assert(dots(String(hay)).includes(dots(String(needle))), name, "introuvable : " + JSON.stringify(needle));
     const deepEq = (x, y) => { if (x === y) return true; if (typeof x !== "object" || typeof y !== "object" || !x || !y) return false; if (Array.isArray(x) !== Array.isArray(y)) return false; const kx = Object.keys(x).filter((k) => x[k] !== undefined), ky = Object.keys(y).filter((k) => y[k] !== undefined); if (kx.length !== ky.length) return false; return kx.every((k) => deepEq(x[k], y[k])); };
     assert.deepEqual = (a, b, name, detail) => assert(deepEq(a, b), name, detail || ("attendu : " + JSON.stringify(b) + " · obtenu : " + JSON.stringify(a)));
     assert.noTypeErrors = (name, file) => { const e = TS_DIAG.filter((d) => d.file !== "verif-types.tsx" && (!file || d.file === file)); assert(e.length === 0, name || "Aucune erreur de type", e.slice(0, 3).map((d) => d.file + ":" + d.line + " TS" + d.code + " " + d.message).join(" · ")); };

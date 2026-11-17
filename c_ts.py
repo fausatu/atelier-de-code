@@ -585,7 +585,7 @@ formater(undefined);
     TD(2, "Union discriminée : les moyens de paiement",
        "Décris les moyens de paiement avec une union discriminée, puis écris les fonctions avec un `switch` **exhaustif**." + TS,
        ["`type Paiement` : `{ type: 'carte'; numero: string; expire: string }`, `{ type: 'virement'; iban: string }`, `{ type: 'especes' }`",
-        "`libelle(p)` : `Carte ****1234` (4 derniers chiffres), `Virement FR76…` (4 premiers caractères de l'IBAN + `…`), `Espèces`",
+        "`libelle(p)` : `Carte ****1234` (4 derniers chiffres), `Virement FR76…` (4 premiers caractères de l'IBAN + `…`, le caractère « points de suspension » ; trois points `...` sont aussi acceptés), `Espèces`",
         "`frais(p, montant)` : carte 1,5 % (arrondi au centime), virement 0, espèces 0 au-delà de 1000 € → erreur `Espèces limitées à 1000 €`",
         "Chaque `switch` a un `default` qui assigne `p` à une variable de type `never`"],
        [F("paiement.ts", "ts", r"""
@@ -646,7 +646,7 @@ const src = source('paiement.ts');
 assert((src.match(/:\s*never\s*=/g) || []).length >= 2, 'Les deux switch ont un default exhaustif (variable de type never)');
 const { libelle, frais } = require('./paiement');
 assert.equal(libelle({ type: 'carte', numero: '4970123412341234', expire: '12/28' }), 'Carte ****1234', 'carte');
-assert.equal(libelle({ type: 'virement', iban: 'FR7630001007941234567890185' }), 'Virement FR76…', 'virement');
+{ const v = libelle({ type: 'virement', iban: 'FR7630001007941234567890185' }); assert(v === 'Virement FR76…' || v === 'Virement FR76...', 'virement : « Virement FR76… » (ou avec trois points « ... »)', 'obtenu : ' + JSON.stringify(v)); }
 assert.equal(libelle({ type: 'especes' }), 'Espèces', 'espèces');
 assert.equal(frais({ type: 'carte', numero: '1', expire: '1' }, 99.99), 1.5, 'frais carte 1,5 % de 99,99 € → 1,50');
 assert.equal(frais({ type: 'virement', iban: 'FR' }, 500), 0, 'frais virement 0');

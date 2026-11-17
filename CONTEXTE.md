@@ -229,6 +229,10 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   et ajoute une ligne « → … » en français (console et erreurs de tests). Cas vécu : `?? throw` (habitude PHP) en TypeScript.
   Ajouter une ligne à `ERR_FR` pour chaque nouvelle erreur qu'Ana ne comprend pas.
 
+## Tests : « … » = « ... » (17/11)
+- Dans le runner, `assert.equal` et `assert.includes` considèrent « … » (U+2026) et « ... » comme égaux (`dots`). Les comparaisons
+  `textContent === 'Envoi…'` de c_forms.py normalisent aussi. Ne pas exiger de caractère qu'on ne tape pas au clavier.
+
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
 2. **Espace « Mes cours » (école)** — étape 1 faite (voir ci-dessus). Étape 2 faite aussi (fichiers, Ma semaine, emploi du temps ; réimporter l'emploi du temps après le 02/01/2027). Idée suivante possible : TD / cartes générés par Claude depuis les fichiers et notes d'un cours. — PAS seulement du code : management de projet, anglais, UX/UI, etc.
