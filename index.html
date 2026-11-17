@@ -4355,7 +4355,10 @@ function edKeydown(e, ta) {
     const c = edComment(ta); if (!c) return false; e.preventDefault();
     edLines(ta, (ls) => { const on = ls.filter((l) => l.trim()).every((l) => l.trimStart().startsWith(c)); return ls.map((l) => !l.trim() ? l : on ? l.replace(new RegExp("^(\\s*)" + c + " ?"), "$1") : l.replace(/^(\s*)/, "$1" + c + " ")); }); return true;
   }
-  if (e.ctrlKey || e.metaKey || e.altKey) return false;
+  // AltGr (clavier AZERTY sous Windows : { [ ] } | @) arrive comme Ctrl+Alt ; sur Mac, { [ viennent d'Option : on garde ces caractères.
+  const altGr = (e.getModifierState && e.getModifierState("AltGraph")) || (e.ctrlKey && e.altKey);
+  if (e.metaKey || (e.ctrlKey && !altGr)) return false;
+  if (e.altKey && !altGr && e.key.length !== 1) return false;
   if (e.key === "Tab") {
     e.preventDefault();
     if (e.shiftKey) { edLines(ta, (ls) => ls.map((l) => l.replace(/^( {1,4}|\t)/, ""))); return true; }

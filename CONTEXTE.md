@@ -199,7 +199,7 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 ## Éditeur comme VS Code (fait le 17/11)
 - Bloc « Éditeur : paires automatiques… » de template.html : `edKeydown` (appelé par le keydown des `textarea.editor`) et
   `edAfterInput` (appelé par leur input). Les insertions passent par `edIns` (`execCommand("insertText")` → Ctrl+Z marche).
-- Paires auto `() [] {} '' "" \`\`` (pas devant un mot, pas dans une chaîne), sauter le fermant, Retour arrière entre une paire
+- Paires auto (AltGr = Ctrl+Alt sous Windows et Option sur Mac acceptés, pour { [ en AZERTY) `() [] {} '' "" \`\`` (pas devant un mot, pas dans une chaîne), sauter le fermant, Retour arrière entre une paire
   vide, entourer une sélection ; Entrée garde l'indentation (+4 après `{ [ (`, bloc ouvert entre `{}`), `}` désindente ;
   Tab/Maj+Tab sur plusieurs lignes ; Ctrl+/ commente ; `>` ferme la balise JSX/HTML (`.tsx/.jsx/.html`).
 - Complétion (popup `#ed-ac`, ↑↓ Entrée/Tab Échap, Ctrl+Espace pour forcer) :
