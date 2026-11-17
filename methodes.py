@@ -183,15 +183,15 @@ E("enum_from", "php", "Enum::from / tryFrom / ->value", ["::from", "::tryFrom", 
   "Genre::from('animation');\nGenre::tryFrom('horreur');\nGenre::Animation->value;", "Genre::Animation\nnull\n'animation'")
 E("enum_cases", "php", "Enum::cases", ["::cases"], "Forfait::cases(): array", "Liste tous les cas d'un enum.", [], "un tableau de cas",
   "array_map(fn($f) => $f->value, Forfait::cases());", "['essentiel', 'standard', 'premium']")
-E("first_class", "php", "fonction(...) (callable)", [], "MaClasse::methode(...)",
+E("first_class", "php", "fonction(...) (callable)", ["re:[\\w>:]\\(\\.\\.\\.\\)"], "MaClasse::methode(...)",
   "Les `(...)` après un nom de fonction ne l'appellent pas : ils en font une valeur qu'on passe à une autre fonction.",
   [], "un objet `Closure`", "array_map(FilmCard::fromEntity(...), $films);\n// équivaut à : array_map(fn($f) => FilmCard::fromEntity($f), $films)")
 E("declare", "php", "declare(strict_types=1)", ["fn:declare"], "declare(strict_types=1);",
   "En haut d'un fichier : PHP refuse les conversions automatiques (passer `'12'` à un paramètre `int` devient une erreur).", [], "rien",
   "declare(strict_types=1);\nfunction age(int $a) {}\nage('12');   // TypeError")
-E("instanceof", "php", "instanceof", [], "$objet instanceof NomDeClasse", "Teste si un objet est d'une classe (ou l'implémente).", [], "`true` ou `false`",
+E("instanceof", "php", "instanceof", ["re:\\binstanceof\\b"], "$objet instanceof NomDeClasse", "Teste si un objet est d'une classe (ou l'implémente).", [], "`true` ou `false`",
   "$e instanceof \\DomainException;")
-E("nullsafe", "php", "?? , ??= et ?->", [], "$a ?? $b   ·   $x ??= $defaut   ·   $objet?->methode()",
+E("nullsafe", "php", "?? , ??= et ?->", ["re:\\?\\?|\\?->"], "$a ?? $b   ·   $x ??= $defaut   ·   $objet?->methode()",
   "`??` : la valeur de gauche si elle existe et n'est pas null, sinon celle de droite. `??=` : donne une valeur seulement si c'est null. `?->` : appelle la méthode seulement si l'objet n'est pas null.",
   [], "", "$page = $data['page'] ?? 1;\n$filtres ??= new CatalogueFiltres();\n$v?->getPosition();   // null si $v est null")
 E("match", "php", "match", ["fn:match"], "match ($valeur) { cas => résultat, … }",
@@ -345,7 +345,7 @@ E("js_join", "js", ".join / .split", [".join", ".split"], "tableau.join(separate
 E("js_foreach", "js", ".forEach", [".forEach"], "tableau.forEach((element) => { ... })",
   "Exécute une action pour chaque élément (sans rien renvoyer).", [("element", "l'élément")], "`undefined`",
   "erreurs.forEach((e) => console.log(e.message));", piege="Pour transformer, utilise `map` ; pour garder, `filter`.")
-E("js_spread", "js", "... (décomposition)", [], "[...tableau, element]  ·  { ...objet, champ: valeur }",
+E("js_spread", "js", "... (décomposition)", ["re:(?<![.\\w])\\.\\.\\.[\\w\\[{(]"], "[...tableau, element]  ·  { ...objet, champ: valeur }",
   "Copie le contenu d'un tableau ou d'un objet dans un nouveau. C'est la façon de « modifier » un state React sans le muter.", [], "",
   "setListe([...liste, nouveau]);\nsetForm({ ...form, nom: 'Léo' });")
 E("object_keys", "js", "Object.keys / entries / values", ["Object.keys", "Object.entries", "Object.values", "Object.fromEntries"], "Object.entries(objet)",
@@ -411,7 +411,7 @@ E("then", "js", ".then / .catch / .finally", [".then", ".catch", ".finally"], "p
   "Ce qu'on fait quand une promesse se termine : avec le résultat (`then`), en cas d'erreur (`catch`), dans tous les cas (`finally`).",
   [("succes", "reçoit le résultat"), ("erreur", "reçoit l'erreur"), ("toujours", "pour arrêter un « Chargement… »")], "une nouvelle promesse",
   "api.get('/films').then((r) => setFilms(r.data)).catch(() => setErreur('…')).finally(() => setLoading(false));")
-E("async_await", "js", "async / await", [], "async function f() { const x = await promesse; }",
+E("async_await", "js", "async / await", ["re:\\bawait\\b"], "async function f() { const x = await promesse; }",
   "`await` attend la fin d'une promesse et donne son résultat ; seulement dans une fonction `async`. Les erreurs s'attrapent avec `try/catch`.", [], "",
   "async function getFilms() {\n  const r = await api.get('/films');\n  return r.data;\n}")
 E("promise", "js", "Promise / Promise.all", ["new:Promise", "Promise.all", "Promise.resolve", "Promise.reject"], "Promise.all([p1, p2])",
@@ -497,7 +497,7 @@ E("register", "formulaires", "register", ["fn:register", ".register"], "<input {
 E("handlesubmit", "formulaires", "handleSubmit", ["fn:handleSubmit", ".handleSubmit"], "<form onSubmit={handleSubmit(envoyer)}>",
   "Valide tout le formulaire, puis appelle ta fonction avec les valeurs propres **seulement si c'est valide**.", [("envoyer", "ta fonction, reçoit les valeurs")], "un gestionnaire pour `onSubmit`",
   "<form onSubmit={handleSubmit((v) => creer.mutate(v))}>")
-E("seterror", "formulaires", "setError / reset", ["fn:setError", ".setError", "fn:reset", ".reset"], "setError('champ', { message })  ·  reset(valeurs?)",
+E("seterror", "formulaires", "setError / reset", [".setError", ".reset"], "setError('champ', { message })  ·  reset(valeurs?)",
   "`setError` place une erreur sur un champ (par exemple renvoyée par l'API) ; `reset` remet le formulaire à zéro (ou à des valeurs).", [], "",
   "setError('nom', { message: 'Le profil Léo existe déjà' });\nreset();")
 E("zodresolver", "formulaires", "zodResolver", ["fn:zodResolver"], "zodResolver(schema)", "Fait le lien entre un schéma zod et React Hook Form.", [("schema", "le schéma `z.object(...)`")], "un resolver",
@@ -529,8 +529,24 @@ E("redirect", "next", "redirect", ["fn:redirect"], "redirect(chemin)", "Redirige
 E("userouter", "next", "useRouter / usePathname / useSearchParams", ["fn:useRouter", "fn:usePathname", "fn:useSearchParams"], "const router = useRouter()",
   "Dans un Client Component : naviguer (`router.push('/films')`), lire l'URL actuelle (`usePathname`) ou ses paramètres (`useSearchParams`).", [], "",
   "'use client';\nconst router = useRouter();\nrouter.push('/films?genre=animation');")
-E("use_client", "next", "'use client' / 'use server'", [], "'use client';  ·  'use server';",
+E("use_client", "next", "'use client' / 'use server'", ["re:^\\s*['\"]use (client|server)['\"]"], "'use client';  ·  'use server';",
   "En haut d'un fichier : `'use client'` = composant exécuté dans le navigateur (state, clics) ; `'use server'` = fonctions exécutées sur le serveur (Server Actions).", [], "",
   "'use client';\nimport { useState } from 'react';")
+
+E("js_optional", "js", "?. et ?? (valeurs absentes)", ["re:\\?\\.[\\w\\[(]|\\?\\?"], "objet?.champ  ·  valeur ?? parDefaut",
+  "`?.` lit un champ (ou appelle une fonction) seulement si ce qui est à gauche n'est ni `null` ni `undefined` ; sinon le résultat vaut `undefined` au lieu de planter. `??` donne la valeur de droite quand celle de gauche est `null` ou `undefined`.",
+  [], "", "const ville = user?.adresse?.ville;   // undefined si pas d'adresse\nconst page = params.page ?? 1;", res="undefined, puis 1 si page est absent",
+  piege="`??` ne remplace pas `0` ni `''` (contrairement à `||`) : `0 ?? 5` vaut `0`, `0 || 5` vaut `5`.")
+E("js_destructuring", "js", "Déstructuration { a } = objet", ["re:\\b(const|let)\\s*[{\\[]"], "const { a, b } = objet;  ·  const [x, setX] = tableau;",
+  "Sort des valeurs d'un objet (par leur nom) ou d'un tableau (par leur position) dans des variables, en une ligne. Marche aussi dans les paramètres d'une fonction : `function Carte({ titre })`.",
+  [], "", "const { titre, duree } = film;\nconst [premier, second] = ['a', 'b'];\nconst [compte, setCompte] = useState(0);", res="titre et duree contiennent film.titre et film.duree ; premier = 'a'",
+  piege="Un nom qui n'existe pas dans l'objet donne `undefined`, sans erreur. Tu peux renommer : `const { titre: nom } = film`.")
+E("js_arrow", "js", "Fonction fléchée () =>", ["re:=>"], "(a, b) => a + b  ·  (x) => { ...; return y; }",
+  "Une façon courte d'écrire une fonction. Sans accolades, la valeur après `=>` est renvoyée directement ; avec accolades, il faut `return`.",
+  [], "", "const double = (n) => n * 2;\nconst ids = films.map((f) => f.id);", res="double(4) → 8",
+  piege="Pour renvoyer un objet sans accolades de bloc, entoure-le de parenthèses : `() => ({ id: 1 })`.")
+E("js_template", "js", "Texte avec ${…} (template literal)", ["re:`[^`]*\\$\\{"], "`Bonjour ${nom}`",
+  "Un texte entouré d'accents graves (touche AltGr + 7 sur un clavier AZERTY) au lieu de guillemets, dans lequel `${...}` insère la valeur d'une expression.",
+  [], "", "const url = `/api/films/${id}`;", res="'/api/films/3' si id vaut 3")
 
 METHODES = M

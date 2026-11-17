@@ -98,6 +98,8 @@ Dans les TD, après avoir lancé ton fichier de commandes, tu peux taper directe
 PowerShell connaît beaucoup d'alias « à la Linux » (`ls`, `cd`, `pwd`, `cat`, `rm`…), mais ce sont ses propres commandes derrière : les options sont différentes (`ls -la` ne marche pas dans PowerShell).
 """),
     L("Chemins absolus, relatifs, ~, . et ..", r"""
+Un **chemin** indique où se trouve un fichier. Il est **absolu** s'il part de la racine (`/` sous Linux et macOS, `C:\` sous Windows) ou de ton dossier personnel (`~`), et **relatif** s'il part du dossier où tu te trouves. Dans un chemin relatif, `.` veut dire « ici » et `..` « le dossier parent ». Voici une arborescence d'exemple, puis plusieurs chemins qui mènent au même endroit.
+
 ```
 /home/ana                       ← ~ (ton dossier personnel)
 └── projets
@@ -739,6 +741,8 @@ Pour le cas 3 : `export PATH="$HOME/outils/bin:$PATH"` (on **ajoute** devant, on
 Sous Windows, le PATH se sépare avec `;` et se voit avec `$env:Path`.
 """),
     L("Écrire et lancer un script", r"""
+Un **script** est un fichier texte qui contient des commandes, exécutées l'une après l'autre. Avant de lire le premier : la ligne `#!/usr/bin/env bash` (le *shebang*) dit quel programme doit l'exécuter ; `$1` est le premier argument donné au lancement (`./sauvegarde.sh v1` → `$1` vaut `v1`) ; `mkdir -p` crée un dossier (et ses parents) sans erreur s'il existe déjà ; `cp -r` copie un dossier entier. Ensuite, la façon de le lancer.
+
 ```bash
 #!/usr/bin/env bash
 # sauvegarde.sh : copie src dans sauvegardes/<nom>

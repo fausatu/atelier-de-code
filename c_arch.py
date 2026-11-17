@@ -1000,6 +1000,7 @@ err = V2(v1["arch-erreurs"],
     P("Exception métier", "Une exception qui nomme une règle du métier : `LivreIndisponible`, `QuotaEmpruntsAtteint`. Elle ne parle pas de HTTP."),
     P("`#[WithHttpStatus]`", "Attribut posé sur une classe d'exception (Symfony 6.3+) : quand elle remonte jusqu'à Symfony, la réponse a ce statut."),
     P("Listener", "Une classe que Symfony appelle quand un événement se produit. L'événement `kernel.exception` survient quand une exception n'a pas été attrapée."),
+    P("axios (côté front)", "La librairie qui envoie les requêtes depuis React (détaillée dans le parcours Données & API). `axios.create({ baseURL: '/api' })` crée un client dont toutes les URL commencent par `/api`. Si le serveur répond 4xx ou 5xx, axios **lève une erreur** : `axios.isAxiosError(err)` dit si elle vient d'axios, `err.response.status` donne le statut et `err.response.data` le corps JSON."),
     P("Codes 4xx", "400 requête mal formée, 401 non connecté, 403 interdit, 404 introuvable, 409 conflit avec l'état actuel, 422 données invalides."),
   ],
   diagram=D(
@@ -1066,7 +1067,14 @@ Pourquoi ne pas lever directement une `ConflictHttpException` dans l'entité ? P
     L("Un format d'erreur stable pour le front : le listener", r"""
 Pour que le front affiche le bon message, deux 409 doivent être distinguables (« déjà emprunté » ≠ « quota atteint »). Comparer les textes est fragile (ils changent, ils sont traduits). Mieux : un **code** stable dans chaque réponse d'erreur.
 
-On centralise le format avec un **listener** sur l'événement `kernel.exception` :
+On centralise le format avec un **listener** : une classe que Symfony appelle tout seul quand un **événement** se produit. Ici l'événement est `kernel.exception`, déclenché chaque fois qu'une exception sort d'un contrôleur sans avoir été attrapée. Ce qu'il faut savoir pour lire le code :
+
+- `#[AsEventListener(event: 'kernel.exception')]` : l'attribut qui inscrit la classe comme listener de cet événement. Pas de configuration ailleurs.
+- `__invoke(ExceptionEvent $event)` : la méthode appelée par Symfony (une classe avec `__invoke` s'utilise comme une fonction). `$event` transporte l'exception.
+- `$event->getThrowable()` : récupère l'exception levée.
+- `instanceof ErreurMetier` : vrai si l'exception est une de nos erreurs métier (une classe qui hérite de `ErreurMetier`). Les autres, on n'y touche pas.
+- `$e->getMessage()` : le texte passé au constructeur de l'exception.
+- `$event->setResponse(new JsonResponse([...], $statut))` : remplace la page d'erreur par une réponse JSON, avec le statut voulu.
 
 ```php
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -1087,7 +1095,7 @@ final class ErreurMetierListener
 }
 ```
 
-Côté React (parcours Données & API), on teste alors `err.response.data.code === 'QUOTA_ATTEINT'` au lieu du texte. Les autres exceptions (bugs) continuent vers la page d'erreur 500 normale ; en production, leur message n'est jamais montré.
+Côté React, on teste alors le **code** reçu au lieu du texte. Avec axios (la librairie qui envoie les requêtes, vue en détail dans le parcours Données & API), une réponse d'erreur arrive dans `err.response` : son statut est `err.response.status` et son corps JSON `err.response.data`. Le test devient donc `err.response.data.code === 'QUOTA_ATTEINT'`. Les autres exceptions (bugs) continuent vers la page d'erreur 500 normale ; en production, leur message n'est jamais montré.
 """),
   ],
   recap=[
@@ -1498,6 +1506,14 @@ bout = V2(v1["arch-bout-en-bout"],
     lanes=[LANE("Navigateur (React)", 0, 0, "accent"), LANE("Serveur (Symfony)", 2, 2, "tc")],
     caption="Les deux côtés en miroir : composant ↔ contrôleur, hook ↔ service, api/ ↔ repository. Le DTO est le contrat au milieu."),
   lessons=[
+    L("Côté front : les quatre outils du code de ce module", r"""
+Ce module montre une fonctionnalité **entière**, back **et** front. Le back, tu le connais. Côté React, le code utilise quatre outils, présentés ici en une phrase chacun (ils ont leur propre module dans les parcours React et Données & API, et chaque nom est cliquable dans le code pour sa fiche complète) :
+
+- **`useState`** : la mémoire d'un composant. `const [note, setNote] = useState(0)` donne la valeur actuelle (`note`) et la fonction qui la change (`setNote`) ; chaque changement redessine le composant.
+- **`useEffect`** : lance du code **après** l'affichage, par exemple un chargement. Avec `[]` en second argument : une seule fois, à l'arrivée du composant.
+- **axios** : envoie les requêtes. `api.post('/livres/7/notes', { note: 4 })` envoie un `POST` avec ce JSON ; la réponse est dans `res.data`. Sur une réponse 4xx/5xx, axios lève une erreur dont le statut est `err.response.status`.
+- **TanStack Query** (`useMutation`, `useQueryClient`) : gère l'envoi pour toi. `useMutation({ mutationFn, onSuccess })` donne un objet `noter` : `noter.mutate(4)` lance l'envoi, `noter.isPending` vaut `true` pendant l'attente. Dans `onSuccess`, `qc.invalidateQueries({ queryKey: ['livres', 7] })` dit « les données du livre 7 sont périmées, recharge-les ».
+"""),
     L("Le trajet complet d'un clic", r"""
 L'utilisateur clique sur « 4 étoiles » pour noter un livre. Voici tout ce qui se passe, dans l'ordre :
 

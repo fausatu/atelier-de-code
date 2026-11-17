@@ -270,6 +270,8 @@ Symfony voit l'attribut et répond `409 {"error": "Ton forfait Essentiel permet 
 Le front peut afficher `error` tel quel : le message est écrit pour une personne, pas pour un développeur.
 """),
     L("Supprimer sans rien révéler", r"""
+La route `DELETE /api/profils/{id}`. Ce qu'il faut savoir pour la lire : `#[CurrentUser] Compte $compte` donne le compte connecté ; `trouverProfil($id) ?? throw new NotFoundHttpException(...)` cherche le profil et, s'il n'y en a pas (`null`), lève tout de suite une exception qui devient une réponse 404 ; `$this->json(null, 204)` répond « réussi, sans contenu ».
+
 ```php
 #[Route('/api/profils/{id}', methods: ['DELETE'])]
 public function supprimer(int $id, #[CurrentUser] Compte $compte): JsonResponse
@@ -1327,6 +1329,8 @@ export type Page<T> = { items: T[]; total: number; page: number; pages: number }
 `Page<T>` est un type **générique** : `Page<FilmCard>` pour le catalogue, `Page<Serie>` plus tard. Et `duree` est une chaîne déjà formatée (« 1 h 32 ») : le front affiche, il ne calcule pas.
 """),
     L("Le catalogue et la fiche avec TanStack Query", r"""
+Le catalogue utilise **`useQuery`** de TanStack Query. On lui donne une `queryKey` (le nom de la donnée dans le cache, qui inclut les filtres : `['films', { q, genre }]`) et une `queryFn` (la fonction qui charge, ici `getFilms` qui appelle l'API avec axios). Il renvoie `data` (les films), `isPending` (premier chargement en cours) et `isError`. `placeholderData: keepPreviousData` garde l'ancienne liste affichée pendant que la nouvelle charge. Pour la fiche, on lira le statut de l'erreur axios : `axios.isAxiosError(error)` dit si l'erreur vient d'axios, et `error.response?.status` donne le statut (404, 403…).
+
 ```tsx
 const [q, setQ] = useState('');
 const [genre, setGenre] = useState<Genre | ''>('');

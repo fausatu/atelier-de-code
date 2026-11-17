@@ -406,7 +406,7 @@ La solution se fait en trois temps :
 Le state sert donc de **boîte aux lettres** entre le monde asynchrone (la requête) et le rendu (le JSX).
 """),
     L("fetch et axios : deux façons d'écrire la même requête", r"""
-`fetch` est intégré au navigateur. Il demande deux étapes et une vérification manuelle :
+Tu as vu axios en détail dans le module précédent. Tu croiseras aussi `fetch` dans des tutos et d'autres projets : voici les deux côte à côte, pour reconnaître l'un et l'autre. `fetch` est intégré au navigateur. Il demande deux étapes et une vérification manuelle :
 
 ```ts
 const res = await fetch('/api/livres');
@@ -491,7 +491,11 @@ useEffect(() => {
 
 Pour un bouton « Recharger », astuce classique : un compteur dans le state, ajouté aux dépendances. Chaque clic l'incrémente, ce qui relance l'effet.
 
-**Le piège des réponses dans le désordre.** Tu tapes « d », puis « du », puis « dun ». Trois requêtes partent. Si la réponse de « d » arrive **après** celle de « dun », la liste affiche les mauvais résultats. La parade : annuler l'ancienne requête dans le **cleanup** de l'effet.
+**Le piège des réponses dans le désordre.** Tu tapes « d », puis « du », puis « dun ». Trois requêtes partent. Si la réponse de « d » arrive **après** celle de « dun », la liste affiche les mauvais résultats. La parade : annuler l'ancienne requête dans le **cleanup** de l'effet (la fonction que l'effet renvoie, appelée par React juste avant de relancer l'effet). Les trois pièces du code :
+
+- `new AbortController()` : un objet qui sert de « télécommande » pour annuler une requête ; on la passe à axios avec l'option `signal: controller.signal`.
+- `controller.abort()` : appuie sur le bouton. La requête en cours est abandonnée et sa promesse échoue (on arrive dans le `catch`).
+- `axios.isCancel(err)` : vrai si l'erreur vient de cette annulation. Ce n'est pas une vraie erreur, donc on n'affiche rien dans ce cas.
 
 ```tsx
 useEffect(() => {

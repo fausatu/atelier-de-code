@@ -107,7 +107,11 @@ Deux règles à retenir :
 Le fichier `page.tsx` exporte par défaut un composant : c'est ce qui s'affiche à cette URL.
 """),
     L("Les segments dynamiques et `params`", r"""
-Pour une page « détail » dont l'URL varie (`/produits/clavier`, `/produits/ecran`), on nomme le dossier entre crochets : `[id]`. La valeur réelle du segment arrive dans la prop `params` :
+Pour une page « détail » dont l'URL varie (`/produits/clavier`, `/produits/ecran`), on nomme le dossier entre crochets : `[id]`. La valeur réelle du segment arrive dans la prop `params`. Avant de lire le code :
+
+- La page est une fonction `async` : elle attend ses données (`await`) **avant** d'être envoyée. Pas de `useEffect`, pas d'état de chargement à gérer à la main (voir le module Server Components).
+- `params` est une **promesse** depuis Next 15 : on fait `await params` pour obtenir `{ id }`.
+- `notFound()` (importé de `next/navigation`) interrompt l'affichage et montre la page 404. Next cherche un fichier `not-found.tsx` en remontant les dossiers.
 
 ```tsx
 // app/produits/[id]/page.tsx
@@ -122,8 +126,6 @@ export default async function ProduitPage({ params }: { params: Promise<{ id: st
 }
 ```
 
-- La page est `async` : elle attend ses données **avant** d'être envoyée. Pas de `useEffect`, pas d'état de chargement à gérer à la main (voir le module Server Components).
-- `notFound()` interrompt le rendu et affiche la page 404. Next cherche un fichier `not-found.tsx` en remontant les dossiers.
 - On peut imbriquer plusieurs segments : `app/blog/[categorie]/[slug]/page.tsx` donne `params = { categorie, slug }`.
 - La query string (`?q=dune`) arrive dans une autre prop, `searchParams` (une promesse elle aussi).
 """),

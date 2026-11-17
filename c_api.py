@@ -2016,6 +2016,8 @@ client_php = DM("api-client-php", "Consommer une API depuis Symfony", 25,
     caption="Seul MeteoClient connaît l'API externe : il renvoie tes objets et lève tes exceptions. En test, MockHttpClient remplace le réseau."),
   lessons=[
     L("Faire une requête avec HttpClient", r"""
+Pour appeler une API externe depuis Symfony, on utilise le service **HttpClient**, injecté par son interface `HttpClientInterface`. Les pièces du code : `#[Autowire('%env(METEO_API_KEY)%')]` injecte une valeur du fichier `.env` (ici la clé de l'API) ; `$this->client->request('GET', $url, $options)` prépare la requête (les options : `query` pour les paramètres d'URL, `headers`, `timeout`) ; `$reponse->toArray()` l'envoie vraiment, lit le JSON et le transforme en tableau PHP, ou lève une exception si le statut est 4xx ou 5xx.
+
 ```php
 final class MeteoClient
 {

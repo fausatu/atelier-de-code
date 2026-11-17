@@ -88,6 +88,8 @@ php = DM("dbg-php", "Lire une erreur PHP", 20,
     caption="En haut : ce que le message te dit, dans l'ordre de lecture. En bas : la méthode pour passer du message à la correction."),
   lessons=[
     L("Anatomie d'une erreur PHP", r"""
+Quand un script PHP plante, il affiche un message en plusieurs parties : le type d'erreur, le message, le fichier et la ligne, puis la **stack trace** (la pile d'appels : quelle fonction a appelé quelle fonction pour arriver là, de la plus récente à la plus ancienne). En voici une réelle, puis l'ordre dans lequel la lire.
+
 ```
 PHP Fatal error:  Uncaught Error: Call to a member function nom() on null in /app/src/Clients.php:12
 Stack trace:
@@ -2212,6 +2214,8 @@ git = DM("dbg-git", "Erreurs Git", 20,
     caption="Trois situations qui font paniquer, et la commande qui n'écrase le travail de personne."),
   lessons=[
     L("Lire un refus de push", r"""
+Le message complet d'un `git push` refusé. Les lignes `hint:` sont des conseils de Git ; la partie importante est entre parenthèses sur la première ligne (`fetch first` ou `non-fast-forward`), car elle dit **pourquoi** c'est refusé.
+
 ```
  ! [rejected]        main -> main (fetch first)
 error: failed to push some refs to 'github.com:toi/projet.git'
@@ -2228,6 +2232,8 @@ Deux variantes à distinguer :
 `--force-with-lease` refuse d'écraser si quelqu'un a poussé entre-temps ; `--force` écrase toujours. On n'utilise jamais `--force` seul.
 """),
     L("Conflit pendant un pull --rebase", r"""
+Pendant un `git pull --rebase`, Git rejoue tes commits un par un par-dessus ceux du distant. Si un de tes commits modifie les mêmes lignes qu'un commit distant, il s'arrête et affiche ce message : `CONFLICT` indique le fichier en conflit, `could not apply` le commit qui bloque, et le `hint` les commandes pour continuer.
+
 ```
 CONFLICT (content): Merge conflict in prix.js
 error: could not apply 3f2c1d0... fix: arrondit les prix

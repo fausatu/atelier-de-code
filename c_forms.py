@@ -142,7 +142,14 @@ Pour un vrai formulaire d'entreprise, il faut en plus :
 Avec 10 champs, ça fait vite 10 `useState`, des `if` partout et des bugs (erreur affichée trop tôt, double envoi…). **C'est exactement ce que font les bibliothèques de formulaires.** Le 1er TD te fait écrire ce travail à la main, pour reconnaître ensuite chaque morceau dans RHF et TanStack Form.
 """),
     L("Les règles dans un schéma (zod)", r"""
-Plutôt que des `if` dans le composant, on décrit les règles **une fois**, dans un schéma :
+Plutôt que des `if` dans le composant, on décrit les règles **une fois**, dans un **schéma** : un objet zod qui décrit la forme attendue des données. On le construit en enchaînant des méthodes, chacune ajoute une règle. Celles du code ci-dessous :
+
+- `z.object({ champ: règle, … })` : un objet avec ces champs.
+- `z.string()` : un texte. Ensuite `.trim()` retire les espaces autour, `.email('message')` exige un format d'email, `.min(8, 'message')` au moins 8 caractères. Le texte passé est le **message d'erreur** affiché si la règle échoue.
+- `z.coerce.number()` : convertit d'abord en nombre (la valeur d'un `<input type="number">` est toujours une chaîne : `"17"` → `17`), puis `.int()` exige un entier.
+- `z.boolean()` : vrai ou faux (une case à cocher).
+- `.refine((valeur) => condition, message)` : une règle **à toi**, quand aucune méthode toute faite ne convient. Posé sur l'objet entier, il compare plusieurs champs (confirmation, dates début/fin) ; `path: ['confirmation']` dit sous quel champ afficher l'erreur.
+- `z.infer<typeof schema>` : fabrique le type TypeScript correspondant au schéma, sans le réécrire.
 
 ```ts
 import { z } from 'zod';
@@ -160,21 +167,19 @@ export const inscriptionSchema = z.object({
 export type Inscription = z.infer<typeof inscriptionSchema>;   // le type TS gratuit
 ```
 
-- `safeParse(données)` renvoie `{ success: true, data }` (données **nettoyées** : trim, conversions) ou `{ success: false, error }` avec `error.issues` : une liste `{ path: ['email'], message: 'Email invalide' }`.
-- `.refine()` sur l'objet entier sert aux règles **entre champs** (confirmation, dates début/fin).
-- `z.coerce.number()` convertit la chaîne d'un `<input type="number">` en nombre.
+Pour vérifier des données avec ce schéma : `inscriptionSchema.safeParse(données)` renvoie `{ success: true, data }` (données **nettoyées** : trim, conversions) ou `{ success: false, error }` avec `error.issues` : une liste `{ path: ['email'], message: 'Email invalide' }`.
 
 Le même schéma marche avec React Hook Form (`zodResolver`), TanStack Form (directement) et côté serveur Node. (Zod 4 : `z.email()` existe aussi ; en zod 3 les messages se passent pareil.)
 """),
     L("Deux philosophies : non contrôlé (RHF) et contrôlé (TanStack)", r"""
-**React Hook Form** laisse la valeur **dans le DOM**. `register('email')` renvoie `{ name, onChange, onBlur, ref }` que tu étales sur l'input. RHF lit la valeur par la `ref` quand il en a besoin (validation, envoi). Conséquence : très peu de re-rendus, une API courte, mais il faut un adaptateur (`Controller`) pour les composants qui n'ont pas d'input natif (sélecteur maison, étoiles…).
+**React Hook Form** (RHF) s'utilise avec un hook, `useForm()`. Il renvoie un objet dont on sort trois outils (par déstructuration) : `register` pour brancher un champ, `handleSubmit` pour envoyer, et `formState.errors` qui contient les erreurs par champ. RHF laisse la valeur **dans le DOM**. `register('email')` renvoie `{ name, onChange, onBlur, ref }` que tu étales sur l'input. RHF lit la valeur par la `ref` quand il en a besoin (validation, envoi). Conséquence : très peu de re-rendus, une API courte, mais il faut un adaptateur (`Controller`) pour les composants qui n'ont pas d'input natif (sélecteur maison, étoiles…).
 
 ```tsx
 const { register, handleSubmit, formState: { errors } } = useForm();
 <input {...register('email', { required: 'Email requis' })} />
 ```
 
-**TanStack Form** garde la valeur **dans son store**, et chaque champ est un composant qui la lit (champ **contrôlé**) :
+**TanStack Form** a aussi son `useForm({ defaultValues, onSubmit })` (même nom, autre bibliothèque) : il renvoie un objet `form`. Il garde la valeur **dans son store**, et chaque champ est un composant `<form.Field name="…">` qui la lit (champ **contrôlé**) : `field.state.value` est la valeur, `field.handleChange(v)` la modifie, `field.handleBlur` signale que l'utilisateur a quitté le champ.
 
 ```tsx
 const form = useForm({ defaultValues: { email: '' }, onSubmit: ({ value }) => … });
@@ -567,6 +572,8 @@ rhf = DM("rhf-bases", "React Hook Form : les bases", 30,
     caption="Les inputs gardent leur valeur ; RHF la lit, valide (avec zod si tu veux) et n'appelle ta fonction qu'avec des données valides."),
   lessons=[
     L("register, handleSubmit, errors", r"""
+Le formulaire de connexion avec React Hook Form. Ce qu'il faut savoir avant de le lire : `useForm<Valeurs>({ defaultValues })` crée le formulaire et renvoie des outils, qu'on sort par déstructuration. **`register('email', règles)`** branche un champ (on l'étale sur l'input avec `{...register('email')}`) et lui donne ses règles (`required`, `pattern`, `minLength`, chacune avec son message). **`handleSubmit(envoyer)`** valide tout, puis appelle `envoyer` seulement si tout est valide. **`formState.errors`** contient le message d'erreur de chaque champ, et `isSubmitting` vaut `true` pendant l'envoi.
+
 ```tsx
 import { useForm } from 'react-hook-form';
 
@@ -1091,6 +1098,8 @@ rhf2 = DM("rhf-avance", "React Hook Form : composants maison, listes, gros formu
 C'est le même principe que TanStack Form pour **tous** les champs : value + onChange.
 """),
     L("useFieldArray : des lignes à ajouter et supprimer", r"""
+Pour une liste de lignes (une facture, des invités…), React Hook Form fournit **`useFieldArray({ control, name: 'lignes' })`**. `control` est un objet renvoyé par `useForm` qui relie les deux. Il renvoie `fields` (les lignes à afficher, chacune avec un `id` stable pour la `key`), `append(ligne)` pour en ajouter une à la fin et `remove(i)` pour supprimer la ligne d'index `i`. Le nom d'un champ de la liste suit le chemin : `` `lignes.${i}.designation` ``. `valueAsNumber: true` convertit la saisie en nombre.
+
 ```tsx
 const { control, register } = useForm({
   defaultValues: { lignes: [{ designation: '', quantite: 1, prix: 0 }] },
@@ -1582,6 +1591,8 @@ tsf = DM("tsf-bases", "TanStack Form : les bases", 30,
     caption="Tout passe par le store : les champs lisent et écrivent leur valeur, Subscribe lit l'état global, onSubmit reçoit les valeurs."),
   lessons=[
     L("useForm et form.Field", r"""
+Le même formulaire de connexion avec **TanStack Form**. Les pièces : `useForm({ defaultValues, onSubmit })` crée le formulaire (`onSubmit` n'est appelé que si tout est valide). Chaque champ est un composant **`<form.Field name="…">`** qui reçoit une fonction `children={(field) => …}` : `field.state.value` est la valeur, `field.handleChange(v)` la change, `field.handleBlur` signale qu'on a quitté le champ, `field.state.meta.errors` liste les erreurs. Les règles sont des **validateurs** (`validators.onBlur` : une fonction qui renvoie un message d'erreur, ou `undefined` si c'est bon). **`<form.Subscribe selector={...}>`** affiche une partie de l'état du formulaire (ici : peut-on envoyer ? envoi en cours ?).
+
 ```tsx
 import { useForm } from '@tanstack/react-form';
 
@@ -2131,6 +2142,8 @@ tsf2 = DM("tsf-avance", "TanStack Form : listes, champs liés et composants de c
     caption="Les composants de champ sont écrits une fois et enregistrés dans createFormHook ; chaque formulaire les utilise via useAppForm."),
   lessons=[
     L("Listes de champs", r"""
+Avec TanStack Form, une liste est un `form.Field` avec `mode="array"`. Son `field` (appelé ici `lignes`) a `lignes.state.value` (le tableau), `pushValue(ligne)` pour ajouter et `removeValue(i)` pour supprimer. Chaque case est un `form.Field` dont le nom suit le chemin `` `lignes[${i}].prix` ``. En bas, `form.Subscribe` calcule un total avec `reduce` (parcourt les lignes en additionnant `quantite * prix`, en partant de `0`) et l'affiche avec `toFixed(2)` (2 décimales).
+
 ```tsx
 const form = useForm({
   defaultValues: { client: '', lignes: [{ designation: '', quantite: 1, prix: 0 }] },

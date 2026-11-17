@@ -538,7 +538,25 @@ public function create(#[MapRequestPayload] CreateArticleInput $input): JsonResp
 `#[MapRequestPayload]` lit le corps JSON, crée le DTO en faisant correspondre les **clés JSON** aux **paramètres du constructeur**, vérifie les types, puis lance la **validation**. Si une étape échoue, Symfony répond 422 et ton action n'est jamais appelée.
 """),
     L("Décrire les règles avec des contraintes", r"""
-Les règles se posent directement sur les propriétés du DTO :
+Les règles se posent directement sur les propriétés du DTO, sous forme d'**attributs** `#[Assert\...]` : une étiquette par règle, au-dessus de la propriété. Symfony les lit au moment de valider. Avant de voir le code, voici les contraintes les plus utiles :
+
+| Contrainte | Vérifie |
+|---|---|
+| `NotBlank` | pas vide (`''`, `null`, `[]`) |
+| `Length(min:, max:)` | longueur d'une chaîne |
+| `Email` | format d'email |
+| `Positive`, `PositiveOrZero`, `Range(min:, max:)` | nombres |
+| `Regex('/^[a-z0-9_]+$/')` | motif |
+| `IsTrue` | case cochée (CGU) |
+| `Choice(['a', 'b'])` | valeur parmi une liste |
+| `Count(min:, max:)` | taille d'un tableau |
+| `All([...])` | applique des contraintes à **chaque** élément d'un tableau |
+| `Date` | chaîne au format `Y-m-d` |
+| `Valid` | valide aussi un DTO imbriqué |
+
+Chacune accepte un `message:` personnalisé : `#[Assert\IsTrue(message: 'Tu dois accepter les CGU')]`.
+
+Dans le DTO ci-dessous, on en combine plusieurs sur la même propriété : `titre` ne doit pas être vide **et** faire entre 5 et 180 caractères ; `tags` ne doit pas avoir plus de 5 éléments (`Count`), et chacun doit faire 30 caractères au plus (`All` applique `Length` à chaque élément).
 
 ```php
 use Symfony\Component\Validator\Constraints as Assert;
@@ -560,23 +578,6 @@ final class CreateArticleInput
 }
 ```
 
-Les contraintes les plus utiles :
-
-| Contrainte | Vérifie |
-|---|---|
-| `NotBlank` | pas vide (`''`, `null`, `[]`) |
-| `Length(min:, max:)` | longueur d'une chaîne |
-| `Email` | format d'email |
-| `Positive`, `PositiveOrZero`, `Range(min:, max:)` | nombres |
-| `Regex('/^[a-z0-9_]+$/')` | motif |
-| `IsTrue` | case cochée (CGU) |
-| `Choice(['a', 'b'])` | valeur parmi une liste |
-| `Count(min:, max:)` | taille d'un tableau |
-| `All([...])` | applique des contraintes à **chaque** élément d'un tableau |
-| `Date` | chaîne au format `Y-m-d` |
-| `Valid` | valide aussi un DTO imbriqué |
-
-Chacune accepte un `message:` personnalisé : `#[Assert\IsTrue(message: 'Tu dois accepter les CGU')]`.
 """),
     L("Pourquoi des valeurs par défaut (`= ''`) ?", r"""
 Si le client **oublie** un champ, Symfony ne peut pas appeler le constructeur sans valeur pour ce paramètre : il répondrait par une erreur générique peu claire. Avec une valeur par défaut (`= ''`), le DTO se construit, puis `NotBlank` produit un message précis sur le bon champ : « titre : Cette valeur ne doit pas être vide. ».

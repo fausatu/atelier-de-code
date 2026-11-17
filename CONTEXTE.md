@@ -10,7 +10,7 @@
 ## Construction et tests
 - `python3 build.py` construit `index.html` à partir de `template.html` + les modules `c_*.py` (aides dans `common.py` : P, L, D/N/E, F, TD, RUN).
 - Serveur local nécessaire pour valider : `(setsid nohup python3 -m http.server 8765 >/dev/null 2>&1 &)`.
-- `python3 validate.py [parcours|module]` exécute chaque solution de TD contre ses tests ; `STARTER=1 python3 validate.py …` vérifie que chaque code de départ échoue. Dernier passage complet : 240/240 (16/11, après les notes).
+- `python3 validate.py [parcours|module]` exécute chaque solution de TD contre ses tests ; `STARTER=1 python3 validate.py …` vérifie que chaque code de départ échoue. Dernier passage complet : 276/276 (17/11, après fil rouge 7-9, axios, Organiser).
 - Types d'exécution : php (php-wasm), react, js, next, git (git-sim), term (term-sim, bash + PowerShell), vérification TypeScript (vendor/ts).
 - Catégories de parcours : `GROUPS` dans build.py (methode, back, front, outils, + « perso »).
 - **Formulaires** : claude.ai affiche l'artefact dans un cadre sandbox SANS `allow-forms` → l'événement `submit` n'est jamais
@@ -19,8 +19,8 @@
   Test : servir une page avec `<iframe sandbox="allow-scripts allow-same-origin" src="index.html">`.
 - Commits : terminer par les lignes d'attribution Co-Authored-By / Claude-Session données par le système.
 
-## État actuel (16/11/2026)
-16 parcours, 89 modules. Récemment : mémo des méthodes (#methodes, méthodes cliquables dans le code), Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
+## État actuel (17/11/2026)
+17 parcours, 95 modules. Récemment : règle « expliquer avant d'utiliser » (encadré auto), module axios, parcours Organiser un projet React, fil rouge complet (9 modules), mémo des méthodes (#methodes, méthodes cliquables dans le code), Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
 tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barre latérale allégée (outils en icônes, « Mes parcours »).
 
 ## Calendrier (fait le 16/11)
@@ -114,6 +114,10 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   1. `fil-decoupe` Du cahier des charges aux tranches (TD js : scénarios de reprise, `peutVoir` contrôle parental, `etatVisionnage`)
   2. `fil-modele` Le modèle de données (Doctrine simulé : Film + enum Genre, Série/Épisode cascade+orphelins, Compte/Profil/enum Forfait)
   3. `fil-api` L'API du catalogue (Symfony simulé : `CatalogueFiltres` + `FilmCard`, fiche + contrôle parental 403/404, `/api/accueil` en rangées)
+- Modules 7 à 9 faits le 17/11 (`c_fil3.py`, 27 TD au total pour le parcours, tous OK + départs qui échouent) :
+  7. `fil-formulaire` RHF + zod (`versApi`, 422 → `setError(champ)`, 409 → `root.serveur`, `invalidateQueries`), renommer avec `isDirty`.
+  8. `fil-git` branche par tranche, Conventional Commits, `gh pr create`, rebase + `--force-with-lease`, conflit, `gh pr merge --squash`.
+  9. `fil-lancer` back Symfony + front Vite, proxy, `.env`/`.env.local`, port occupé (`lsof`, `kill`), script `dev.sh`.
 - Le Doctrine simulé ne gère pas ManyToMany (genre = enum ; Ma liste devra être une entité `ElementListe` ManyToOne×2).
 - Modules 4 à 6 faits (`c_fil2.py`, 18 TD au total pour le parcours, 18/18 + départs qui échouent) :
   4. `fil-profils` Créer et supprimer un profil (`#[MapRequestPayload]` NouveauProfil, `#[CurrentUser] Compte`, exceptions
@@ -122,7 +126,7 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
      `Horloge` injectée, `GET /api/continuer`)
   6. `fil-front` Le front React (types du contrat, catalogue `useQuery(['films', { q, genre }])`, fiche 403/404,
      classe `Sauvegarde` toutes les 10 s + pause, `Lecteur` « Reprendre à 6:00 »). API simulée : `BOBINE_API`.
-- **Suite, à faire maintenant (modules 7 à 9)** : 7. formulaires (créer/modifier un profil avec React Hook Form + zod, afficher les 422/409 de l'API),
+- **Modules 7 à 9 faits le 17/11** (`c_fil3.py`, voir plus bas). Ancienne description : 7. formulaires (créer/modifier un profil avec React Hook Form + zod, afficher les 422/409 de l'API),
   8. Git (une branche par tranche, Conventional Commits, PR), 9. terminal (lancer back + front, .env, ports occupés).
 
 ## Mémo des méthodes (fait le 16/11)
@@ -137,6 +141,38 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 - Page `#methodes` (icône livre dans la barre d'outils) : recherche `#m-filter`, puces de famille, fiches en `<details>`.
   « Demander à Claude » (bloc ai-only) pour une méthode absente → « Garder dans Mes ajouts » (`state.progress.memoPerso`).
 - Pour ajouter une méthode : une entrée `E(...)` dans `methodes.py` (vérifier qu'aucune clé n'est en double).
+
+## RÈGLE PÉDAGOGIQUE : expliquer AVANT d'utiliser (demande d'Ana du 17/11)
+- Ana : « tu utilises des notions avant de les avoir expliquées… ne mets pas un exemple puis une petite ligne d'explication en bas ».
+- **Pour tout nouveau contenu** : chaque notion, fonction ou syntaxe nouvelle est expliquée dans le texte **avant** le bloc de code
+  qui l'utilise (liste « les pièces du code » puis le code). Jamais une leçon qui commence par un bloc de code sans introduction.
+- `explique.py` (appelé par `build.py`) calcule pour chaque module `m["croiser"]` : les fiches du mémo utilisées dans son code
+  (leçons, exemple, TD + solutions) et pas encore expliquées (ni avant dans le module, ni dans un module précédent du parcours ou
+  d'un parcours prérequis : `DEPS`, `MODULE_DEPS`). Affiché en haut de « Comprendre » : encadré « Ce que tu vas croiser dans le code »
+  (`croiserBlock`). Une « mention » = le nom entre backticks dans le texte (ou `MOTS` pour les notions de syntaxe).
+- `python3 explique.py [parcours|module]` liste aussi les cas « expliqué APRÈS » (7 restants : exemples/TD, couverts par l'encadré).
+  À lancer après chaque nouveau module : 0 cas en leçon.
+- Onglet Exemple : « Ce que tu vas voir dans ce code » (les notes) est AU-DESSUS du code.
+- Fiches de notions ajoutées au mémo avec des clés `re:` (regex) : `?.`/`??`, déstructuration, fonction fléchée, template literal,
+  spread, async/await, instanceof, `??`/`?->` PHP. Les génériques `useState<T>(` / `api.get<T>(` sont reconnus.
+
+## Module axios (fait le 17/11)
+- Ana utilise **axios + React Query** (pas fetch). `c_axios.py` : module `data-axios` « axios de A à Z », inséré en 2e position du
+  parcours Données (build.py : `DATA_[:1] + AXIOS + DATA_[1:]`). Leçons : rôle axios vs React Query, `axios.create`, les 5 verbes et
+  `res.data`, erreurs (`isAxiosError`, `err.response`), intercepteurs, `queryFn`. 3 TD (client + fonctions, `messageErreur`, intercepteurs jeton/401).
+
+## Parcours « Organiser un projet React » (fait le 17/11)
+- `c_orga.py`, track `orga` (groupe front, couleur `moss` ajoutée dans COLORS / `--t-moss`), entre Données et Formulaires.
+  1. `orga-dossiers` : ranger par fonctionnalité (`app/`, `features/<nom>/`, `shared/`), « un fichier commence là où il est utilisé »,
+     `index.ts` porte d'entrée, règles d'import. TD : réorganiser (term-sim, mkdir/mv), ajouter « Ma liste », vérificateur d'imports (js).
+  2. `orga-props` : quand passer une prop ; remonter le state, React Query (même hook partout), composition (`children`/`barre`),
+     Context (`ProfilActif`). TD react : remonter le state, composition, Context.
+
+## Simulateur de terminal : serveurs de dev (ajouté le 17/11, vendor/term-sim/term-sim.js)
+- `symfony server:start [-d] [--port=N]` (projet = dossier avec composer.json + bin/console ; port occupé → port suivant + warning),
+  `symfony server:stop|server:list`, `php -S hôte:port -t dossier`, `vite` (via `npm run dev` ; lit `vite.config.ts` : `port`,
+  `strictPort`, proxy `'/api': 'http://localhost:8000'`), `curl` avec chemin + proxy Vite → back. L'API répond selon `.env`/`.env.local`
+  (`DATABASE_URL` avec `!ChangeMe!` → erreur « Access denied »). Tests : `term.procs()` (`kind`: symfony|php|vite, `port`), `term.lastCurl` (`{ok, via}`).
 
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).

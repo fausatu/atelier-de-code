@@ -57,6 +57,8 @@ bases = DM("ts-bases", "Les types de base", 25,
     caption="Les types sont vérifiés avant l'exécution, puis effacés : le navigateur n'exécute que du JavaScript."),
   lessons=[
     L("Pourquoi TypeScript", r"""
+Une même fonction écrite deux fois : d'abord en JavaScript, puis en TypeScript. En TypeScript, on ajoute un **type** après chaque paramètre (`prixHT: number`) et après les parenthèses pour la valeur renvoyée (`): number`). Regarde ce qui se passe dans chaque cas quand on l'appelle avec `'10'` (un texte) au lieu de `10` (un nombre).
+
 ```ts
 function prixTTC(prixHT, taux) {
   return prixHT * (1 + taux);
@@ -436,6 +438,8 @@ unions = DM("ts-unions", "Unions et rétrécissement des types", 30,
     caption="Un champ commun dit quelle variante on a ; dans chaque case, TypeScript connaît ses champs ; le default exhaustif attrape les oublis."),
   lessons=[
     L("Unions et rétrécissement", r"""
+Une **union** `string | number | null` veut dire « l'un de ces types ». Tant que TypeScript ne sait pas lequel, il refuse les méthodes propres à un seul type (`toFixed` n'existe que sur les nombres, `trim` que sur les textes). Le **rétrécissement**, c'est vérifier le type avec un `if` (`typeof v === 'number'`) : après ce test, TypeScript sait lequel c'est. Pour lire le code : `nombre.toFixed(2)` écrit le nombre avec 2 décimales, `texte.trim()` retire les espaces autour.
+
 ```ts
 function formater(v: string | number | null): string {
   // v.toFixed(2)           ← erreur : toFixed n'existe pas sur string ni sur null
@@ -457,6 +461,8 @@ Les vérifications que TypeScript comprend :
 | `x.type === 'carte'` | une union discriminée (le plus courant) |
 """),
     L("Unions discriminées", r"""
+Une **union discriminée** est une union d'objets qui ont tous un champ commun avec une valeur fixe différente, ici `type: 'carte'`, `'virement'` ou `'especes'`. En testant ce champ (avec un `switch`), TypeScript sait quels autres champs existent. Dans le code : `texte.slice(-4)` garde les 4 derniers caractères, `slice(0, 4)` les 4 premiers ; `never` est le type « impossible », qu'on utilise pour vérifier que tous les cas ont été traités.
+
 ```ts
 type Paiement =
   | { type: 'carte'; numero: string; expire: string }
@@ -777,6 +783,8 @@ generiques = DM("ts-generiques", "Génériques et types utilitaires", 30,
     caption="Un seul type source ; les autres en dérivent et suivent automatiquement ses changements."),
   lessons=[
     L("Fonctions génériques", r"""
+Une fonction **générique** a un paramètre de **type**, écrit entre chevrons après son nom : `premier<T>`. `T` est une variable qui contient un type : à l'appel, TypeScript le remplace par le vrai type (`number`, `Produit`…). Dans les exemples : `xs.find((x) => condition)` renvoie le premier élément qui respecte la condition (ou `undefined`), `[...xs]` fait une copie du tableau, `xs.sort(...)` le trie, et `keyof T` désigne « un des noms de champs de T ».
+
 ```ts
 function premier<T>(xs: T[]): T | undefined {
   return xs[0];
@@ -1155,6 +1163,12 @@ nulls = DM("ts-null", "null, undefined et données inconnues", 30,
     caption="Les données extérieures passent par unknown et une vérification avant d'être utilisées."),
   lessons=[
     L("Gérer l'absence", r"""
+Beaucoup de fonctions peuvent ne **rien** trouver. TypeScript le voit dans leur type de retour et t'oblige à gérer ce cas. Trois exemples dans le code ci-dessous :
+
+- `tableau.find((x) => condition)` renvoie le premier élément qui respecte la condition… ou `undefined` s'il n'y en a aucun. Type : `Produit | undefined`.
+- `localStorage.getItem('n')` lit une valeur gardée dans le navigateur ; elle renvoie un texte, ou `null` si la clé n'existe pas. Type : `string | null`.
+- `u.adresse?.ville` : le `?.` lit `ville` seulement si `adresse` existe, sinon donne `undefined` au lieu de planter. Et `a ?? b` donne `b` quand `a` est `null` ou `undefined`.
+
 ```ts
 const p = produits.find((x) => x.id === id);   // Produit | undefined
 p.nom;                     // ✗ erreur : 'p' est peut-être 'undefined'
@@ -1177,7 +1191,7 @@ const n = Number(localStorage.getItem('n') ?? '0');   // getItem : string | null
 Utilise `??` pour une valeur par défaut, sauf si tu veux vraiment remplacer `0` et `''`.
 """),
     L("Ne pas mentir au compilateur : `!`, `as`, `any`", r"""
-Trois façons de faire taire une erreur, trois façons de cacher un bug :
+Trois façons de faire taire une erreur, trois façons de cacher un bug. Pour lire le deuxième exemple : `fetch(url)` envoie une requête et donne une réponse `res` ; `await res.json()` lit le corps de cette réponse et le transforme en objet JS, mais **sans aucune garantie** sur sa forme.
 
 ```ts
 const p = produits.find((x) => x.id === id)!;      // « crois-moi, il existe »
@@ -1498,7 +1512,7 @@ export default function App() {
 
 react = DM("ts-react", "TypeScript avec React", 30,
   "Typer des composants React : props (dont `children` et les fonctions), événements, `useState` avec un type, `useRef`, et un hook personnalisé générique.",
-  "C'est ce que tu écris tous les jours en entreprise avec React ou Next.js : des props bien typées documentent le composant et empêchent de l'utiliser de travers.",
+  "C'est ce que tu écris tous les jours en entreprise avec React ou Next.js : des props bien typées documentent le composant et empêchent de l'utiliser de travers. **À faire après le parcours React** (et le début de Données & API) : ce module ne réexplique pas `useState`, `useEffect`, `useRef` ni les événements, il leur ajoute seulement des types.",
   ["Décrire les **props** avec un `type` (fonctions comprises)", "Typer les **événements** (`ChangeEvent<HTMLInputElement>`, `FormEvent<HTMLFormElement>`)",
    "Donner un type à **`useState`** quand la valeur de départ ne suffit pas (`null`, `[]`)", "Écrire un **hook générique** (`useFetch<T>`)"],
   ["`type Props = { titre: string; onAjouter: (id: number) => void; children: ReactNode }` puis `function Carte({ titre }: Props)`.",
@@ -1528,6 +1542,8 @@ react = DM("ts-react", "TypeScript avec React", 30,
     caption="Les props typées protègent chaque utilisation du composant ; state et événements typés protègent l'intérieur."),
   lessons=[
     L("Typer les props", r"""
+Pour typer les **props** d'un composant, on décrit leur forme dans un `type` (une prop finie par `?` est optionnelle ; une fonction s'écrit `(param: type) => typeRetour` ; `ReactNode` est « tout ce que React sait afficher »), puis on l'indique après la déstructuration des props : `function Carte({ titre, prix }: CarteProps)`. `enPromo = false` donne une valeur par défaut à une prop optionnelle.
+
 ```tsx
 import type { ReactNode } from 'react';
 
@@ -1551,6 +1567,8 @@ export function Carte({ titre, prix, enPromo = false, onAjouter, children }: Car
 Pour un composant qui « enrichit » un élément HTML, on peut reprendre toutes ses props : `type Props = React.ComponentProps<'button'> & { variante?: 'primaire' | 'secondaire' }`.
 """),
     L("State, événements, refs", r"""
+Trois choses à typer. **`useState<Type>(depart)`** : les chevrons donnent le type de la valeur quand le départ ne suffit pas (`null`, `[]`). **Les événements** : un handler écrit à part reçoit `e`, dont le type dépend de l'élément (`React.ChangeEvent<HTMLInputElement>` pour un input) ; `e.target.value` est le texte tapé, `e.preventDefault()` empêche le navigateur de recharger la page à l'envoi d'un formulaire. **`useRef<HTMLInputElement>(null)`** : une référence vers un élément du DOM, disponible dans `champ.current` (qui peut être `null`, d'où le `?.`).
+
 ```tsx
 const [produit, setProduit] = useState<Produit | null>(null);   // null au départ, Produit ensuite
 const [liste, setListe] = useState<Produit[]>([]);              // [] seul serait never[]
@@ -1580,6 +1598,8 @@ champ.current?.focus();
 Astuce : survole `onChange` dans VS Code, il te donne le type exact.
 """),
     L("Un hook générique", r"""
+On écrit un **hook générique** `useFetch<T>` : il charge une URL et renvoie l'état du chargement, avec le type `T` des données fourni à l'appel. Il réutilise trois choses déjà vues : une **union discriminée** pour l'état (chargement / erreur / succès), `useState`, et `useEffect` qui lance `fetch(url)` (envoie la requête), vérifie `r.ok` (vrai pour un statut 2xx) et lit le JSON avec `r.json()`. La variable `actif` évite de mettre à jour l'état si le composant a disparu entre-temps.
+
 ```tsx
 type EtatFetch<T> =
   | { statut: 'chargement' }
@@ -1899,6 +1919,8 @@ erreurs = DM("ts-erreurs", "Lire et corriger les erreurs TypeScript", 25,
     caption="Lire l'erreur, décider si c'est la valeur ou le type qui est faux, corriger à la source."),
   lessons=[
     L("Lire un message, même long", r"""
+Les erreurs TypeScript sur des objets imbriqués font plusieurs lignes, chacune un peu plus en retrait que la précédente. Chaque ligne précise la précédente : la première dit où est le problème (fichier, ligne, colonne, code d'erreur `TS2322`), la dernière dit exactement ce qui manque. En voici une typique.
+
 ```
 commande.ts:14:9  TS2322
 L'objet n'est pas assignable au type 'Commande'.

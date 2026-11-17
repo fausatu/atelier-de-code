@@ -23,7 +23,7 @@
   --warn: #a96d00; --warn-soft: #fbf0d9;
   --bad: #c83c3c;  --bad-soft: #fbe5e5;
   --t-violet: #6b55cc; --t-orange: #cf6a1d; --t-green: #18865f; --t-cyan: #13809f; --t-graphite: #4a5263;
-  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f; --t-amber: #b7791f; --t-teal: #0f8a7e; --t-indigo: #4a4fc4; --t-plum: #8e3f8a; --t-navy: #2f5d9e; --t-slate: #3d5566; --t-coral: #d9533d;
+  --t-rose: #c23f78; --t-olive: #6f7f1a; --t-blue: #2f63c9; --t-brick: #b8432f; --t-amber: #b7791f; --t-teal: #0f8a7e; --t-indigo: #4a4fc4; --t-plum: #8e3f8a; --t-navy: #2f5d9e; --t-slate: #3d5566; --t-coral: #d9533d; --t-moss: #4f7a2e;
   --code-bg: #f4f7fb; --code-ink: #24292f; --code-line: #d6dfea;
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
@@ -347,6 +347,8 @@ a.stat-card:hover { border-color: var(--accent); }
 .prereq dl { margin: 0; padding: 0 16px 14px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; font-size: 0.92rem; }
 .prereq dt { font-weight: 600; color: var(--tc); }
 .prereq dd { margin: 0; }
+.croiser > p { margin: 0 16px 10px; }
+.croiser dt { max-width: 260px; }
 .mech { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(220px, 0.8fr); gap: 18px; align-items: start; }
 .flow-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; counter-reset: f; }
 .flow-list li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; font-size: 0.92rem; line-height: 1.45; align-items: start; }
@@ -437,7 +439,8 @@ pre.code code { background: none; padding: 0; font-size: inherit; color: inherit
 .hljs-section, .hljs-selector-class, .hljs-selector-id { color: #8250df; }
 .hljs-addition { color: #116329; background: #dafbe1; }
 .hljs-deletion { color: #82071e; background: #ffebe9; }
-.ex { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.ex { display: flex; flex-direction: column; gap: 16px; }
+.croiser dt .mref { font: 600 0.9rem var(--font-mono); }
 .notes { display: flex; flex-direction: column; gap: 10px; counter-reset: n; margin: 0; padding: 0; list-style: none; }
 .notes li { counter-increment: n; display: grid; grid-template-columns: 24px 1fr; gap: 8px; font-size: 0.9rem; }
 .notes li::before { content: counter(n); width: 22px; height: 22px; border-radius: 6px; background: var(--surface-2); display: grid; place-items: center; font: 600 12px var(--font-mono); color: var(--tc); }
@@ -906,7 +909,7 @@ li.done-item { color: var(--muted); text-decoration: line-through; }
 "use strict";
 const DATA = /*__CONTENT__*/null;
 const INTERVALS = [1, 3, 7, 16, 35];
-const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick", "amber", "teal", "indigo", "plum", "navy", "slate", "coral"];
+const COLORS = ["violet", "orange", "green", "cyan", "graphite", "rose", "olive", "blue", "brick", "amber", "teal", "indigo", "plum", "navy", "slate", "coral", "moss"];
 const LANGS = { php: "php", tsx: "typescript", ts: "typescript", typescript: "typescript", js: "javascript", jsx: "javascript", javascript: "javascript", sql: "sql", bash: "bash", shell: "bash", powershell: "powershell", ps1: "powershell", yaml: "yaml", json: "json", python: "python", css: "css", html: "xml", xml: "xml", twig: "xml", plaintext: null };
 const STEPS = ["Comprendre", "Exemple", "Quiz", "TD"];
 const LEVEL_NAMES = { 1: "Niveau 1 · Appliquer", 2: "Niveau 2 · Adapter", 3: "Niveau 3 · Approfondir" };
@@ -1821,12 +1824,21 @@ function viewModule(id) {
     <div class="nav-steps">${prev}${next}</div>
   </div>`;
 }
+function croiserBlock(m) {
+  const list = (Array.isArray(m.croiser) ? m.croiser : []).map((id) => MEMO_BY_ID[id]).filter(Boolean);
+  if (!list.length) return "";
+  const first = (t) => String(t).split(/(?<=[.!?])\s/)[0];
+  return `<details class="prereq croiser" ${state.ui.croiserOpen === false ? "" : "open"}><summary>Ce que tu vas croiser dans le code <span class="muted small">· ${list.length} fonction${list.length > 1 ? "s" : ""} pas encore vue${list.length > 1 ? "s" : ""}</span></summary>
+    <p class="muted small">Lis-les avant : le code du module s'en sert. Clique sur un nom pour sa fiche complète (paramètres, exemple, piège).</p>
+    <dl>${list.map((e) => `<dt><span class="mref" data-m="${esc(e.id)}" tabindex="0" role="button">${esc(e.nom)}</span></dt><dd>${inl(first(e.desc))}</dd>`).join("")}</dl></details>`;
+}
 function panelLearn(m) {
   const pre = Array.isArray(m.prereq) ? m.prereq : [];
   const lessons = Array.isArray(m.lessons) ? m.lessons : [];
   return `
     <div class="why"><div class="eyebrow">Le problème</div><p>${inl(m.why)}</p></div>
     ${pre.length ? `<details class="prereq" ${state.ui.prereqOpen === false ? "" : "open"}><summary>Avant de commencer <span class="muted small">· ${pre.length} mot${pre.length > 1 ? "s" : ""} à connaître</span></summary><dl>${pre.map((x) => `<dt>${inl(x.term)}</dt><dd>${inl(x.def)}</dd>`).join("")}</dl></details>` : ""}
+    ${croiserBlock(m)}
     <div class="stack"><h2>Comment ça marche</h2>
       <div class="mech">${m.diagram ? diagram(m.diagram) : ""}<ol class="flow-list">${m.flow.map((f) => `<li><span>${inl(f)}</span></li>`).join("")}</ol></div>
     </div>
@@ -1844,10 +1856,10 @@ function panelExample(m) {
   const files = exFiles(m);
   return `
     <div class="ex">
-      ${filesBlock(files, "ex-" + m.id)}
-      <div class="stack"><h3>À remarquer</h3><ol class="notes">${(m.example.notes || []).map((x) => `<li><span>${inl(x)}</span></li>`).join("")}</ol>
+      <div class="stack"><h3>Ce que tu vas voir dans ce code</h3><ol class="notes">${(m.example.notes || []).map((x) => `<li><span>${inl(x)}</span></li>`).join("")}</ol>
       ${files.length > 1 ? `<p class="muted small">Les onglets sont les fichiers du projet : clique dessus pour passer de l'un à l'autre, comme dans ton éditeur.</p>` : ""}
       <p class="muted small">Relis le code en cherchant chaque étape du schéma « Comment ça marche ».</p></div>
+      ${filesBlock(files, "ex-" + m.id)}
     </div>`;
 }
 function panelQuiz(m) {
@@ -3997,9 +4009,9 @@ function memoMatches(text, fam) {
     const reF = /(?<![\w$>:\\])([a-z_]\w*)\s*\(/g; while ((m = reF.exec(text))) { if (/function\s+$/.test(text.slice(Math.max(0, m.index - 12), m.index))) continue; add(m.index, m[1], "fn:" + m[1]); }
   } else {
     const reN = /\bnew\s+([A-Z]\w*)/g; while ((m = reN.exec(text))) add(m.index + m[0].length - m[1].length, m[1], "new:" + m[1]);
-    const reM = /(?:([\w$]+)\s*)?\.([\w$]+)\s*\(/g;
+    const reM = /(?:([\w$]+)\s*)?\.([\w$]+)\s*(?:<[^()]*?>)?\s*\(/g;
     while ((m = reM.exec(text))) { const name = m[2], start = m.index + m[0].indexOf("." + name) + 1; if (m[1] && K.has(m[1] + "." + name)) add(start, name, m[1] + "." + name); else add(start, name, "." + name); }
-    const reF = /(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(/g; while ((m = reF.exec(text))) { if (/function\s+$/.test(text.slice(Math.max(0, m.index - 12), m.index))) continue; add(m.index, m[1], "fn:" + m[1]); }
+    const reF = /(?<![\w$.])([A-Za-z_$][\w$]*)\s*(?:<[^()]*?>)?\s*\(/g; while ((m = reF.exec(text))) { if (/function\s+$/.test(text.slice(Math.max(0, m.index - 12), m.index))) continue; add(m.index, m[1], "fn:" + m[1]); }
   }
   out.sort((a, b) => a[0] - b[0]);
   const res = []; let end = -1; for (const r of out) { if (r[0] >= end) { res.push(r); end = r[1]; } }
@@ -4029,12 +4041,13 @@ function linkMethods(root) {
 let MEMO_SEEN = null;
 function memoKeyRegex(k) {
   const e = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  if (k.startsWith("fn:")) return new RegExp("(?<![\\w$>:.\\\\])" + e(k.slice(3)) + "\\s*\\(");
+  if (k.startsWith("re:")) return new RegExp(k.slice(3), "m");
+  if (k.startsWith("fn:")) return new RegExp("(?<![\\w$>:.\\\\])" + e(k.slice(3)) + "\\s*(?:<[^()]*?>)?\\s*\\(");
   if (k.startsWith("->") || k.startsWith("::")) return new RegExp(e(k) + "\\s*\\(");
   if (k.startsWith("new:")) return new RegExp("\\bnew\\s+\\\\?" + e(k.slice(4)) + "\\b");
   if (k.startsWith("#")) return new RegExp("#\\[[^\\]]*\\b" + e(k.slice(1)) + "\\b");
   if (k.startsWith("Assert:")) return new RegExp("Assert\\\\" + e(k.slice(7)) + "\\b");
-  if (k.startsWith(".")) return new RegExp(e(k) + "\\s*\\(");
+  if (k.startsWith(".")) return new RegExp(e(k) + "\\s*(?:<[^()]*?>)?\\s*\\(");
   return new RegExp("\\b" + e(k) + "\\s*\\(");
 }
 function memoSeen(id) {
@@ -4501,7 +4514,8 @@ document.addEventListener("change", (e) => {
   if (e.target.id === "sb-start") { state.ui.sbStart = e.target.value.trim() || "/"; }
 });
 document.addEventListener("toggle", (e) => {
-  if (e.target.classList && e.target.classList.contains("prereq")) state.ui.prereqOpen = e.target.open;
+  if (e.target.classList && e.target.classList.contains("croiser")) state.ui.croiserOpen = e.target.open;
+  else if (e.target.classList && e.target.classList.contains("prereq")) state.ui.prereqOpen = e.target.open;
   if (e.target.classList && e.target.classList.contains("r-undated")) state.ui.ecUndated = e.target.open;
   if (e.target.classList && e.target.classList.contains("edt-card")) state.ui.edtOpen = e.target.open;
   if (e.target.dataset && e.target.dataset.bug) { if (e.target.open) state.ui.dbgOpen = e.target.dataset.bug; else if (state.ui.dbgOpen === e.target.dataset.bug) state.ui.dbgOpen = null; }

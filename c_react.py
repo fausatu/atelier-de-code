@@ -914,6 +914,8 @@ function TodoForm({ onAdd }: { onAdd: (title: string) => void }) {
     L("Remonter le state : deux composants qui partagent une donnée", r"""
 Une barre de recherche et une liste filtrée sont deux composants **frères** : aucun ne peut passer de props à l'autre. Où mettre le texte recherché ? Dans leur **plus proche parent commun**. Le parent détient le state, passe la valeur à l'un et à l'autre, et passe à la barre une fonction pour le modifier.
 
+Dans le code, la ligne `visible` calcule la liste filtrée : `contacts.filter((c) => …)` garde seulement les contacts pour lesquels la fonction renvoie `true` ; `texte.includes(morceau)` dit si un texte en contient un autre ; `toLowerCase()` met tout en minuscules des deux côtés, pour que « Léa » soit trouvée en tapant « léa ».
+
 ```tsx
 function Page() {
   const [query, setQuery] = useState('');
@@ -1377,6 +1379,8 @@ Sans le cleanup, chaque changement de `running` ajouterait un deuxième interval
 En développement, le **StrictMode** de React monte, démonte et remonte chaque composant une fois au démarrage : si ton effet n'a pas de cleanup correct, tu le vois tout de suite (double requête, double timer). C'est volontaire : un composant qui survit à ça est un composant sain.
 """),
     L("Charger des données avec useEffect : le schéma complet", r"""
+Voici le schéma complet, que tu retrouveras partout. Avant de le lire, les pièces : deux `useState` (l'utilisateur chargé, l'erreur éventuelle) ; un `useEffect` qui se relance quand `userId` change ; dedans, `fetch(url, { signal })` envoie la requête, `r.ok` vaut `true` si le statut est 2xx, `r.json()` lit le corps ; `new AbortController()` sert à **annuler** la requête (`controller.abort()`), ce qu'on fait dans le **cleanup** (la fonction renvoyée par l'effet, appelée avant de le relancer). Une requête annulée échoue avec une erreur nommée `AbortError`, qu'on ignore.
+
 ```tsx
 const [user, setUser] = useState<User | null>(null);
 const [error, setError] = useState<string | null>(null);
@@ -1753,6 +1757,8 @@ Après le module useEffect, tu sais charger des données : trois `useState` (don
 Avec des fonctions classiques, tu extrairais le code commun dans une fonction. Mais ici le code commun **contient des hooks** (`useState`, `useEffect`), et une fonction ordinaire n'a pas le droit de les appeler… sauf si elle est elle-même un hook. Un **hook personnalisé** est exactement ça : une fonction dont le nom commence par `use`, qui peut appeler d'autres hooks, et qui renvoie ce dont le composant a besoin.
 """),
     L("Écrire un hook : extraire, nommer, renvoyer", r"""
+On prend le code de chargement de la leçon précédente (`useState` + `useEffect` + `fetch`) et on le **déplace** dans une fonction à part, `useFetch`. Une seule chose nouvelle dans le code : `Promise.reject(new Error(...))` crée une promesse déjà en échec, ce qui fait sauter directement au `.catch` ; et `.finally(...)` s'exécute à la fin, que ce soit un succès ou une erreur.
+
 ```tsx
 export function useFetch<T>(url: string) {
   const [data, setData] = useState<T | null>(null);

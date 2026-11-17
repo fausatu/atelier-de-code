@@ -522,6 +522,8 @@ vo = V2(v1["ddd-vo"],
     caption="Un value object vérifie ses règles une seule fois, à la création. Ensuite, toute variable de type Email est forcément valide."),
   lessons=[
     L("Le problème des primitives", r"""
+Les **primitives**, ce sont les types de base : `string`, `int`, `float`, `bool`. Le code ci-dessous montre ce qui arrive quand on représente un email ou un prix avec eux : PHP accepte n'importe quelle valeur, et les `float` (nombres à virgule) font des erreurs d'arrondi (`0.1 + 0.2` n'est pas exactement `0.3`).
+
 ```php
 function inscrire(string $email, float $prix, string $devise) { ... }
 
@@ -559,6 +561,8 @@ public function equals(Money $autre): bool
 ```
 """),
     L("Écrire un value object en PHP", r"""
+Un value object `Email`, avant de le lire : son constructeur est `private` (personne ne peut faire `new Email(...)` de l'extérieur) ; on le crée uniquement par une méthode `static` nommée, `Email::depuis($saisie)`, qui nettoie la saisie (`trim` enlève les espaces, `strtolower` met en minuscules), la vérifie avec `filter_var(..., FILTER_VALIDATE_EMAIL)` (fonction native qui teste le format d'un email), puis appelle `new self(...)` (`self` = la classe elle-même). `domaine()` découpe le texte après le `@` avec `strpos` (position d'un caractère) et `substr` (morceau de texte à partir d'une position).
+
 ```php
 final class Email
 {
@@ -965,6 +969,8 @@ $a->suspendre();   // vérifie, change le statut, compte la suspension : tout ou
 Le code appelant devient simple, et il est **impossible** de mettre l'objet dans un état invalide.
 """),
     L("Construire une entité riche", r"""
+Deux pièces dans ce code. D'abord un **enum** (`enum StatutAbonnement: string`) : un type qui n'a que quelques valeurs possibles, listées avec `case` ; on les écrit `StatutAbonnement::Actif`. Ensuite l'entité `Abonnement` : ses propriétés sont privées, et la seule façon de la faire changer est d'appeler une méthode au nom métier (`suspendre()`), qui vérifie les règles et lève une `DomainException` (exception native de PHP pour « règle métier non respectée ») si elles ne sont pas respectées.
+
 ```php
 enum StatutAbonnement: string
 {
@@ -1923,6 +1929,8 @@ couches = V2(v1["ddd-couches"],
     caption="Les dépendances pointent vers le domaine : le handler utilise le domaine et ses interfaces ; l'infrastructure implémente ces interfaces. Le domaine ne connaît ni Doctrine ni Symfony."),
   lessons=[
     L("Trois couches, une règle de dépendance", r"""
+Une application DDD range son code en **trois dossiers**, un par couche : *Domain* (les règles du métier), *Application* (les cas d'usage) et *Infrastructure* (la base de données, HTTP, etc.). Voici l'arborescence d'un module « Planning » de salle de sport, puis le rôle de chaque couche.
+
 ```
 src/Planning/
 ├── Domain/           Cours, MembreId, CoursComplet, CoursRepository (interface)
@@ -1969,6 +1977,8 @@ En production, Symfony injecte les adaptateurs Doctrine ; dans les tests, on inj
 (Remarque : `new DateTimeImmutable()` au milieu d'une règle métier rend le code impossible à tester « le 31 décembre » : l'horloge injectée règle ce problème.)
 """),
     L("Un handler typique", r"""
+Un **handler** exécute un cas d'usage. Il reçoit une **commande** : un petit objet qui ne contient que des données (ici l'id du cours et l'id du membre). Il a une méthode `__invoke`, ce qui permet de l'appeler comme une fonction : `$handler($commande)`. Son travail tient en trois étapes, marquées en commentaire : charger, laisser le domaine décider, sauvegarder.
+
 ```php
 // Application
 final class ReserverPlace

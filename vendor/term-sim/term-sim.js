@@ -153,6 +153,83 @@
       out(`(simulation : le serveur tourne en arrière-plan, PID ${pid})`, "dim");
       return 0;
     }
+
+    /* ---------- serveurs de dev : symfony, php -S, vite (+ proxy) ---------- */
+    function fileText(p) { const f = lookup(p); return f && f.type === "file" ? f.content : null; }
+    function readEnvFiles(dir) {
+      const env = {};
+      for (const name of [".env", ".env.local"]) { const t = fileText(norm(dir + "/" + name)); if (t == null) continue; for (const line of t.split("\n")) { const m = line.match(/^\s*([A-Za-z_]\w*)\s*=\s*(.*?)\s*$/); if (m && !line.trim().startsWith("#")) env[m[1]] = m[2].replace(/^["']|["']$/g, ""); } }
+      return env;
+    }
+    function freePort(port) { while (portOwner(port)) port++; return port; }
+    function addProc(o) { const pid = S.nextPid; S.nextPid += 37; S.procs.push(Object.assign({ pid, user: "ana" }, o)); return pid; }
+    function apiResponse(dir) {
+      const env = readEnvFiles(dir);
+      return (path) => {
+        if (!/^\/api\//.test(path)) return "<!DOCTYPE html><title>Bobine API</title><h1>Bobine API</h1>";
+        if (!env.DATABASE_URL || /!ChangeMe!|app:!ChangeMe/.test(env.DATABASE_URL)) return '{"error":"An exception occurred in the driver: SQLSTATE[HY000] [1045] Access denied for user \'app\'"}';
+        if (path.startsWith("/api/films")) return '{"items":[{"id":1,"titre":"Big Buck Bunny"},{"id":3,"titre":"Sintel"}],"total":2,"page":1,"pages":1}';
+        return '{"error":"No route found for \\"GET ' + path + '\\""}';
+      };
+    }
+    function symfonyCmd(args) {
+      const sub = args[0] || "";
+      if (sub === "-v" || sub === "version" || sub === "--version") { out("Symfony CLI version 5.10.4"); return 0; }
+      const dir = S.cwd;
+      const isProject = !!lookup(norm(dir + "/composer.json")) && !!lookup(norm(dir + "/bin/console"));
+      if (sub === "server:stop") {
+        const before = S.procs.length; S.procs = S.procs.filter((p) => !(p.kind === "symfony" && p.dir === dir));
+        out(before === S.procs.length ? " [ERROR] The web server is not running" : " Stopping the web server... [OK]"); return before === S.procs.length ? 1 : 0;
+      }
+      if (sub === "server:start" || sub === "serve" || sub === "local:server:start") {
+        if (!isProject) { out(" [ERROR] Unable to find a Symfony project here (no composer.json / bin/console in " + show(dir) + ")", "err"); hint("place-toi dans le dossier du back (celui qui contient composer.json), par exemple : cd back"); return 1; }
+        const mine = S.procs.find((p) => p.kind === "symfony" && p.dir === dir);
+        if (mine) { out(` [WARNING] The local web server is already running for this project at port ${mine.port}`); return 0; }
+        const pa = args.find((a) => a.startsWith("--port")); let want = pa ? Number(pa.split("=")[1] || args[args.indexOf(pa) + 1]) : 8000;
+        const port = pa ? want : freePort(want);
+        if (pa && portOwner(port)) { out(` [ERROR] Port ${port} is already in use by another process (PID ${portOwner(port).pid})`, "err"); hint(`le port ${port} est pris : trouve qui l'utilise avec lsof -i :${port}`); return 1; }
+        if (port !== want) out(` [WARNING] Port ${want} is already in use, using port ${port} instead`, "warn");
+        addProc({ nom: "php", kind: "symfony", dir, cmd: "symfony server:start" + (args.includes("-d") ? " -d" : ""), port, respond: apiResponse(dir) });
+        out(""); out(` [OK] Web server listening`); out(`      The Web server is using PHP CLI 8.3.14`); out(""); out(`      http://127.0.0.1:${port}`); out("");
+        out(`(simulation : le serveur tourne en arrière-plan${args.includes("-d") ? "" : " ; dans un vrai terminal, sans -d, il occupe la fenêtre jusqu'à Ctrl+C"})`, "dim");
+        return 0;
+      }
+      if (sub === "server:list") { const l = S.procs.filter((p) => p.kind === "symfony"); if (!l.length) out("No local web servers configured."); for (const p of l) out(`${show(p.dir)}  http://127.0.0.1:${p.port}`); return 0; }
+      out(`(simulation : « symfony ${args.join(" ")} » n'est pas disponible ; essaie server:start, server:stop, server:list)`, "dim"); return 0;
+    }
+    function phpCmd(args) {
+      if (args[0] === "-v" || args[0] === "--version") { out("PHP 8.3.14 (cli)"); return 0; }
+      if (args[0] === "-S") {
+        const hp = args[1] || ""; const port = Number((hp.match(/:(\d+)$/) || [])[1]);
+        if (!port) { out("Invalid address: " + hp, "err"); hint("la forme attendue est -S localhost:8000"); return 1; }
+        const t = args.indexOf("-t"); const docroot = t >= 0 ? norm(abs(args[t + 1] || ".")) : S.cwd;
+        if (!lookup(docroot)) { out(`Directory ${args[t + 1]} does not exist.`, "err"); return 1; }
+        if (portOwner(port)) { out(`[Mon Nov 16 09:00:00 2026] Failed to listen on ${hp} (reason: Address already in use)`, "err"); hint(`le port ${port} est déjà pris (PID ${portOwner(port).pid}).`); return 1; }
+        const proj = docroot.replace(/\/public$/, "");
+        addProc({ nom: "php", kind: "php", dir: proj, cmd: "php " + args.join(" "), port, respond: apiResponse(proj) });
+        out(`[Mon Nov 16 09:00:00 2026] PHP 8.3.14 Development Server (http://${hp}) started`); return 0;
+      }
+      if (args[0] === "bin/console") { out("(simulation : bin/console n'est pas exécuté dans l'atelier)", "dim"); return 0; }
+      out("(simulation : seul « php -S hôte:port -t dossier » et « php -v » sont disponibles)", "dim"); return 0;
+    }
+    function viteCmd(args) {
+      const dir = S.cwd;
+      if (!lookup(norm(dir + "/node_modules"))) { out("sh: 1: vite: not found", "err"); hint("les dépendances ne sont pas installées dans ce dossier : lance npm install d'abord."); return 127; }
+      const cfg = fileText(norm(dir + "/vite.config.ts")) || fileText(norm(dir + "/vite.config.js")) || "";
+      const pa = args.find((a) => a.startsWith("--port")); const cp = (cfg.match(/port\s*:\s*(\d+)/) || [])[1];
+      let port = pa ? Number(pa.split("=")[1] || args[args.indexOf(pa) + 1]) : cp ? Number(cp) : 5173;
+      const strict = /strictPort\s*:\s*true/.test(cfg) || args.includes("--strictPort");
+      if (portOwner(port)) {
+        if (strict) { out(`error when starting dev server:`, "err"); out(`Error: Port ${port} is already in use`, "err"); hint(`strictPort est activé : Vite refuse de changer de port. Libère le port ${port}.`); return 1; }
+        while (portOwner(port)) { out(`Port ${port} is in use, trying another one...`); port++; }
+      }
+      const pm = cfg.match(/['"]\/api['"]\s*:\s*(?:\{[^}]*?target\s*:\s*)?['"]https?:\/\/(?:localhost|127\.0\.0\.1):(\d+)/);
+      const env = readEnvFiles(dir); const vite = {}; for (const [k, v] of Object.entries(env)) if (k.startsWith("VITE_")) vite[k] = v;
+      addProc({ nom: "node", kind: "vite", dir, cmd: "vite", port, proxy: pm ? Number(pm[1]) : null, viteEnv: vite, respond: () => '<!doctype html><html lang="fr"><head><title>Bobine</title></head><body><div id="root"></div></body></html>' });
+      out(""); out("  VITE v5.4.11  ready in 312 ms"); out(""); out(`  ➜  Local:   http://localhost:${port}/`); out("  ➜  Network: use --host to expose"); out("");
+      out("(simulation : Vite tourne en arrière-plan ; dans un vrai terminal, il occupe la fenêtre jusqu'à Ctrl+C)", "dim");
+      return 0;
+    }
     function readPkg() {
       const f = lookup(abs("package.json"));
       if (!f || f.type !== "file") return null;
@@ -595,10 +672,24 @@
         return 0;
       },
       curl(args) {
-        const url = args.find((a) => /^https?:/.test(a) || /^localhost/.test(a)) || ""; const port = (url.match(/:(\d+)/) || [])[1] || "80";
-        if (/localhost|127\.0\.0\.1/.test(url)) { const p = portOwner(port); if (!p) { berr(`curl: (7) Failed to connect to localhost port ${port} after 0 ms: Couldn't connect to server`); hint(`aucun programme n'écoute sur le port ${port} : le serveur n'est pas démarré (ou il tourne sur un autre port).`); return 7; } out(p.response || "OK"); return 0; }
+        const url = args.find((a) => /^https?:/.test(a) || /^localhost/.test(a) || /^127\.0\.0\.1/.test(a)) || ""; const port = (url.match(/:(\d+)/) || [])[1] || "80";
+        const path = (url.replace(/^https?:\/\//, "").match(/^[^/]*(\/.*)?$/) || [])[1] || "/";
+        if (/localhost|127\.0\.0\.1/.test(url)) {
+          const p = portOwner(port);
+          if (!p) { berr(`curl: (7) Failed to connect to localhost port ${port} after 0 ms: Couldn't connect to server`); hint(`aucun programme n'écoute sur le port ${port} : le serveur n'est pas démarré (ou il tourne sur un autre port).`); S.lastCurl = { url, ok: false }; return 7; }
+          if (p.kind === "vite" && path.startsWith("/api")) {
+            if (!p.proxy) { out('<!doctype html><html lang="fr"><head><title>Bobine</title></head><body><div id="root"></div></body></html>'); hint("Vite a renvoyé la page du front au lieu de l'API : aucun proxy /api n'est configuré dans vite.config.ts."); S.lastCurl = { url, ok: false }; return 0; }
+            const b = portOwner(p.proxy);
+            if (!b) { out(`(dans le terminal de Vite) [vite] http proxy error: ${path}`, "err"); out(`AggregateError [ECONNREFUSED]: connect ECONNREFUSED 127.0.0.1:${p.proxy}`, "err"); hint(`le proxy envoie /api vers le port ${p.proxy}, mais rien n'y écoute : le back n'est pas démarré, ou il tourne sur un autre port.`); S.lastCurl = { url, ok: false }; return 0; }
+            const r = b.respond ? b.respond(path) : b.response || "OK"; out(r); S.lastCurl = { url, ok: !/"error"/.test(r), via: "proxy" }; return 0;
+          }
+          const r = p.respond ? p.respond(path) : p.response || "OK"; out(r); S.lastCurl = { url, ok: !/"error"/.test(r) }; return 0;
+        }
         out("(simulation : pas d'accès à Internet dans l'atelier)", "dim"); return 0;
       },
+      symfony(args) { return symfonyCmd(args); },
+      php(args) { return phpCmd(args); },
+      vite(args) { return viteCmd(args); },
       npm(args) { return npm(args); },
       node(args) { if (args[0] === "-v" || args[0] === "--version") { out("v22.11.0"); return 0; } if (!args.length) { out("(simulation : la console interactive de node n'est pas disponible)", "dim"); return 0; } const n = lookup(abs(args[0])); if (!n) { out("node:internal/modules/cjs/loader:1228", "err"); out(`  throw err;`, "err"); out("", "err"); out(`Error: Cannot find module '${abs(args[0])}'`, "err"); hint("le fichier n'existe pas à cet endroit : vérifie le chemin et le dossier courant."); return 1; } return startServer("node " + args[0], args[0]); },
       pwsh() { S.mode = "pwsh"; S.cwd = canon(HOME_PS); mkdirp(HOME_PS); out("PowerShell 7.4.6", "dim"); return 0; },
@@ -1117,7 +1208,8 @@
       get mode() { return S.mode; },
       env(k) { return S.env[k]; },
       get policy() { return S.policy; },
-      procs() { return S.procs.map((p) => Object.assign({}, p)); },
+      procs() { return S.procs.map((p) => { const o = Object.assign({}, p); delete o.respond; return o; }); },
+      get lastCurl() { return S.lastCurl || null; },
       portPid(port) { const p = portOwner(port); return p ? p.pid : null; },
       commands() { return T.map((e) => e.cmd).filter(Boolean); },
       used(re) { return T.some((e) => (re instanceof RegExp ? re.test(e.cmd) : e.cmd.includes(re))); },

@@ -8,6 +8,8 @@ from c_react import MODULES as REACT
 from c_next import MODULES as NEXT
 from c_dto import MODULES as DTO
 from c_data import MODULES as DATA_
+from c_axios import MODULES as AXIOS
+DATA_ = DATA_[:1] + AXIOS + DATA_[1:]
 from c_arch import MODULES as ARCH
 from c_git import MODULES as GIT
 from c_debug import MODULES as DEBUG
@@ -18,6 +20,8 @@ from c_term import MODULES as TERM
 from c_ts import MODULES as TSM
 from c_fil import MODULES as FIL
 from c_fil2 import MODULES as FIL2
+from c_fil3 import MODULES as FIL3
+from c_orga import MODULES as ORGA
 
 TRACKS = [
     {"id": "php", "group": "back", "name": "PHP orienté objet", "short": "PHP POO", "color": "violet",
@@ -36,6 +40,8 @@ TRACKS = [
      "desc": "Composants, state, formulaires, effets, hooks personnalisés."},
     {"id": "data", "group": "front", "name": "React : données & API", "short": "Données & API", "color": "rose",
      "desc": "Requêtes HTTP, fetch et axios, mutations, couche API, TanStack Query."},
+    {"id": "orga", "group": "front", "name": "Organiser un projet React", "short": "Organiser", "color": "moss",
+     "desc": "Où créer chaque fichier (ranger par fonctionnalité, partagé ou non), et quand passer des props : remonter le state, composition, React Query, Context."},
     {"id": "forms", "group": "front", "name": "Formulaires React", "short": "Formulaires", "color": "indigo",
      "desc": "Du formulaire fait main à React Hook Form et TanStack Form : validation zod, listes, composants de champ, migration."},
     {"id": "next", "group": "front", "name": "Next.js (App Router)", "short": "Next.js", "color": "graphite",
@@ -54,7 +60,7 @@ TRACKS = [
      "desc": "Créer une API (REST, erreurs, auth, cache, idempotence, limites) et la consommer en PHP et en JS."},
 ]
 
-modules = PHP + DOC + DTO + ARCH + DDD + TSM + REACT + DATA_ + FORMS + NEXT + GIT + TERM + API + DECOUPE + DEBUG + FIL + FIL2
+modules = PHP + DOC + DTO + ARCH + DDD + TSM + REACT + DATA_ + ORGA + FORMS + NEXT + GIT + TERM + API + DECOUPE + DEBUG + FIL + FIL2 + FIL3
 ids = set()
 for m in modules:
     assert m["id"] not in ids, m["id"]
@@ -97,7 +103,7 @@ for m in modules:
 GROUPS = [
     {"id": "methode", "name": "Méthode", "desc": "Savoir s'y prendre : découper une fonctionnalité, déboguer."},
     {"id": "back", "name": "Web · Back-end", "desc": "PHP → Doctrine → DTO → Architecture → API, DDD en bonus."},
-    {"id": "front", "name": "Web · Front-end", "desc": "TypeScript → React → Données & API → Formulaires → Next.js."},
+    {"id": "front", "name": "Web · Front-end", "desc": "TypeScript → React → Données & API → Organiser → Formulaires → Next.js."},
     {"id": "outils", "name": "Outils", "desc": "Les outils du quotidien : Git, le terminal."},
     {"id": "projet", "name": "Projet", "desc": "Tout relier sur un vrai projet : Bobine, un site de streaming."},
 ]
@@ -124,6 +130,8 @@ _prog = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 PROGRAMME = {k: _prog[k] for k in ("ecole", "formation", "promo", "ue", "types", "modules")}
 EDT = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ecole", "edt.json"), encoding="utf-8"))
 from methodes import METHODES, CATS as MCATS
+from explique import analyse as _explique
+_explique(modules)
 data = {"methodes": {"cats": MCATS, "items": METHODES}, "groups": GROUPS, "tracks": TRACKS, "modules": modules, "setups": SETUPS, "cal": CAL, "programme": PROGRAMME, "edt": EDT}
 js = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
 tpl = open("/home/claude/atelier/template.html", encoding="utf-8").read()

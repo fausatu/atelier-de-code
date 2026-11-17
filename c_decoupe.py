@@ -495,7 +495,7 @@ finally { setEnCours(false) }   // c'est fini, quoi qu'il arrive
 Pour chaque information, pose les questions **dans cet ordre** :
 
 1. **Le parent me la donne ?** → c'est une **prop** (`utilisateur`, `produitId`). Ne la recopie pas dans un state.
-2. **Je peux la calculer à partir de ce que j'ai déjà ?** → une **`const` calculée** à chaque rendu :
+2. **Je peux la calculer à partir de ce que j'ai déjà ?** → une **`const` calculée** à chaque rendu. Dans l'exemple ci-dessous, `lignes.reduce((t, l) => t + l.prix * l.quantite, 0)` parcourt les lignes en gardant un cumul `t` qui part de `0` : à chaque ligne `l`, la fonction fléchée `(t, l) => …` renvoie le nouveau cumul. Le résultat final est le total.
    ```ts
    const total = lignes.reduce((t, l) => t + l.prix * l.quantite, 0);
    const vide = lignes.length === 0;

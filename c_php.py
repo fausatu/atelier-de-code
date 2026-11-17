@@ -841,6 +841,8 @@ abstract class Forme
 Une classe abstraite peut mélanger du code concret (`decrire()`) et des méthodes abstraites (`aire()`). C'est ce qui la distingue d'une interface (module suivant), qui ne contient **que** des signatures.
 """),
     L("Le polymorphisme : un appel, plusieurs comportements", r"""
+On reprend `Cercle` et `Rectangle`, qui héritent tous les deux de `Forme`. Le code ci-dessous les met dans un même tableau, puis appelle `decrire()` sur chacun avec une boucle `foreach` (pour chaque élément du tableau, la variable `$forme` vaut cet élément). `PHP_EOL` est simplement un retour à la ligne. Regarde bien : la boucle ne teste jamais quel type de forme elle tient.
+
 ```php
 $formes = [new Cercle(1), new Rectangle(2, 3)];
 foreach ($formes as $forme) {
@@ -1198,6 +1200,8 @@ interf = V2(v1["php-interfaces"],
     caption="Le service ne connaît que le contrat. On branche l'implémentation qu'on veut, y compris une fausse pour tester."),
   lessons=[
     L("Le problème : dépendre d'une classe précise", r"""
+Le point de départ : une classe `AlerteStock` qui prévient le gérant quand un stock est bas. Pour envoyer le message, elle **crée elle-même**, dans son constructeur, l'objet qui envoie des SMS (`new SmsNotifier()`). Voici à quoi ça ressemble, puis pourquoi ça pose problème.
+
 ```php
 final class AlerteStock
 {
@@ -1215,6 +1219,8 @@ final class AlerteStock
 Ce que `AlerteStock` veut vraiment, ce n'est pas « un SmsNotifier », c'est « quelque chose qui sait envoyer un message ». C'est ce besoin, et uniquement lui, qu'une **interface** décrit.
 """),
     L("Une interface est un contrat sans code", r"""
+Une **interface** se déclare avec le mot `interface` et ne contient que des **signatures** : le nom de chaque méthode, ses paramètres et son type de retour, terminés par `;`, sans corps `{ }`. Une classe s'engage à la respecter avec `implements NomDeLInterface`. Voici d'abord l'interface, puis une classe qui l'implémente.
+
 ```php
 interface Notifier
 {
@@ -1243,6 +1249,8 @@ Différences avec une classe abstraite :
 - En pratique : interface pour décrire un **rôle** qu'on branche (`Notifier`, `Repository`, `PaymentGateway`), classe abstraite pour factoriser du code entre des enfants proches (`Forme`).
 """),
     L("Programmer contre l'interface", r"""
+On réécrit `AlerteStock` : au lieu de créer son notifier, elle le **reçoit** dans son constructeur, et le type du paramètre est l'interface `Notifier` (pas une classe précise). La syntaxe `__construct(private Notifier $notifier) {}` déclare la propriété et la remplit en une seule ligne (c'est la *promotion de constructeur*, vue dans le module Classes).
+
 ```php
 final class AlerteStock
 {
@@ -1675,6 +1683,8 @@ ns = V2(v1["php-namespaces"],
 Les deux mécanismes vont ensemble : le namespace donne à chaque classe un nom complet unique, et c'est ce nom complet que l'autoloader traduit en chemin de fichier.
 """),
     L("Déclarer et utiliser un namespace", r"""
+Un **namespace** est un « nom de famille » pour tes classes, pour que deux classes `Produit` de deux parties du projet ne se confondent pas. On le déclare avec `namespace App\Catalogue;` en haut du fichier ; ensuite, pour utiliser la classe ailleurs, on l'importe avec `use`. Voici la déclaration, puis les trois façons de l'utiliser.
+
 ```php
 <?php
 // src/Catalogue/Produit.php
@@ -1943,6 +1953,8 @@ di = V2(v1["php-di"],
     caption="Personne n'écrit ces `new` : le conteneur construit chaque service une fois et le passe à ceux qui le demandent."),
   lessons=[
     L("Le problème : une classe qui construit ses propres outils", r"""
+Voici une classe d'inscription qui, à chaque appel, **fabrique elle-même** ses outils avec `new` : un accès à la base MySQL (`PDO` est la classe native de PHP pour parler à une base de données) et un envoi d'email. Lis-la en te demandant : comment la tester sans vraie base ni vrai serveur mail ?
+
 ```php
 final class InscriptionService
 {
@@ -1964,6 +1976,8 @@ Cette classe **décide** elle-même de ses outils. Trois conséquences :
 Le principe de l'**injection de dépendances** est simple : une classe ne construit pas ses dépendances, elle les **reçoit**. Elle déclare ce dont elle a besoin, et quelqu'un d'autre les lui fournit.
 """),
     L("Injecter par le constructeur", r"""
+La correction : la classe **déclare ses besoins** comme paramètres du constructeur, typés par des interfaces (`UserRepository`, `Mailer`), et ne fait plus aucun `new` d'outil. `private UserRepository $users` dans le constructeur crée la propriété et la remplit (promotion de constructeur). Ensuite, c'est celui qui construit l'objet qui choisit quelles implémentations donner.
+
 ```php
 final class InscriptionService
 {

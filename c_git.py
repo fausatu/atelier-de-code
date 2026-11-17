@@ -1156,6 +1156,8 @@ test(profil): couvre la page profil
 La convention **Conventional Commits** est aussi lisible par des outils : génération automatique du CHANGELOG, calcul du prochain numéro de version, filtres (`git log --grep "^fix"`).
 """),
     L("Le format", r"""
+Un message de commit au format **Conventional Commits** a jusqu'à trois parties, séparées par une ligne vide : une première ligne obligatoire (un **type**, une **portée** facultative entre parenthèses, un `!` si ça casse quelque chose, puis `:` et une description), puis un corps et un pied facultatifs. Voici le modèle, puis la liste des types.
+
 ```
 type(portée optionnelle)!: description
 
@@ -1418,6 +1420,8 @@ Ton dépôt local et GitHub sont **deux dépôts complets**. Ils ne se synchroni
 Première publication d'une branche : `git push -u origin feat/x`. Le `-u` (set-upstream) relie `feat/x` à `origin/feat/x` ; ensuite un simple `git push` / `git pull` suffit.
 """),
     L("Quand le push est refusé", r"""
+Tu fais `git push` et Git répond par un refus. Voici le message que tu verras (« rejected » veut dire refusé, « fetch first » veut dire « récupère d'abord »), puis ce qu'il signifie et comment s'en sortir.
+
 ```
  ! [rejected]        main -> main (fetch first)
 hint: Updates were rejected because the remote contains work that you do not have locally.
@@ -1684,6 +1688,8 @@ C'est un nouveau commit (même message, autre identifiant). En cas de conflit : 
 À utiliser ponctuellement : si tu cherry-pick des dizaines de commits, c'est qu'il fallait plutôt fusionner ou rebaser.
 """),
     L("Tags : marquer les versions", r"""
+Un **tag** est une étiquette fixe posée sur un commit, en général un numéro de version (`v1.0.0`). Il en existe deux sortes : le tag **léger** (juste un nom) et le tag **annoté** (`-a`, avec un message, un auteur et une date : à préférer pour une version). Voici les commandes, avec leur effet en commentaire.
+
 ```bash
 git tag v1.0.0                              # tag léger : juste une étiquette
 git tag -a v1.0.1 -m "Version 1.0.1"        # tag annoté : auteur, date, message (à préférer pour les versions)

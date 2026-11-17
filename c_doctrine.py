@@ -48,7 +48,11 @@ Et l'inverse pour relire : un `SELECT`, puis remplir un objet champ par champ. M
 **Doctrine** fait cette traduction pour toi. Tu décris **une fois** comment la classe correspond à la table (le *mapping*), et ensuite tu ne manipules que des objets.
 """),
     L("L'entité et son mapping", r"""
-Une **entité** est une classe PHP dont les objets sont stockés en base. On la marque avec des attributs :
+Une **entité** est une classe PHP dont les objets sont stockés en base. On la marque avec des **attributs** : une étiquette `#[...]` posée juste au-dessus d'une classe ou d'une propriété. Elle ne change rien au code PHP ; c'est Doctrine qui la lit pour savoir quoi stocker et comment. Voici celles du code ci-dessous, avant de le lire :
+
+- `#[ORM\Entity(repositoryClass: LivreRepository::class)]` : « cette classe correspond à une table », et sa classe de requêtes est `LivreRepository`.
+- `#[ORM\Id]` : cette propriété est la clé primaire. `#[ORM\GeneratedValue]` : c'est la base qui choisit sa valeur (auto-incrément).
+- `#[ORM\Column]` : cette propriété est une colonne. Ses options : `length: 255` (taille max du texte), `unique: true` (pas deux lignes avec la même valeur), `type:` (forcer un type SQL), `nullable: true` (accepter `NULL`).
 
 ```php
 use Doctrine\ORM\Mapping as ORM;
@@ -1085,6 +1089,18 @@ $repo->count(['disponible' => true]);                  // un nombre
 Les clés du tableau sont des **noms de propriétés** (pas de colonnes). Dès que tu as besoin d'autre chose qu'une égalité (`LIKE`, `>=`, une jointure, un `COUNT` groupé), passe au QueryBuilder.
 """),
     L("Le QueryBuilder et le DQL", r"""
+Le **QueryBuilder** construit une requête morceau par morceau, en enchaînant des méthodes (chacune renvoie le même objet, d'où les `->` les uns sous les autres). Le texte de requête qu'il produit s'appelle le **DQL** : du SQL qui parle d'entités et de propriétés au lieu de tables et de colonnes. Les méthodes du code ci-dessous, dans l'ordre où elles apparaissent :
+
+- `createQueryBuilder('a')` : démarre une requête sur l'entité du repository ; `a` est son **alias**. Toutes les conditions parlent ensuite de `a.propriete` (Doctrine traduit `a.creeLe` en colonne `cree_le`).
+- `andWhere('condition')` : ajoute une condition (un `WHERE ... AND ...`). Chaque appel s'**empile** sur les précédents.
+- `setParameter('nom', $valeur)` : donne la valeur du paramètre `:nom` écrit dans une condition (on verra pourquoi c'est obligatoire juste après).
+- `orderBy('a.creeLe', 'DESC')` : trie (`ASC` croissant, `DESC` décroissant).
+- `setMaxResults($max)` : garde au maximum `$max` résultats (un `LIMIT`).
+- `getQuery()` : transforme la construction en vraie requête, puis la méthode finale l'exécute :
+  - `getResult()` : un tableau d'objets ;
+  - `getOneOrNullResult()` : un objet ou `null` (exception s'il y en a plusieurs) ;
+  - `getSingleScalarResult()` : une seule valeur (avec `->select('COUNT(l.id)')`). Elle arrive souvent en chaîne : caste en `int`.
+
 ```php
 public function findPubliesDepuis(\DateTimeImmutable $depuis, int $max = 10): array
 {
@@ -1099,9 +1115,7 @@ public function findPubliesDepuis(\DateTimeImmutable $depuis, int $max = 10): ar
 }
 ```
 
-- `createQueryBuilder('a')` : `a` est l'**alias** de l'entité. Toutes les conditions parlent de `a.propriete`.
-- On écrit des **propriétés** (`a.creeLe`), Doctrine les traduit en colonnes (`cree_le`).
-- `andWhere` s'empile : chaque appel ajoute une condition. Pratique pour les filtres optionnels :
+Comme `andWhere` s'empile, on peut n'ajouter une condition **que si** un filtre est rempli. C'est la recette des filtres optionnels (`mb_strtolower` met le texte en minuscules, accents compris, pour une recherche qui ignore la casse) :
 
 ```php
 $qb = $this->createQueryBuilder('l');
@@ -1112,12 +1126,6 @@ if ($disponible !== null) {
     $qb->andWhere('l.disponible = :d')->setParameter('d', $disponible);
 }
 ```
-
-Ce que renvoie la requête dépend de la méthode finale :
-
-- `getResult()` : un tableau d'objets.
-- `getOneOrNullResult()` : un objet ou `null` (exception s'il y en a plusieurs).
-- `getSingleScalarResult()` : une seule valeur (avec `->select('COUNT(l.id)')`). Elle arrive souvent en chaîne : caste en `int`.
 """),
     L("Toujours des paramètres", r"""
 Ne colle **jamais** une valeur dans le texte de la requête :
@@ -1228,7 +1236,7 @@ SELECT COUNT(a0_.id) AS sclr_0 FROM article a0_ WHERE a0_.publie = 1
         "`$q` : titre **ou** auteur contenant le texte (insensible à la casse) ; ignoré si vide",
         "`$disponible` et `$auteurId` : ignorés s'ils valent `null`",
         "`$tri` accepte `'titre'` ou `'recent'` (publieLe décroissant) ; toute autre valeur → `'titre'` (jamais injecter `$tri` dans la requête)",
-        "Jointure sur l'auteur pour pouvoir filtrer par son nom"],
+        "Jointure sur l'auteur pour pouvoir filtrer par son nom : `->leftJoin('l.auteur', 'a')` relie chaque livre à son auteur sous l'alias `a` (comme un `LEFT JOIN` en SQL : un livre sans auteur reste dans les résultats), et `->addSelect('a')` charge aussi les colonnes de l'auteur. Tu pourras alors écrire `a.nom` dans un `andWhere`. On reviendra en détail sur la jointure dans le module « Lazy loading & problème N+1 »"],
        [F("src/Repository/LivreRepository.php", "php", r"""
 <?php
 
