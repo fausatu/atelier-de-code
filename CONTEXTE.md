@@ -213,7 +213,7 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   trouvée dans les fichiers (fonction, propriété, classe) ou fiche du mémo. `edPosAt` convertit la souris en position dans le texte.
 - **Erreurs en direct** (650 ms après la frappe) : calque `.ed-dg` sous le texte (vagues rouges = erreurs, orange = avertissements),
   numéros de ligne colorés, barre `.ed-probs` sous l'éditeur (clic = aller à la ligne), message au survol, paire de parenthèses
-  surlignée (`.bm`). PHP/CSS/JSON : `edScan` maison (chaînes, commentaires, heredoc, paires, `;` dans un `[`/`(` ouvert, « ; »
+  surlignée (`.bm`). En .ts/.js (pas .tsx), `edScan(v, "js")` (avec littéraux regex) trouve la vraie accolade non fermée, TS signale souvent plus bas. PHP/CSS/JSON : `edScan` maison (chaînes, commentaires, heredoc, paires, `;` dans un `[`/`(` ouvert, « ; »
   probablement oublié = `edPhpSemicolons`), une seule cause à la fois. TS/JS : diagnostics du service TypeScript en français ;
   erreurs de types complètes seulement dans le parcours TypeScript / TD `typecheck`, ailleurs seulement les sûres (`SURES`), car
   les types simplifiés des bibliothèques feraient de fausses alertes. Vérifié : 0 fausse alerte sur les 190 solutions TS et 485 fichiers PHP.

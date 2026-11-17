@@ -2326,6 +2326,7 @@ function libText(url) {
 }
 /* Erreurs de compilation / d'exécution : on coupe le blabla anglais de Babel et on ajoute une explication en français. */
 const ERR_FR = [
+  [/'import' and 'export' may only appear at the top level|TS1184/, "Ce `export` se retrouve À L'INTÉRIEUR d'une autre fonction : il manque une accolade `}` plus haut (la fonction, le `switch` ou le `if` précédent n'est pas fermé). Cherche au-dessus la `{` qui n'a pas sa `}` : l'éditeur la souligne en rouge."],
   [/experimental syntax 'throwExpressions'/, "En JavaScript/TypeScript, `throw` ne peut pas se placer au milieu d'une expression (après `??`, dans un `? :` ou après `=>` sans accolades), contrairement à PHP où `$x ?? throw new …` est permis. Écris un `if` avant : `if (x === undefined) throw new Error('…');`, ou une fonction fléchée avec accolades : `() => { throw new Error('…'); }`."],
   [/experimental syntax '(\w+)'/, "Cette syntaxe n'existe pas (encore) en JavaScript/TypeScript. Souvent une habitude de PHP : vérifie la ligne indiquée."],
   [/Unexpected token,? expected "([^"]+)"/, "Il manque « $1 » à l'endroit indiqué (ligne:colonne). Regarde aussi la ligne juste au-dessus : une parenthèse, une accolade ou une virgule oubliée."],
@@ -4739,11 +4740,18 @@ function edScan(v, lang) {
     if (php && !inPhp) { const k = v.indexOf("<?", i); if (k < 0) break; i = k + (v.startsWith("<?php", k) ? 5 : 3); inPhp = true; continue; }
     const c = v[i], d = v[i + 1];
     if (php && c === "?" && d === ">") { inPhp = false; i += 2; continue; }
+    if (lang === "js" && c === "/" && d !== "/" && d !== "*") {
+      let p = i - 1; while (p >= 0 && /\s/.test(v[p])) p--;
+      if (p < 0 || /[(,=:[!&|?{};+\-*%<>~^]/.test(v[p]) || /\breturn$/.test(v.slice(Math.max(0, p - 6), p + 1))) {
+        let k = i + 1, cls = false; while (k < n && v[k] !== "\n") { if (v[k] === "\\") k++; else if (v[k] === "[") cls = true; else if (v[k] === "]") cls = false; else if (v[k] === "/" && !cls) break; k++; }
+        if (v[k] === "/") { i = k + 1; continue; }
+      }
+    }
     if ((c === "/" && d === "/" && lang !== "json") || (php && c === "#" && d !== "[")) { const k = v.indexOf("\n", i); i = k < 0 ? n : k; continue; }
     if (c === "/" && d === "*") { const k = v.indexOf("*/", i + 2); if (k < 0) { err(i, i + 2, "Commentaire /* jamais fermé : il manque */"); break; } i = k + 2; continue; }
     if (php && c === "<" && v.startsWith("<<<", i)) { const m = v.slice(i).match(/^<<<\s*['"]?(\w+)['"]?\n/); if (m) { const end = v.slice(i + m[0].length).search(new RegExp("^\\s*" + m[1] + "\\b", "m")); i = end < 0 ? n : i + m[0].length + end + m[1].length; continue; } }
     if (c === "'" || c === '"' || (c === "`" && lang !== "php")) {
-      let k = i + 1; while (k < n && v[k] !== c) { if (v[k] === "\\") k++; else if (v[k] === "\n" && !php && lang !== "css") break; k++; }
+      let k = i + 1; while (k < n && v[k] !== c) { if (v[k] === "\\") k++; else if (v[k] === "\n" && !php && lang !== "css" && c !== "`") break; k++; }
       if (k >= n || v[k] !== c) { const eol = v.indexOf("\n", i); err(i, eol < 0 ? n : eol, `Texte jamais fermé : il manque le ${c === "'" ? "guillemet simple ( ' )" : c === '"' ? "guillemet double ( \" )" : "accent grave ( ` )"} de fin`); return { errs, pairs }; }
       i = k + 1; continue;
     }
@@ -4817,6 +4825,8 @@ async function edDiagRun(ta) {
   if (lang === "typescript" || lang === "javascript") {
     if (!(await edTsLoad())) return; if (ta.value !== v) return;
     errs = edTsDiags(ta) || [];
+    // En .ts/.js (pas de JSX), on cherche aussi la VRAIE cause d'un problème d'accolades : TypeScript la signale souvent bien plus bas.
+    if (!/\.(tsx|jsx)$/.test(edPath(ta))) { const sc = edScan(v, "js"); pairs = sc.pairs; if (sc.errs.length && errs.length) errs = sc.errs.concat(errs.map((e) => ({ ...e, sev: "w" }))); }
   } else ({ errs, pairs } = edScan(v, lang));
   errs.sort((a, b) => a.from - b.from);
   ta._dg = errs.slice(0, 50); ta._pairs = pairs; ta._dgFor = v;
