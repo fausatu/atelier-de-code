@@ -588,21 +588,22 @@ body.q-open .qfab { display: none; }
 .q-ans .who { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .q-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 /* Éditeur : complétion et aide aux paramètres */
-.ed-ac { position: fixed; z-index: 80; display: flex; align-items: flex-start; gap: 0; max-width: min(720px, calc(100vw - 16px)); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgb(31 38 51 / 0.2); overflow: hidden; font-size: 0.84rem; }
+.ed-ac { position: fixed; z-index: 80; display: flex; align-items: flex-start; gap: 0; max-width: min(500px, calc(100vw - 16px)); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 22px rgb(31 38 51 / 0.18); overflow: hidden; font-size: 0.78rem; }
 .ed-ac[hidden], .ed-sig[hidden] { display: none; }
-.ed-ac ul { list-style: none; margin: 0; padding: 4px; min-width: 220px; max-width: 300px; }
-.ed-ac li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-family: var(--font-mono); white-space: nowrap; }
+.ed-ac ul { list-style: none; margin: 0; padding: 3px; min-width: 160px; max-width: 220px; }
+.ed-ac li { display: flex; align-items: center; gap: 6px; padding: 1px 6px; line-height: 1.55; border-radius: 4px; cursor: pointer; font-family: var(--font-mono); white-space: nowrap; }
 .ed-ac li.on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
-.ac-ic { width: 16px; text-align: center; font-weight: 700; flex: none; }
+.ac-ic { width: 12px; text-align: center; font-weight: 700; flex: none; font-size: 0.72rem; }
 .ac-l { overflow: hidden; text-overflow: ellipsis; }
 .ac-fr { margin-left: auto; font: 600 0.68rem var(--font-sans, inherit); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); padding: 1px 5px; border-radius: 4px; }
-.ac-doc { border-left: 1px solid var(--line); padding: 10px 12px; width: 340px; max-height: 300px; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
-.ac-doc code { font-size: 0.78rem; white-space: pre-wrap; word-break: break-word; background: none; padding: 0; color: var(--ink); }
+.ac-doc { border-left: 1px solid var(--line); padding: 6px 9px; width: 250px; max-height: 150px; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
+.ac-doc code { font-size: 0.74rem; white-space: pre-wrap; word-break: break-word; background: none; padding: 0; color: var(--ink); }
 .ac-doc p { margin: 0; line-height: 1.45; }
 .ac-doc dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 8px; margin: 0; }
 .ac-doc dt, .ac-doc dd { margin: 0; font-size: 0.8rem; }
 .ed-sig { position: fixed; z-index: 79; max-width: min(560px, calc(100vw - 16px)); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgb(31 38 51 / 0.16); padding: 8px 12px; font-size: 0.82rem; display: flex; flex-direction: column; gap: 4px; }
 .ed-sig code { white-space: pre-wrap; background: none; padding: 0; color: var(--ink); font-size: 0.8rem; }
+.ed-hover { z-index: 78; max-width: min(460px, calc(100vw - 16px)); }
 .ed-sig code span.on { font-weight: 700; color: var(--accent); text-decoration: underline; }
 .ed-sig p { margin: 0; }
 /* En entreprise */
@@ -4554,15 +4555,17 @@ const AC_ICON = { m: ["ƒ", "#7c4dbd"], f: ["ƒ", "#7c4dbd"], p: ["◆", "#2d72c
 function edAcRender() {
   let box = $("#ed-ac"); if (!box) { box = document.createElement("div"); box.id = "ed-ac"; box.className = "ed-ac"; box.setAttribute("role", "listbox"); document.body.appendChild(box); }
   const it = edAc.items[edAc.sel]; const d = edDetail(it);
-  const from = Math.max(0, Math.min(edAc.sel - 4, edAc.items.length - 9)); const shown = edAc.items.slice(from, from + 9);
+  const from = Math.max(0, Math.min(edAc.sel - 3, edAc.items.length - 7)); const shown = edAc.items.slice(from, from + 7);
   box.innerHTML = `<ul>${shown.map((x, i) => { const [ic, col] = AC_ICON[x.kind] || AC_ICON.w; const k = from + i; return `<li class="${k === edAc.sel ? "on" : ""}" data-i="${k}" role="option" aria-selected="${k === edAc.sel}"><span class="ac-ic" style="color:${col}">${ic}</span><span class="ac-l">${esc(x.label)}</span></li>`; }).join("")}</ul>
-    ${d.sig || d.doc ? `<div class="ac-doc">${d.sig ? `<code>${esc(d.sig.length > 220 ? d.sig.slice(0, 220) + "…" : d.sig)}</code>` : ""}${d.doc ? `<p>${inl(d.doc.length > 400 ? d.doc.slice(0, 400) + "…" : d.doc)}</p>` : ""}${d.memo && d.memo.params && d.memo.params.length ? `<dl>${d.memo.params.slice(0, 4).map((p) => `<dt><code>${esc(p.n)}</code></dt><dd>${inl(p.d)}</dd>`).join("")}</dl>` : ""}<small class="muted">Entrée ou Tab pour insérer · Échap pour fermer</small></div>` : ""}`;
+    ${d.sig || d.doc ? `<div class="ac-doc">${d.sig ? `<code>${esc(edShort(d.sig, 140))}</code>` : ""}${d.doc ? `<p>${inl(edShort(edFirst(d.doc), 170))}</p>` : ""}</div>` : ""}`;
   const p = edCaret(edAc.ta, edAc.start); box.hidden = false;
   const W = box.offsetWidth, H = box.offsetHeight;
   let x = Math.min(p.x, window.innerWidth - W - 8), y = p.y + p.lh;
   if (y + H > window.innerHeight - 8) y = Math.max(8, p.y - H);
   box.style.left = Math.max(8, x) + "px"; box.style.top = y + "px";
 }
+function edShort(s, n) { s = String(s).replace(/\s+/g, " ").trim(); return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+function edFirst(s) { return String(s).split(/(?<=[.!?])\s/)[0]; }
 function edAcClose() { edAc.open = false; edAc.seq++; const b = $("#ed-ac"); if (b) b.hidden = true; }
 function edAccept(it) {
   const ta = edAc.ta; if (!it || !ta) return;
@@ -4623,6 +4626,50 @@ async function edSigShow(ta) {
 }
 function edSigUpdate(ta) { if (edSig.open || edCallAt(ta.value, ta.selectionStart)) edSigShow(ta); }
 function edSigClose() { edSig.open = false; const b = $("#ed-sig"); if (b) b.hidden = true; }
+/* ---- survol : type et explication (comme le survol de VS Code) ---- */
+const edHov = { t: null, open: false, key: "" };
+function edPosAt(ta, x, y) {
+  const cs = getComputedStyle(ta); edCaret(ta, 0); const r = ta.getBoundingClientRect(); const lh = parseFloat(cs.lineHeight) || 22;
+  const line = Math.floor((y - r.top - parseFloat(cs.paddingTop) + ta.scrollTop) / lh); const col = Math.floor((x - r.left - parseFloat(cs.paddingLeft) + ta.scrollLeft) / edCw);
+  const lines = ta.value.split("\n"); if (line < 0 || line >= lines.length || col < 0 || col >= lines[line].length) return -1;
+  let pos = 0; for (let i = 0; i < line; i++) pos += lines[i].length + 1; return pos + col;
+}
+async function edHover(ta, x, y) {
+  const pos = edPosAt(ta, x, y); const v = ta.value;
+  if (pos < 0 || !/[\w$]/.test(v[pos])) { edHoverClose(); return; }
+  let s = pos, e = pos; while (s > 0 && /[\w$]/.test(v[s - 1])) s--; while (e < v.length && /[\w$]/.test(v[e])) e++;
+  const word = v.slice(s, e); const key = ta.dataset.ed + ":" + s + ":" + word; if (edHov.open && edHov.key === key) return;
+  const fam = edFam(ta); let sig = "", doc = "";
+  const b4 = v.slice(Math.max(0, s - 3), s); const member = fam === "php" ? (/->$/.test(b4) ? "->" : /::$/.test(b4) ? "::" : "") : /\.$/.test(b4) ? "." : "";
+  if (fam === "js") {
+    if (!(await edTsLoad())) return; const sv = edTsService(ta); let qi = null;
+    try { qi = sv.ls.getQuickInfoAtPosition(sv.file, pos); } catch (err) {}
+    if (qi) { sig = window.ts.displayPartsToString(qi.displayParts); doc = window.ts.displayPartsToString(qi.documentation); }
+    const memo = memoFor(word, "js", member, member ? edRecv(v, s - 1) : "");
+    if (memo && (!doc || /[a-z] the |Returns|Calls|Creates|Determines|Adds/.test(doc))) doc = memo.desc;
+  } else if (fam === "php") {
+    const memo = memoFor(word.replace(/^\$/, ""), "php", member) || (/^[A-Z]/.test(word) && v[e] === "(" ? null : null);
+    const all = [...document.querySelectorAll("textarea.editor")].filter((x) => x.dataset.ed === ta.dataset.ed).map((x) => x.value).join("\n");
+    const decl = word.startsWith("$") ? all.match(new RegExp("(?:public|protected|private)\\s+(?:readonly\\s+)?[^;=(]*\\" + word + "\\b[^;)]*")) : all.match(new RegExp("(?:(?:public|protected|private|static|abstract|final)\\s+)*(?:function\\s+" + word + "\\s*\\([^)]*\\)[^{;]*|(?:class|interface|enum|trait)\\s+" + word + "\\b[^{]*)"));
+    if (decl && !(memo && member)) sig = decl[0].trim(); else if (memo) sig = memo.sig.split("  ·  ")[0];
+    if (memo) doc = memo.desc;
+  }
+  if (!sig && !doc) { edHoverClose(); return; }
+  if (document.elementFromPoint(x, y) !== ta) return;
+  let box = $("#ed-hover"); if (!box) { box = document.createElement("div"); box.id = "ed-hover"; box.className = "ed-sig ed-hover"; document.body.appendChild(box); }
+  box.innerHTML = `${sig ? `<code>${esc(edShort(sig, 260))}</code>` : ""}${doc ? `<p>${inl(edShort(doc, 320))}</p>` : ""}`;
+  box.hidden = false; edHov.open = true; edHov.key = key;
+  const p = edCaret(ta, s); const H = box.offsetHeight, W = box.offsetWidth;
+  box.style.left = Math.max(8, Math.min(p.x, window.innerWidth - W - 8)) + "px"; box.style.top = (p.y - H - 4 > 8 ? p.y - H - 4 : p.y + p.lh + 4) + "px";
+}
+function edHoverClose() { edHov.open = false; edHov.key = ""; const b = $("#ed-hover"); if (b) b.hidden = true; }
+document.addEventListener("mousemove", (e) => {
+  const ta = e.target; clearTimeout(edHov.t);
+  if (!ta.classList || !ta.classList.contains("editor")) { if (edHov.open && !(e.target.closest && e.target.closest("#ed-hover"))) edHoverClose(); return; }
+  if (edAc.open) return;
+  const x = e.clientX, y = e.clientY; edHov.t = setTimeout(() => edHover(ta, x, y).catch(() => {}), 350);
+});
+document.addEventListener("keydown", () => { if (edHov.open) edHoverClose(); }, true);
 let edTimer = null;
 function edAfterInput(ta, e) {
   const d = e.data || ""; const t = e.inputType || "";
@@ -4635,7 +4682,7 @@ function edAfterInput(ta, e) {
   else { edAcClose(); if (edSig.open) edSigShow(ta); }
 }
 document.addEventListener("focusout", (e) => { if (e.target.classList && e.target.classList.contains("editor")) setTimeout(() => { if (document.activeElement !== e.target) { edAcClose(); edSigClose(); } }, 120); });
-document.addEventListener("scroll", (e) => { if (!edAc.open && !edSig.open) return; if (e.target === edAc.ta || e.target === edSig.ta) { if (edAc.open) edAcRender(); if (edSig.open) edSigShow(e.target); } else { edAcClose(); edSigClose(); } }, true);
+document.addEventListener("scroll", (e) => { if (edHov.open) edHoverClose(); if (!edAc.open && !edSig.open) return; if (e.target === edAc.ta || e.target === edSig.ta) { if (edAc.open) edAcRender(); if (edSig.open) edSigShow(e.target); } else { edAcClose(); edSigClose(); } }, true);
 document.addEventListener("focusin", (e) => { if (e.target.classList && e.target.classList.contains("editor") && edFam(e.target) === "js") edTsLoad(); });
 function render() {
   const r = currentRoute();

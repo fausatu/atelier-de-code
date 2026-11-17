@@ -208,6 +208,9 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
     @hookform/resolvers/zod dans `vendor/ts/atelier-types.js` (sources : `declare module` ; régénérer ce fichier si on les modifie).
     Si TS ne trouve rien après un `.`, repli sur le mémo. Fiche du mémo (français) prioritaire sur la doc anglaise de lib.d.ts.
   - PHP : méthodes/propriétés/classes/fonctions déclarées dans les fichiers, `$variables`, fiches du mémo (`fn:`, `->`, `::`, `#`), mots-clés.
+- Popup de complétion compacte (7 lignes, doc courte : signature + 1re phrase) à la demande d'Ana.
+- Survol (`#ed-hover`, 350 ms) : TS `getQuickInfoAtPosition` (type + doc, fiche du mémo en français si elle existe) ; PHP : déclaration
+  trouvée dans les fichiers (fonction, propriété, classe) ou fiche du mémo. `edPosAt` convertit la souris en position dans le texte.
 - Aide aux paramètres (`#ed-sig`) à `(` et `,` : TS `getSignatureHelpItems`, sinon signature du mémo / de la fonction du fichier,
   paramètre courant en gras + explication du mémo. `memoFor(name, fam, member, recv)` exige le bon objet pour les clés `Math.min`, `api.get`…
 
