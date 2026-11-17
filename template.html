@@ -587,6 +587,27 @@ body.q-open .qfab { display: none; }
 .q-ans { border-top: 1px dashed var(--line); padding-top: 8px; font-size: 0.92rem; }
 .q-ans .who { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .q-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+/* En entreprise */
+.ent-nudge { width: 100%; text-align: left; font: inherit; cursor: pointer; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+.ent-nudge:hover { border-color: var(--accent); }
+.ent-ic { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.ent-ic svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.ent-j .ent-date { flex: none; width: 110px; font-size: 0.86rem; }
+.ent-j small .chip { font-size: 0.74rem; }
+.chip.ghost { background: transparent; border: 1px solid var(--line); }
+.ent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.ent-m { display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: inherit; }
+.ent-m:hover { border-color: var(--accent); }
+.ent-m-t { font-size: 1.02rem; }
+.r-st.ms-en_cours { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.r-st.ms-livree { background: var(--good-soft, color-mix(in srgb, var(--good) 14%, transparent)); color: var(--good); }
+.r-st.ms-en_pause { background: var(--warn-soft); color: var(--warn); }
+.r-st.ms-abandonnee { background: color-mix(in srgb, var(--muted) 14%, transparent); color: var(--muted); }
+.ent-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.ent-f { display: flex; flex-direction: column; gap: 4px; }
+.notion-row { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; }
+.notion-sugg { gap: 6px; flex-wrap: wrap; }
+.notion-sugg .chip { text-decoration: none; }
 /* Mes cours */
 .mref { text-decoration: underline dotted color-mix(in srgb, var(--accent) 55%, transparent); text-underline-offset: 3px; text-decoration-thickness: 1.5px; cursor: help; border-radius: 3px; }
 .mref:hover, .mref:focus-visible { background: color-mix(in srgb, var(--accent) 14%, transparent); outline: none; }
@@ -1382,6 +1403,7 @@ function renderSide() {
       <a class="nav-link ${r === "revision" || r.startsWith("cartes") || r.startsWith("paquet-") ? "on" : ""}" href="#revision">Révisions <span class="count ${due + dueCards().length ? "" : "zero"}">${due + dueCards().length}</span></a>
       <a class="nav-link ${r === "parcours" ? "on" : ""}" href="#parcours">Parcours</a>
       <a class="nav-link ${r === "cours" || /^(mat|c|r)-/.test(r) ? "on" : ""}" href="#cours">Mes cours <span class="count ${soonRendus(14).length ? "" : "zero"}" title="Rendus dans les 14 prochains jours">${soonRendus(14).length}</span></a>
+      <a class="nav-link ${r === "entreprise" || /^(j|ms)-/.test(r) ? "on" : ""}" href="#entreprise">En entreprise${joursSansNote(10).length ? ` <span class="count" title="Jours en entreprise sans note (10 derniers jours)">${joursSansNote(10).length}</span>` : ""}</a>
       <a class="nav-link ${r === "questions" ? "on" : ""}" href="#questions">Mes questions <span class="count ${qOpenCount() ? "" : "zero"}">${qOpenCount()}</span></a>
     </nav>
     <div class="tool-row" role="navigation" aria-label="Outils">
@@ -1489,6 +1511,7 @@ function viewHome() {
   const todayLine = `Aujourd'hui tu es <b>${cs.kind === "ecole" ? "à l'école" : cs.kind === "entreprise" ? "en entreprise" : cs.kind === "examens" ? "en examens" : cs.kind === "ferie" ? "en jour férié" : "en week-end"}</b>${soon ? ` · <b>${soon} rendu${soon > 1 ? "s" : ""}</b> cette semaine` : ""}${due.length + dueCards().length ? ` · <b>${due.length + dueCards().length} révision${due.length + dueCards().length > 1 ? "s" : ""}</b> à faire` : ""}.`;
   return `<div class="wrap home">
     <header class="home-head"><div class="eyebrow">${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div><h1>Mon atelier</h1><p class="lead">${todayLine}</p></header>
+    ${entNudge()}
     <section class="home-sec">
       <div class="sec-head"><h2>À venir</h2><span class="spacer"></span><a class="small" href="#cours">Mes cours →</a></div>
       <div class="home-grid2">
@@ -2866,8 +2889,9 @@ function mergeData(inc) {
   if (Array.isArray(inc.progress.agenda)) { const mine = myEvents(); for (const ev of inc.progress.agenda) { const i = mine.findIndex((x) => x.id === ev.id); if (i < 0) mine.push(ev); else if ((ev.ts || 0) > (mine[i].ts || 0)) mine[i] = ev; } }
   if (inc.ecole && typeof inc.ecole === "object") {
     const e = ecole(); const del = new Set([...e.deleted, ...(inc.ecole.deleted || [])]); e.deleted = [...del];
-    for (const key of ["matieres", "cours"]) { const mine = e[key]; for (const x of inc.ecole[key] || []) { if (del.has(x.id)) continue; const i = mine.findIndex((y) => y.id === x.id); if (i < 0) mine.push(x); else if ((x.ts || 0) > (mine[i].ts || 0)) mine[i] = x; } e[key] = mine.filter((y) => !del.has(y.id)); }
+    for (const key of ["matieres", "cours", "journal", "missions"]) { if (!Array.isArray(e[key])) e[key] = []; const mine = e[key]; for (const x of inc.ecole[key] || []) { if (del.has(x.id)) continue; const i = mine.findIndex((y) => y.id === x.id); if (i < 0) mine.push(x); else if ((x.ts || 0) > (mine[i].ts || 0)) mine[i] = x; } e[key] = mine.filter((y) => !del.has(y.id)); }
     if (inc.ecole.setup) e.setup = true;
+    if (inc.ecole.entreprise && typeof inc.ecole.entreprise === "object" && (inc.ecole.entreprise.ts || 0) > ((e.entreprise || {}).ts || 0)) e.entreprise = inc.ecole.entreprise;
   }
   if (inc.cartes && typeof inc.cartes === "object") {
     const k = cartes(); const del = new Set([...k.deleted, ...(inc.cartes.deleted || [])]); k.deleted = [...del];
@@ -3397,12 +3421,12 @@ function viewRendu(id) {
     <div class="row">${confirm ? `<span class="small">Supprimer ce rendu ?</span><button class="btn sm danger" data-act="ecDelRendu" data-id="${esc(id)}">Oui, supprimer</button><button class="btn sm ghost" data-act="ecCancelDel">Annuler</button>` : `<button class="btn sm ghost danger" data-act="ecAskDel" data-key="rendu:${esc(id)}">Supprimer ce rendu</button>`}<span class="spacer"></span><span class="muted small">Enregistrement automatique · visible dans le calendrier</span></div>
   </div>`;
 }
-function ecObj(kind, id) { return kind === "mat" ? matiere(id) : kind === "cours" ? coursItem(id) : kind === "rendu" ? renduItem(id) : null; }
+function ecObj(kind, id) { return kind === "mat" ? matiere(id) : kind === "cours" ? coursItem(id) : kind === "rendu" ? renduItem(id) : kind === "jour" ? jourItem(id) : kind === "mission" ? missionItem(id) : kind === "entreprise" ? ent().entreprise : null; }
 function ecApply(el) {
   const { ec: field, kind, id } = el.dataset; const o = ecObj(kind, id); if (!o) return false;
   let v = el.value;
-  if (field === "tags") v = v.split(",").map((x) => x.trim().replace(/^#/, "")).filter(Boolean).slice(0, 20);
-  else if (field === "date") v = v || null;
+  if (field === "tags" || field === "notions" || field === "stack") v = v.split(",").map((x) => x.trim().replace(/^#/, "")).filter(Boolean).slice(0, 20);
+  else if (field === "date" || field === "debut" || field === "fin") v = v || null;
   else if (field === "titre" || field === "nom") { if (!v.trim()) return false; v = v.slice(0, 160); }
   else v = String(v).slice(0, 60000);
   o[field] = v; o.ts = Date.now();
@@ -4132,6 +4156,141 @@ async function memoAsk(nom, ctx) {
   } catch (e) { u.busy = false; u.err = "Claude n'a pas pu répondre. Réessaie."; }
   if (currentRoute() === "methodes") render();
 }
+/* ---------- En entreprise : alternance, journal, missions, notions croisées ---------- */
+function ent() { const e = ecole(); if (!e.entreprise || typeof e.entreprise !== "object") e.entreprise = {}; if (!Array.isArray(e.journal)) e.journal = []; if (!Array.isArray(e.missions)) e.missions = []; return e; }
+function jourItem(id) { return ent().journal.find((x) => x.id === id); }
+function missionItem(id) { return ent().missions.find((x) => x.id === id); }
+const M_STATUTS = { en_cours: "En cours", livree: "Livrée", en_pause: "En pause", abandonnee: "Abandonnée" };
+function journalSorted() { return ent().journal.slice().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || (b.ts || 0) - (a.ts || 0)); }
+function joursSansNote(days) { const t = today(); const out = []; for (let i = 0; i <= days; i++) { const d = dPlus(t, -i); if (dayKind(d) === "entreprise" && !ent().journal.some((j) => j.date === d)) out.push(d); } return out; }
+function firstLine(s) { const l = String(s || "").split("\n").map((x) => x.replace(/^[#>*\-\s\[\]x]+/, "").trim()).find(Boolean) || ""; return l.length > 140 ? l.slice(0, 140) + "…" : l; }
+function nbImages(o) { return (o.fichiers || []).filter((f) => fileKind(f) === "image").length; }
+function entNotions() {
+  const map = new Map();
+  const add = (n, src) => { const k = norm(n); if (!k) return; const cur = map.get(k) || { label: n.trim(), key: k, count: 0, last: "", srcs: [] }; cur.count++; if (src.date > cur.last) cur.last = src.date; if (cur.srcs.length < 4) cur.srcs.push(src); map.set(k, cur); };
+  for (const j of ent().journal) for (const n of j.notions || []) add(n, { href: "#j-" + j.id, label: "Journal du " + frDate(j.date), date: j.date || "" });
+  for (const m of ent().missions) for (const n of m.notions || []) add(n, { href: "#ms-" + m.id, label: "Mission « " + m.titre + " »", date: m.debut || "" });
+  return [...map.values()].sort((a, b) => b.last.localeCompare(a.last) || b.count - a.count);
+}
+function notionModules(n) {
+  const q = norm(n); if (q.length < 2) return { mods: [], memo: null };
+  const words = q.split(/[\s/,.-]+/).filter((w) => w.length >= 4);
+  const scored = [];
+  for (const m of allModules()) {
+    const title = norm(m.title); const hay = norm([m.goal, (m.prereq || []).map((p) => p.term).join(" "), (m.lessons || []).map((l) => l.title).join(" ")].join(" "));
+    let s = title.includes(q) ? 6 : hay.includes(q) ? 3 : 0;
+    for (const w of words) s += title.includes(w) ? 2 : hay.includes(w) ? 1 : 0;
+    if (s >= 2) scored.push([s, m]);
+  }
+  const memo = MEMO.items.find((e) => norm(e.nom.split("(")[0]).trim() === q || (e.cles || []).some((k) => !k.startsWith("re:") && norm(k.replace(/^(fn:|new:|#|Assert:|->|::|\.)/, "")) === q)) || null;
+  if (memo) for (const id of memoSeen(memo.id).slice(0, 2)) { const m = mod(id); if (m && !scored.some((x) => x[1].id === id)) scored.push([4, m]); }
+  return { mods: scored.sort((a, b) => b[0] - a[0]).slice(0, 3).map((x) => x[1]), memo };
+}
+function entNudge() {
+  const miss = joursSansNote(10); if (!miss.length) return "";
+  const t = today(); const auj = miss[0] === t;
+  return `<button type="button" class="card ent-nudge" data-act="entJour" data-date="${miss[0]}"><span class="ent-ic">${ENT_IC}</span><span class="r-main"><b>${auj ? "Tu es en entreprise aujourd'hui : note ta journée" : `Journée en entreprise du ${esc(frDate(miss[0]))} pas encore notée`}</b><small>${miss.length > 1 ? `${miss.length} jours en entreprise sans note ces 10 derniers jours. ` : ""}Deux minutes suffisent : ce que tu as fait, appris, ce qui t'a bloquée.</small></span><span class="btn sm primary">Noter</span></button>`;
+}
+const ENT_IC = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>';
+function jourRow(j) {
+  const m = j.mission ? missionItem(j.mission) : null; const imgs = nbImages(j); const fs = (j.fichiers || []).length;
+  return `<a class="r-row ent-j" href="#j-${esc(j.id)}"><span class="ent-date"><b>${esc(frDate(j.date))}</b></span><span class="r-main"><b>${esc(firstLine(j.fait) || "Journée sans description")}</b><small>${m ? `<span class="chip">${esc(m.titre)}</span> ` : ""}${(j.notions || []).slice(0, 4).map((n) => `<span class="chip ghost">${esc(n)}</span>`).join(" ")}</small></span>${fs ? `<span class="muted small">${imgs ? `${imgs} capture${imgs > 1 ? "s" : ""}` : ""}${imgs && fs > imgs ? " · " : ""}${fs > imgs ? `${fs - imgs} doc${fs - imgs > 1 ? "s" : ""}` : ""}</span>` : ""}</a>`;
+}
+function missionCard(m) {
+  const nj = ent().journal.filter((j) => j.mission === m.id).length; const imgs = nbImages(m);
+  return `<a class="card ent-m" href="#ms-${esc(m.id)}"><div class="row"><span class="r-st ms-${m.statut || "en_cours"}">${M_STATUTS[m.statut || "en_cours"]}</span><span class="spacer"></span><span class="muted small">${m.debut ? esc(frDate(m.debut)) : ""}${m.fin ? " → " + esc(frDate(m.fin)) : ""}</span></div>
+    <b class="ent-m-t">${esc(m.titre)}</b>${firstLine(m.contexte) ? `<span class="muted small">${esc(firstLine(m.contexte))}</span>` : ""}
+    <div class="row small">${(m.stack || []).slice(0, 5).map((s) => `<span class="chip ghost">${esc(s)}</span>`).join("")}<span class="spacer"></span><span class="muted">${nj ? `${nj} jour${nj > 1 ? "s" : ""}` : ""}${nj && imgs ? " · " : ""}${imgs ? `${imgs} capture${imgs > 1 ? "s" : ""}` : ""}</span></div></a>`;
+}
+function viewEntreprise() {
+  const e = ent(); const inf = e.entreprise; const u = state.ui;
+  const js = journalSorted(); const shownJ = u.entAllJ ? js : js.slice(0, 8);
+  const ms = e.missions.slice().sort((a, b) => (a.statut === "en_cours" ? 0 : 1) - (b.statut === "en_cours" ? 0 : 1) || String(b.debut || "").localeCompare(String(a.debut || "")));
+  const ok = new Set(inf.notionsOk || []); const notions = entNotions(); const aTravailler = notions.filter((n) => !ok.has(n.key)); const maitrisees = notions.filter((n) => ok.has(n.key));
+  const field = (k, label, ph, type) => `<label class="ent-f"><span class="muted small">${label}</span><input class="field" ${type ? `type="${type}"` : ""} data-ec="${k}" data-kind="entreprise" data-id="infos" value="${esc(k === "stack" ? (inf.stack || []).join(", ") : inf[k] || "")}" placeholder="${esc(ph)}"></label>`;
+  const moisCount = e.journal.filter((j) => String(j.date || "").slice(0, 7) === today().slice(0, 7)).length;
+  return `<div class="wrap home">
+    <header class="home-head"><div class="eyebrow">Alternance${inf.nom ? " · " + esc(inf.nom) : ""}</div><h1>En entreprise</h1>
+      <p class="lead">Ton journal, tes missions et tes documents d'alternance : la matière de ton rapport d'entreprise, de ton mémoire et de tes points avec ton tuteur. Tout reste dans tes données privées, jamais dans le dépôt GitHub.</p></header>
+    ${entNudge()}
+    <section class="home-sec">
+      <div class="sec-head"><h2>Journal</h2><span class="muted small">${e.journal.length} entrée${e.journal.length > 1 ? "s" : ""}${moisCount ? ` · ${moisCount} ce mois-ci` : ""}</span><span class="spacer"></span>
+        <label class="row small"><input class="field" type="date" id="ent-jdate" value="${today()}" style="width:150px"></label><button class="btn sm primary" data-act="entJour" data-pick="1">Nouvelle entrée</button></div>
+      ${js.length ? `<div class="stack" style="gap:6px">${shownJ.map(jourRow).join("")}</div>${js.length > 8 ? `<button class="btn sm ghost" data-act="entAllJ">${u.entAllJ ? "Voir moins" : `Voir les ${js.length} entrées`}</button>` : ""}`
+        : `<p class="muted">Pas encore d'entrée. Une entrée par jour en entreprise (ou par semaine) : ce que tu as fait, appris, ce qui t'a bloquée, avec des captures. Ctrl+V colle une capture d'écran directement.</p>`}
+    </section>
+    <section class="home-sec">
+      <div class="sec-head"><h2>Missions</h2><span class="muted small">${e.missions.filter((m) => (m.statut || "en_cours") === "en_cours").length} en cours</span></div>
+      ${ms.length ? `<div class="ent-grid">${ms.map(missionCard).join("")}</div>` : `<p class="muted">Une mission = un ticket, une fonctionnalité, un projet que tu prends en charge. C'est ce que tu raconteras dans ton rapport.</p>`}
+      <form class="row" data-form="entMission"><input class="field" name="titre" placeholder="Nouvelle mission : refonte de la page panier, API d'export CSV, correction du bug de connexion…" required maxlength="160" style="flex:1;min-width:240px"><button class="btn sm">Créer la mission</button></form>
+    </section>
+    <section class="home-sec">
+      <div class="sec-head"><h2>Notions croisées au travail</h2><span class="muted small">ajoutées dans le journal et les missions</span></div>
+      ${aTravailler.length ? `<div class="stack" style="gap:8px">${aTravailler.map((n) => { const r = notionModules(n.label);
+        return `<div class="card notion-row"><div class="row"><b>${esc(n.label)}</b><span class="muted small">${n.count} fois · ${n.srcs.slice(0, 2).map((s) => `<a href="${s.href}">${esc(s.label)}</a>`).join(", ")}</span><span class="spacer"></span><button class="btn sm ghost" data-act="entNotionOk" data-k="${esc(n.key)}">Je maîtrise</button></div>
+          <div class="row small notion-sugg">${r.memo ? `<span class="mref" data-m="${esc(r.memo.id)}" tabindex="0" role="button">Fiche ${esc(r.memo.nom)}</span>` : ""}${r.mods.map((m) => `<a class="chip" href="#m-${esc(m.id)}" style="${tc(track(m.track))}"><i class="dot"></i>${esc(m.title)}</a>`).join("")}
+            ${!r.mods.length && !r.memo ? `<span class="muted">Aucun module de l'atelier n'en parle.</span><button class="btn sm" data-act="entNotionAsk" data-l="${esc(n.label)}">Ajouter à Mes questions</button>` : ""}</div></div>`; }).join("")}</div>`
+        : `<p class="muted">${notions.length ? "Tout est marqué comme maîtrisé. Bravo." : "Quand tu notes une notion (dans le champ « Notions » d'une entrée ou d'une mission), elle apparaît ici avec les modules de l'atelier qui l'expliquent."}</p>`}
+      ${maitrisees.length ? `<details class="small"><summary class="muted">Maîtrisées (${maitrisees.length})</summary><div class="row" style="margin-top:6px">${maitrisees.map((n) => `<span class="chip">${esc(n.label)} <button class="q-x" data-act="entNotionOk" data-k="${esc(n.key)}" aria-label="Remettre à travailler">↺</button></span>`).join("")}</div></details>` : ""}
+    </section>
+    <section class="home-sec">
+      <div class="sec-head"><h2>Mon alternance</h2></div>
+      <div class="card stack"><div class="ent-fields">
+        ${field("nom", "Entreprise", "Nom de l'entreprise")}${field("poste", "Mon poste", "Développeuse full stack en alternance")}${field("service", "Équipe / service", "Équipe produit, pôle web…")}
+        ${field("tuteur", "Tuteur ou tutrice", "Prénom Nom")}${field("tuteurContact", "Contact du tuteur", "email ou téléphone")}${field("stack", "Stack de l'entreprise", "séparée par des virgules : Symfony, React, MySQL, Docker…")}
+        ${field("debut", "Début du contrat", "", "date")}${field("fin", "Fin du contrat", "", "date")}
+      </div></div>
+      <div class="card stack"><h3 style="margin:0">Outils de l'entreprise</h3>${(inf.liens || []).length ? `<div class="tool-list">${linkChips(inf.liens, "entreprise", "infos")}</div>` : ""}${linkForm("entreprise", "infos")}</div>
+      ${filesCard("entreprise", "infos", inf).replace("<h3 style=\"margin:0\">Fichiers</h3>", "<h3 style=\"margin:0\">Documents</h3><span class=\"muted small\">contrat d'apprentissage, fiche de poste, attestations, livret d'apprentissage…</span>")}
+    </section>
+  </div>`;
+}
+function entCrumb(label) { return `<div class="row small"><a href="#entreprise">En entreprise</a><span class="muted">›</span><span class="muted">${label}</span></div>`; }
+function delRow(kind, id, label) {
+  const confirm = state.ui.confirmDel === kind + ":" + id;
+  return `<div class="row">${confirm ? `<span class="small">Supprimer ${label} ?</span><button class="btn sm danger" data-act="entDel" data-kind="${kind}" data-id="${esc(id)}">Oui, supprimer</button><button class="btn sm ghost" data-act="ecCancelDel">Annuler</button>` : `<button class="btn sm ghost danger" data-act="ecAskDel" data-key="${kind}:${esc(id)}">Supprimer ${label}</button>`}<span class="spacer"></span><span class="muted small">Enregistrement automatique · Ctrl+V pour coller une capture</span></div>`;
+}
+function viewJour(id) {
+  const j = jourItem(id); if (!j) return `<div class="wrap"><h1>Entrée introuvable</h1><p><a href="#entreprise">Retour</a></p></div>`;
+  const ms = ent().missions;
+  return `<div class="wrap">
+    ${entCrumb("Journal")}
+    <h1 style="margin:0">Journal du ${esc(frDate(j.date))}</h1>
+    <div class="row"><label class="row small"><span class="muted">Date</span><input class="field" type="date" data-ec="date" data-kind="jour" data-id="${esc(id)}" value="${esc(j.date || "")}"></label>
+      <label class="row small"><span class="muted">Mission</span><select class="field" data-ec="mission" data-kind="jour" data-id="${esc(id)}"><option value="">— aucune —</option>${ms.map((m) => `<option value="${esc(m.id)}" ${m.id === j.mission ? "selected" : ""}>${esc(m.titre)}</option>`).join("")}</select></label>
+      ${j.mission && missionItem(j.mission) ? `<a class="small" href="#ms-${esc(j.mission)}">Ouvrir la mission →</a>` : ""}</div>
+    <div class="card stack"><h3 style="margin:0">Ce que j'ai fait</h3>${mdEditor("jour", id, "fait", j.fait, "- Réunion d'équipe (daily)\n- Ticket #123 : …\n- Revue de la PR de …")}</div>
+    <div class="card stack"><h3 style="margin:0">Ce que j'ai appris</h3>${mdEditor("jour", id, "appris", j.appris, "Une notion, un outil, une façon de faire de l'équipe…")}</div>
+    <div class="card stack"><h3 style="margin:0">Ce qui m'a bloquée, mes questions</h3>${mdEditor("jour", id, "bloque", j.bloque, "Ce qui t'a pris du temps, ce que tu n'as pas compris, ce que tu veux demander à ton tuteur…")}</div>
+    <label class="ent-f"><span class="muted small">Notions croisées (séparées par des virgules) : elles apparaissent dans « Notions croisées au travail » avec les modules qui les expliquent</span><input class="field" data-ec="notions" data-kind="jour" data-id="${esc(id)}" value="${esc((j.notions || []).join(", "))}" placeholder="intercepteurs axios, migration Doctrine, Docker…"></label>
+    ${filesCard("jour", id, j).replace("<h3 style=\"margin:0\">Fichiers</h3>", "<h3 style=\"margin:0\">Captures et documents</h3>")}
+    <div class="card stack"><h3 style="margin:0">Liens</h3>${(j.liens || []).length ? `<div class="tool-list">${linkChips(j.liens, "jour", id)}</div>` : ""}${linkForm("jour", id)}</div>
+    ${delRow("jour", id, "cette entrée")}
+  </div>`;
+}
+function viewMission(id) {
+  const m = missionItem(id); if (!m) return `<div class="wrap"><h1>Mission introuvable</h1><p><a href="#entreprise">Retour</a></p></div>`;
+  const s = m.statut || "en_cours"; const js = journalSorted().filter((j) => j.mission === id);
+  return `<div class="wrap">
+    ${entCrumb("Mission")}
+    <input class="title-input" data-ec="titre" data-kind="mission" data-id="${esc(id)}" value="${esc(m.titre)}" maxlength="160" aria-label="Titre de la mission">
+    <div class="row"><span class="seg">${Object.entries(M_STATUTS).map(([k, v]) => `<button class="${s === k ? "on" : ""}" data-act="entStatut" data-id="${esc(id)}" data-s="${k}">${v}</button>`).join("")}</span>
+      <label class="row small"><span class="muted">Début</span><input class="field" type="date" data-ec="debut" data-kind="mission" data-id="${esc(id)}" value="${esc(m.debut || "")}"></label>
+      <label class="row small"><span class="muted">Fin</span><input class="field" type="date" data-ec="fin" data-kind="mission" data-id="${esc(id)}" value="${esc(m.fin || "")}"></label></div>
+    <div class="ent-fields">
+      <label class="ent-f"><span class="muted small">Stack et outils (virgules)</span><input class="field" data-ec="stack" data-kind="mission" data-id="${esc(id)}" value="${esc((m.stack || []).join(", "))}" placeholder="Symfony, React, TanStack Query…"></label>
+      <label class="ent-f"><span class="muted small">Notions croisées (virgules)</span><input class="field" data-ec="notions" data-kind="mission" data-id="${esc(id)}" value="${esc((m.notions || []).join(", "))}" placeholder="pagination, cache, migrations…"></label>
+    </div>
+    <div class="card stack"><h3 style="margin:0">Contexte et besoin</h3>${mdEditor("mission", id, "contexte", m.contexte, "Pour qui ? Quel problème ? Ce qui existait avant ?")}</div>
+    <div class="card stack"><h3 style="margin:0">Ce que j'ai fait et livré</h3>${mdEditor("mission", id, "realise", m.realise, "Les étapes, tes choix techniques, ce qui a été mis en production…")}</div>
+    <div class="card stack"><h3 style="margin:0">Difficultés et solutions</h3>${mdEditor("mission", id, "difficultes", m.difficultes, "Le problème, ce que tu as essayé, ce qui a marché, l'aide reçue…")}</div>
+    <div class="card stack"><h3 style="margin:0">Ce que j'ai appris</h3>${mdEditor("mission", id, "appris", m.appris, "Compétences techniques, méthodes, savoir-être…")}</div>
+    ${filesCard("mission", id, m).replace("<h3 style=\"margin:0\">Fichiers</h3>", "<h3 style=\"margin:0\">Captures et documents</h3>")}
+    <div class="card stack"><h3 style="margin:0">Liens</h3><span class="muted small">la pull request, le ticket, la maquette, la doc…</span>${(m.liens || []).length ? `<div class="tool-list">${linkChips(m.liens, "mission", id)}</div>` : ""}${linkForm("mission", id)}</div>
+    <div class="card stack"><div class="row"><h3 style="margin:0">Journal de la mission</h3><span class="muted small">${js.length}</span></div>${js.length ? js.map(jourRow).join("") : `<p class="muted small" style="margin:0">Dans une entrée du journal, choisis cette mission pour la retrouver ici.</p>`}</div>
+    ${delRow("mission", id, "cette mission")}
+  </div>`;
+}
 function render() {
   const r = currentRoute();
   let html;
@@ -4146,6 +4305,9 @@ function render() {
   else if (r === "calendrier") html = viewCalendar();
   else if (r === "notes") html = viewNotes();
   else if (r === "cours") html = viewEcole();
+  else if (r === "entreprise") html = viewEntreprise();
+  else if (r.startsWith("j-")) html = viewJour(r.slice(2));
+  else if (r.startsWith("ms-")) html = viewMission(r.slice(3));
   else if (r === "cartes") html = viewCartes();
   else if (r === "methodes") html = viewMemo();
   else if (r === "cartes-revision") html = viewCardReview();
@@ -4198,6 +4360,12 @@ function keepDrafts() {
   draftWriter.schedule();
 }
 const ACTIONS = {
+  entJour(el) { let d = el.dataset.date || (el.dataset.pick && ($("#ent-jdate") || {}).value) || today(); const e = ent(); let j = e.journal.find((x) => x.date === d); if (!j) { j = { id: "j" + rid(), date: d, ts: Date.now(), fait: "", appris: "", bloque: "", notions: [], mission: (e.missions.find((m) => (m.statut || "en_cours") === "en_cours") || {}).id || "" }; e.journal.push(j); saveEcole(); } location.hash = "#j-" + j.id; },
+  entAllJ() { state.ui.entAllJ = !state.ui.entAllJ; render(); },
+  entStatut(el) { const m = missionItem(el.dataset.id); if (!m) return; m.statut = el.dataset.s; if (el.dataset.s === "livree" && !m.fin) m.fin = today(); m.ts = Date.now(); saveEcole(); render(); },
+  entDel(el) { const e = ent(); const id = el.dataset.id; e.deleted.push(id); if (el.dataset.kind === "jour") e.journal = e.journal.filter((x) => x.id !== id); else { e.missions = e.missions.filter((x) => x.id !== id); for (const j of e.journal) if (j.mission === id) { j.mission = ""; j.ts = Date.now(); } } state.ui.confirmDel = null; saveEcole(); location.hash = "#entreprise"; toast("Supprimé."); },
+  entNotionOk(el) { const inf = ent().entreprise; const s = new Set(inf.notionsOk || []); s.has(el.dataset.k) ? s.delete(el.dataset.k) : s.add(el.dataset.k); inf.notionsOk = [...s]; inf.ts = Date.now(); saveEcole(); render(); },
+  entNotionAsk(el) { const u = qUi(); u.ctx = null; u.quote = ""; const q = qSave(`Explique-moi « ${el.dataset.l} » : je l'ai croisé en entreprise et l'atelier n'a pas de module dessus. À quoi ça sert, comment ça marche, un exemple.`); if (q) { saveProgress(); toast("Ajouté à Mes questions."); render(); } },
   memoOpen(el) { closeMemoPop(); state.ui.mFocus = el.dataset.id; state.ui.mFilter = ""; state.ui.mCat = ""; if (currentRoute() !== "methodes") location.hash = "#methodes"; else render(); setTimeout(() => { const d = document.getElementById("memo-" + el.dataset.id); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); } }, 60); },
   memoClose() { closeMemoPop(); },
   memoCat(el) { state.ui.mCat = el.dataset.c; render(); },
@@ -4490,6 +4658,7 @@ function handleForm(f, submitter) {
   if (f.dataset.form === "ghFiles") { const m = $("#ghf-msg"); if (m) m.textContent = "Vérification…"; ghfConnect(f.token.value, f.repo.value).then(() => { render(); toast("Fichiers GitHub activés : tu peux en ajouter dans tes cours."); }).catch((err) => { ghf.token = ""; const mm = $("#ghf-msg"); if (mm) mm.innerHTML = `<span class="err">Ça n'a pas marché : ${esc(err.message)}.</span>`; }); return; }
   if (f.dataset.form === "ecSetup") { const idx = [...f.querySelectorAll("input[name=m]:checked")].map((x) => +x.value); setupEcole(idx, f.rendus.checked); render(); toast(`${idx.length} matière${idx.length > 1 ? "s" : ""} créée${idx.length > 1 ? "s" : ""}.`); return; }
   if (f.dataset.form === "ecNewCours") { const titre = f.titre.value.trim(); if (!titre) return; const c = { id: "co" + rid(), matiere: f.dataset.mat, titre: titre.slice(0, 160), date: f.date.value || null, tags: [], notes: "", liens: [], created: Date.now(), ts: Date.now() }; ecole().cours.push(c); saveEcole(); location.hash = "#c-" + c.id; return; }
+  if (f.dataset.form === "entMission") { const titre = f.titre.value.trim(); if (!titre) return; const m = { id: "ms" + rid(), titre: titre.slice(0, 160), statut: "en_cours", debut: today(), fin: null, stack: (ent().entreprise.stack || []).slice(0, 6), notions: [], contexte: "", realise: "", difficultes: "", appris: "", liens: [], fichiers: [], ts: Date.now() }; ent().missions.push(m); saveEcole(); location.hash = "#ms-" + m.id; return; }
   if (f.dataset.form === "ecLink") { let url = f.url.value.trim(); if (!url) return; if (!/^https?:\/\//i.test(url)) url = "https://" + url; try { new URL(url); } catch (err) { toast("Ce lien n'a pas l'air valide."); return; } const o = ecObj(f.dataset.kind, f.dataset.id); if (!o) return; (o.liens = o.liens || []).push({ url, titre: f.titre.value.trim().slice(0, 80) }); o.ts = Date.now(); ecSaveKind(f.dataset.kind); render(); toast(toolOf(url).name + " ajouté."); return; }
   if (f.dataset.form === "ecCk") { const t = f.t.value.trim(); const r = renduItem(f.dataset.id); if (!t || !r) return; (r.checklist = r.checklist || []).push({ t: t.slice(0, 200), ok: false }); r.ts = Date.now(); saveProgress(); render(); const i = document.querySelector("form[data-form=ecCk] input"); if (i) i.focus(); return; }
   if (f.dataset.form === "calAdd") { const titre = f.titre.value.trim(); if (!titre) return; myEvents().push({ id: "ev" + Date.now().toString(36), date: calUi().day, titre, type: f.type.value, note: f.note.value.trim() || undefined, ts: Date.now(), ...(f.type.value === "rendu" ? { statut: "a_faire", matiere: "", checklist: [], liens: [] } : {}) }); saveLocal(); saveProgress(); render(); toast("Ajouté au calendrier."); return; }
@@ -4583,6 +4752,14 @@ document.addEventListener("focusout", (e) => {
     const v = f.path.value.trim(); const orig = f.path.defaultValue.trim();
     if (v && v !== orig) handleForm(f, null); else { state.ui.sbNew = false; state.ui.sbRename = null; render(); }
   }, 120);
+});
+document.addEventListener("paste", (e) => {
+  const fl = [...((e.clipboardData && e.clipboardData.files) || [])]; if (!fl.length) return;
+  const zones = [...document.querySelectorAll("#main [data-drop], main [data-drop], [data-drop]")]; const z = zones[0]; if (!z || !fileStore()) return;
+  e.preventDefault();
+  const d = new Date(); const stamp = `${today()}-${String(d.getHours()).padStart(2, "0")}h${String(d.getMinutes()).padStart(2, "0")}`;
+  const named = fl.map((f, i) => /^image\.(png|jpe?g|gif|webp)$/i.test(f.name) || !f.name ? new File([f], `capture-${stamp}${fl.length > 1 ? "-" + (i + 1) : ""}.${(f.type.split("/")[1] || "png").replace("jpeg", "jpg")}`, { type: f.type }) : f);
+  uploadFiles(z.dataset.drop, z.dataset.id, named).catch(showError);
 });
 document.addEventListener("dragover", (e) => { const z = e.target.closest && e.target.closest("[data-drop]"); if (!z || !fileStore()) return; e.preventDefault(); z.classList.add("drag"); });
 document.addEventListener("dragleave", (e) => { const z = e.target.closest && e.target.closest("[data-drop]"); if (z && !z.contains(e.relatedTarget)) z.classList.remove("drag"); });

@@ -20,7 +20,7 @@
 - Commits : terminer par les lignes d'attribution Co-Authored-By / Claude-Session données par le système.
 
 ## État actuel (17/11/2026)
-17 parcours, 95 modules. Récemment : règle « expliquer avant d'utiliser » (encadré auto), module axios, parcours Organiser un projet React, fil rouge complet (9 modules), mémo des méthodes (#methodes, méthodes cliquables dans le code), Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
+17 parcours, 95 modules. Récemment : espace En entreprise (journal, missions, documents, captures Ctrl+V), règle « expliquer avant d'utiliser » (encadré auto), module axios, parcours Organiser un projet React, fil rouge complet (9 modules), mémo des méthodes (#methodes, méthodes cliquables dans le code), Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
 tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barre latérale allégée (outils en icônes, « Mes parcours »).
 
 ## Calendrier (fait le 16/11)
@@ -173,6 +173,25 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   `symfony server:stop|server:list`, `php -S hôte:port -t dossier`, `vite` (via `npm run dev` ; lit `vite.config.ts` : `port`,
   `strictPort`, proxy `'/api': 'http://localhost:8000'`), `curl` avec chemin + proxy Vite → back. L'API répond selon `.env`/`.env.local`
   (`DATABASE_URL` avec `!ChangeMe!` → erreur « Access denied »). Tests : `term.procs()` (`kind`: symfony|php|vite, `port`), `term.lastCurl` (`{ok, via}`).
+
+## En entreprise (fait le 17/11)
+- Route `#entreprise` (lien « En entreprise » dans la barre latérale, compteur = jours en entreprise sans note sur 10 jours),
+  `#j-<id>` (entrée de journal), `#ms-<id>` (mission). Code : bloc « En entreprise » de template.html (`ent()`, `viewEntreprise`,
+  `viewJour`, `viewMission`, `entNotions`, `notionModules`, `entNudge`).
+- Données dans le document `ecole` (privé, jamais dans le dépôt) : `ecole.entreprise` (infos : nom, poste, service, tuteur,
+  tuteurContact, stack, debut, fin, liens, fichiers = Documents, notionsOk), `ecole.journal` [{id, date, mission, fait, appris,
+  bloque, notions, fichiers, liens, ts}], `ecole.missions` [{id, titre, statut en_cours|livree|en_pause|abandonnee, debut, fin,
+  stack, notions, contexte, realise, difficultes, appris, liens, fichiers, ts}]. Fusion par id/ts comme matières et cours.
+- Kinds `jour`, `mission`, `entreprise` (id `infos`) branchés sur `ecObj` : `filesCard`, `uploadFiles`, `linkForm`, `mdEditor`,
+  `data-ec` marchent tels quels.
+- Tableau de bord : `entNudge()` propose de noter les jours « entreprise » du calendrier sans entrée.
+- Notions croisées : agrégées depuis journal + missions ; `notionModules` cherche les modules (titre, objectif, prérequis,
+  leçons) et la fiche du mémo ; sinon « Ajouter à Mes questions » (`qSave`). « Je maîtrise » → `entreprise.notionsOk`.
+- **Ctrl+V d'une capture d'écran** : écouteur `paste` global → envoie les fichiers collés dans la 1re zone `[data-drop]` de la page
+  (journal, mission, documents, cours, rendus), renommés `capture-AAAA-MM-JJ-HHhMM.png`.
+- Idées suivantes (proposées à Ana le 17/11, pas encore faites) : suivi tuteur (points d'étape, objectifs, prépa des questions),
+  rapport d'entreprise et mémoire (plan + aide à la rédaction par Claude depuis le journal et les missions, problématiques pour la
+  note d'intention), glossaire de l'entreprise (→ cartes mémo), grille de compétences. Ana n'a pas encore dit quel type d'entreprise.
 
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
