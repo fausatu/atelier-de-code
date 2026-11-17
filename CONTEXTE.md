@@ -187,6 +187,9 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 - Tableau de bord : `entNudge()` propose de noter les jours « entreprise » du calendrier sans entrée.
 - Notions croisées : agrégées depuis journal + missions ; `notionModules` cherche les modules (titre, objectif, prérequis,
   leçons) et la fiche du mémo ; sinon « Ajouter à Mes questions » (`qSave`). « Je maîtrise » → `entreprise.notionsOk`.
+- Jeton GitHub des fichiers (version Pages) : un 401 met `ghf.expired` → bandeau dans `filesCard` + formulaire « Remplacer le jeton »
+  dans Synchroniser (garde l'ancien si le nouveau est refusé). Les consignes disent de choisir une expiration Custom (fin d'alternance),
+  sinon GitHub met 30 jours (cas d'Ana le 17/11 : « jeton GitHub refusé »).
 - **Ctrl+V d'une capture d'écran** : écouteur `paste` global → envoie les fichiers collés dans la 1re zone `[data-drop]` de la page
   (journal, mission, documents, cours, rendus), renommés `capture-AAAA-MM-JJ-HHhMM.png`.
 - Idées suivantes (proposées à Ana le 17/11, pas encore faites) : suivi tuteur (points d'étape, objectifs, prépa des questions),

@@ -3667,6 +3667,7 @@ async function uploadFiles(kind, id, files) {
 function filesCard(kind, id, o) {
   const fs = o.fichiers || []; const confirm = state.ui.confirmDel;
   return `<div class="card stack files-card" data-drop="${kind}" data-id="${esc(id)}"><div class="row"><h3 style="margin:0">Fichiers</h3><span class="muted small">${fs.length || ""}</span></div>
+    ${standalone && ghf.expired ? `<p class="err small" style="margin:0">GitHub refuse ton jeton (expiré ou supprimé) : <a href="#synchro">le renouveler</a>, puis réessaie.</p>` : ""}
     ${fs.length ? `<div class="file-list">${fs.map((f, i) => { const k = f.extrait || fileKind(f); const [b, col] = FILE_BADGE[k] || FILE_BADGE.texte; const sub = f.extrait && f.src !== "github" ? `texte extrait${f.info ? " · " + esc(f.info) : ""}` : `${esc(fmtSize(f.taille || 0))}${f.extrait ? ` · texte lisible ici${f.info ? " (" + esc(f.info) + ")" : ""}` : ""}`; const key = `file:${kind}:${id}:${i}`;
       return `<div class="file-row ${fileReachable(f) ? "" : "off"}"><button class="file-open" data-act="fileView" data-kind="${kind}" data-id="${esc(id)}" data-i="${i}"><span class="fb" style="background:${col}">${b}</span><span class="r-main"><b>${esc(f.nom)}</b><small>${sub} · ajouté ${esc(frDate(f.ajoute))}</small></span></button>
         ${!fileReachable(f) ? `<span class="muted small">${(f.src || "claude") === "github" ? "rangé sur GitHub" : "rangé dans claude.ai"}</span>` : confirm === key ? `<span class="small">Supprimer ?</span><button class="btn sm danger" data-act="fileDel" data-kind="${kind}" data-id="${esc(id)}" data-i="${i}">Oui</button><button class="btn sm ghost" data-act="ecCancelDel">Non</button>` : `${(f.src || "claude") === "github" ? `<button class="btn sm ghost" data-act="fileDl" data-kind="${kind}" data-id="${esc(id)}" data-i="${i}">Télécharger</button>` : `<a class="btn sm ghost" href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">Ouvrir</a>`}<button class="q-x" data-act="ecAskDel" data-key="${key}" aria-label="Supprimer ce fichier">×</button>`}</div>`; }).join("")}</div>` : ""}
@@ -3721,7 +3722,7 @@ function ghfSave() { try { ghf.token ? localStorage.setItem(GHF_LS, JSON.stringi
 const OFFICE_TYPES = { pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
 async function ghfApi(path, opts = {}, raw) {
   const res = await fetch("https://api.github.com/repos/" + ghf.repo + path, Object.assign({}, opts, { headers: Object.assign({ Accept: raw ? "application/vnd.github.raw" : "application/vnd.github+json", Authorization: "Bearer " + ghf.token, "X-GitHub-Api-Version": "2022-11-28" }, opts.body ? { "Content-Type": "application/json" } : {}) }));
-  if (res.status === 401) throw new Error("jeton GitHub refusé (expiré ou faux)");
+  if (res.status === 401) { ghf.expired = true; throw new Error("jeton GitHub refusé (expiré ou faux) : renouvelle-le dans Synchroniser → Fichiers de cours sur GitHub"); }
   if (res.status === 403) throw new Error("le jeton n'a pas le droit d'écrire dans ce dépôt");
   if (res.status === 404) { const e = new Error("dépôt ou fichier introuvable"); e.notFound = true; throw e; }
   if (!res.ok) throw new Error("GitHub a répondu " + res.status);
@@ -3744,6 +3745,7 @@ async function ghfConnect(token, repo) {
   ghf.token = token.trim(); ghf.repo = repo.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\.git$/, "").replace(/\/+$/, "");
   if (!/^[\w.-]+\/[\w.-]+$/.test(ghf.repo)) throw new Error("écris le dépôt sous la forme compte/nom, par exemple fausatu/atelier-fichiers");
   const info = await ghfApi("");
+  ghf.expired = false;
   if (!info.private) throw new Error("ce dépôt est public : choisis un dépôt privé pour tes cours");
   if (info.permissions && !info.permissions.push) throw new Error("le jeton ne peut pas écrire dans ce dépôt");
   ghfSave();
@@ -3760,11 +3762,17 @@ function viewGhFiles() {
   return `<div class="card stack">
       <h2>Fichiers de cours sur GitHub</h2>
       ${ghfOn() ? `<p class="small">Tes fichiers (PDF, PowerPoint, Word, images…) sont rangés dans ton dépôt privé <a href="https://github.com/${esc(ghf.repo)}" target="_blank" rel="noopener"><b>${esc(ghf.repo)}</b></a>.</p>
+        ${ghf.expired ? `<p class="err small"><b>GitHub refuse ton jeton</b> : il a expiré ou a été supprimé. Crée-en un nouveau et colle-le ci-dessous (tes fichiers déjà rangés ne bougent pas).</p>` : ""}
+        <details class="small" ${ghf.expired ? "open" : ""}><summary>Remplacer le jeton (expiré, ou pour changer de dépôt)</summary>
+          <ol class="consignes small"><li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Créer un nouveau jeton « fine-grained »</a> : <i>Expiration</i> → <b>Custom</b>, la date de fin de ton alternance (sinon il expire au bout de 30 jours) ; <i>Repository access</i> → <b>Only select repositories</b> → <code>${esc(ghf.repo.split("/")[1] || "atelier-fichiers")}</code> ; <i>Permissions</i> → <b>Contents : Read and write</b>.</li><li>Colle-le ici.</li></ol>
+          <form class="row" data-form="ghFiles" style="gap:8px"><input class="field" name="repo" value="${esc(ghf.repo)}" required style="flex:1;min-width:180px"><input class="field" name="token" type="password" placeholder="github_pat_..." autocomplete="off" required style="flex:2;min-width:220px"><button class="btn primary">Enregistrer</button></form>
+          <p class="small" id="ghf-msg"></p>
+        </details>
         <div class="row"><button class="btn danger" data-act="ghfOff">Désactiver sur cet appareil</button></div>`
       : `<p class="small">Pour ajouter les fichiers du prof dans tes cours depuis cette version (GitHub Pages), ils sont rangés dans un <b>dépôt privé</b> à toi. À faire une fois par appareil (2 minutes) :</p>
         <ol class="consignes small">
           <li><a href="https://github.com/new?name=atelier-fichiers&visibility=private&description=Fichiers%20de%20cours%20(Atelier%20de%20code)" target="_blank" rel="noopener">Créer un dépôt <b>privé</b></a> nommé <code>atelier-fichiers</code>.</li>
-          <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Créer un jeton « fine-grained »</a> : <i>Repository access</i> → <b>Only select repositories</b> → <code>atelier-fichiers</code> ; <i>Permissions</i> → <b>Contents : Read and write</b>. Rien d'autre.</li>
+          <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Créer un jeton « fine-grained »</a> : <i>Repository access</i> → <b>Only select repositories</b> → <code>atelier-fichiers</code> ; <i>Permissions</i> → <b>Contents : Read and write</b>. Rien d'autre. Pour <i>Expiration</i>, choisis <b>Custom</b> et la date de fin de ton alternance (par défaut, il expire au bout de 30 jours).</li>
           <li>Colle le jeton et le nom du dépôt ici.</li>
         </ol>
         <form class="stack" data-form="ghFiles" style="gap:8px"><div class="row"><input class="field" name="repo" placeholder="compte/atelier-fichiers" value="${esc(ghf.repo || "fausatu/atelier-fichiers")}" required style="flex:1;min-width:180px"><input class="field" name="token" type="password" placeholder="github_pat_..." autocomplete="off" required style="flex:2;min-width:220px"><button class="btn primary">Activer</button></div></form>
@@ -4655,7 +4663,7 @@ function handleForm(f, submitter) {
   if (f.dataset.form === "cardEdit") { const c = carte(f.dataset.id); if (!c) return; c.recto = f.recto.value.trim().slice(0, 400) || c.recto; c.verso = f.verso.value.trim().slice(0, 2000) || c.verso; c.exemple = f.exemple.value.trim().slice(0, 1500); c.ts = Date.now(); state.ui.cardEdit = null; saveCartes(); render(); return; }
   if (f.dataset.form === "genText") { const t = f.src.value.trim(); if (t.length < 40) { toast("Colle un texte un peu plus long."); return; } const key = currentRoute().slice(7).replace("-", ":"); genCards(key, t.slice(0, 16000), "ton texte"); return; }
   if (f.dataset.form === "cTrou") { const r = state.ui.cardRev; const it = r.queue[r.idx]; const v = f.w.value.trim(); if (!v) return; it.typed = v; it.a = norm(v).replace(/s$/, "") === norm(it.qn.answer).replace(/s$/, ""); gradeCard(it, it.a, false); render(); const n = document.querySelector("[data-act=cNext]"); if (n) n.focus(); return; }
-  if (f.dataset.form === "ghFiles") { const m = $("#ghf-msg"); if (m) m.textContent = "Vérification…"; ghfConnect(f.token.value, f.repo.value).then(() => { render(); toast("Fichiers GitHub activés : tu peux en ajouter dans tes cours."); }).catch((err) => { ghf.token = ""; const mm = $("#ghf-msg"); if (mm) mm.innerHTML = `<span class="err">Ça n'a pas marché : ${esc(err.message)}.</span>`; }); return; }
+  if (f.dataset.form === "ghFiles") { const m = $("#ghf-msg"); if (m) m.textContent = "Vérification…"; const old = { token: ghf.token, repo: ghf.repo, expired: ghf.expired }; ghfConnect(f.token.value, f.repo.value).then(() => { render(); toast("Jeton GitHub enregistré : tu peux ajouter tes fichiers."); }).catch((err) => { Object.assign(ghf, old); const mm = $("#ghf-msg"); if (mm) mm.innerHTML = `<span class="err">Ça n'a pas marché : ${esc(err.message)}.</span>`; }); return; }
   if (f.dataset.form === "ecSetup") { const idx = [...f.querySelectorAll("input[name=m]:checked")].map((x) => +x.value); setupEcole(idx, f.rendus.checked); render(); toast(`${idx.length} matière${idx.length > 1 ? "s" : ""} créée${idx.length > 1 ? "s" : ""}.`); return; }
   if (f.dataset.form === "ecNewCours") { const titre = f.titre.value.trim(); if (!titre) return; const c = { id: "co" + rid(), matiere: f.dataset.mat, titre: titre.slice(0, 160), date: f.date.value || null, tags: [], notes: "", liens: [], created: Date.now(), ts: Date.now() }; ecole().cours.push(c); saveEcole(); location.hash = "#c-" + c.id; return; }
   if (f.dataset.form === "entMission") { const titre = f.titre.value.trim(); if (!titre) return; const m = { id: "ms" + rid(), titre: titre.slice(0, 160), statut: "en_cours", debut: today(), fin: null, stack: (ent().entreprise.stack || []).slice(0, 6), notions: [], contexte: "", realise: "", difficultes: "", appris: "", liens: [], fichiers: [], ts: Date.now() }; ent().missions.push(m); saveEcole(); location.hash = "#ms-" + m.id; return; }
