@@ -956,6 +956,9 @@ const LEVEL_NAMES = { 1: "Niveau 1 · Appliquer", 2: "Niveau 2 · Adapter", 3: "
 const LEVEL_DESC = { 1: "Refait directement ce que montre le cours.", 2: "Un cas un peu différent : il faut adapter.", 3: "Combine avec les modules précédents." };
 const LS_KEY = "atelier-code-v1";
 const BASE = new URL(".", location.href).href;
+/* Onglet (Comprendre / Exemple / Quiz / TD) et niveau de TD de chaque module, gardés dans ce navigateur : on retrouve le TD après un rechargement. */
+function uiPos() { if (!uiPos.v) { let v = null; try { v = JSON.parse(localStorage.getItem("atelier-position") || "null"); } catch (e) {} uiPos.v = { step: (v && typeof v.step === "object" && v.step) || {}, level: (v && typeof v.level === "object" && v.level) || {} }; } return uiPos.v; }
+function saveUiPos() { try { localStorage.setItem("atelier-position", JSON.stringify({ step: state.ui.step, level: state.ui.level })); } catch (e) {} }
 
 /* ---------- état ---------- */
 const state = {
@@ -964,7 +967,7 @@ const state = {
   custom: { tracks: [], modules: [] },
   ecole: { matieres: [], cours: [], deleted: [], setup: false },
   cartes: { items: [], deleted: [] },
-  ui: { step: {}, level: {}, hints: {}, showSol: {}, ftab: {}, review: null, gen: null, confirmDel: null, newTrackColor: "rose", runs: {} },
+  ui: { step: uiPos().step, level: uiPos().level, hints: {}, showSol: {}, ftab: {}, review: null, gen: null, confirmDel: null, newTrackColor: "rose", runs: {} },
 };
 let sample = null, uid = null, refs = null;
 
@@ -4835,11 +4838,11 @@ const ACTIONS = {
     keepDrafts(); const id = el.dataset.id; const s = Number(el.dataset.step);
     const cur = state.ui.step[id] ?? 0;
     if (cur === 0 || cur === 1) markSeen(id, cur);
-    state.ui.step[id] = s;
+    state.ui.step[id] = s; saveUiPos();
     saveProgress(); render();
     const tabs = $(".steps"); if (tabs) tabs.scrollIntoView({ block: "nearest" });
   },
-  level(el) { keepDrafts(); state.ui.level[el.dataset.id] = Number(el.dataset.level); render(); },
+  level(el) { keepDrafts(); state.ui.level[el.dataset.id] = Number(el.dataset.level); saveUiPos(); render(); },
   ftab(el) {
     keepDrafts(); const i = Number(el.dataset.i); state.ui.ftab[el.dataset.key] = i; state.ui.sbConfirmDel = null;
     const box = el.closest(".files"); if (!box) return;
@@ -4974,7 +4977,7 @@ const ACTIONS = {
   qGoto(el) {
     const q = questions().find((x) => x.id === el.dataset.id); if (!q || !q.ctx || !q.ctx.module) return;
     const st = q.ctx.etape ? (/^TD/.test(q.ctx.etape) ? 3 : Math.max(0, STEPS.indexOf(q.ctx.etape))) : 0;
-    keepDrafts(); state.ui.step[q.ctx.module] = st;
+    keepDrafts(); state.ui.step[q.ctx.module] = st; saveUiPos();
     if (st === 3) state.ui.level[q.ctx.module] = Number(q.ctx.etape.replace(/\D/g, "")) || 1;
     if (window.matchMedia("(max-width: 720px)").matches) qSetOpen(false);
     if (location.hash === "#m-" + q.ctx.module) render(); else location.hash = "#m-" + q.ctx.module;
