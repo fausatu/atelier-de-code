@@ -211,6 +211,12 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 - Popup de complétion compacte (7 lignes, doc courte : signature + 1re phrase) à la demande d'Ana.
 - Survol (`#ed-hover`, 350 ms) : TS `getQuickInfoAtPosition` (type + doc, fiche du mémo en français si elle existe) ; PHP : déclaration
   trouvée dans les fichiers (fonction, propriété, classe) ou fiche du mémo. `edPosAt` convertit la souris en position dans le texte.
+- **Erreurs en direct** (650 ms après la frappe) : calque `.ed-dg` sous le texte (vagues rouges = erreurs, orange = avertissements),
+  numéros de ligne colorés, barre `.ed-probs` sous l'éditeur (clic = aller à la ligne), message au survol, paire de parenthèses
+  surlignée (`.bm`). PHP/CSS/JSON : `edScan` maison (chaînes, commentaires, heredoc, paires, `;` dans un `[`/`(` ouvert, « ; »
+  probablement oublié = `edPhpSemicolons`), une seule cause à la fois. TS/JS : diagnostics du service TypeScript en français ;
+  erreurs de types complètes seulement dans le parcours TypeScript / TD `typecheck`, ailleurs seulement les sûres (`SURES`), car
+  les types simplifiés des bibliothèques feraient de fausses alertes. Vérifié : 0 fausse alerte sur les 190 solutions TS et 485 fichiers PHP.
 - Aide aux paramètres (`#ed-sig`) à `(` et `,` : TS `getSignatureHelpItems`, sinon signature du mémo / de la fonction du fichier,
   paramètre courant en gras + explication du mémo. `memoFor(name, fam, member, recv)` exige le bon objet pour les clés `Math.min`, `api.get`…
 

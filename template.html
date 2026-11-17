@@ -603,6 +603,19 @@ body.q-open .qfab { display: none; }
 .ac-doc dt, .ac-doc dd { margin: 0; font-size: 0.8rem; }
 .ed-sig { position: fixed; z-index: 79; max-width: min(560px, calc(100vw - 16px)); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgb(31 38 51 / 0.16); padding: 8px 12px; font-size: 0.82rem; display: flex; flex-direction: column; gap: 4px; }
 .ed-sig code { white-space: pre-wrap; background: none; padding: 0; color: var(--ink); font-size: 0.8rem; }
+.ed-wrap .ed-dg { position: absolute; inset: 0; margin: 0; padding: 14px 16px 14px calc(var(--gut) + 12px); border: 0; overflow: hidden; pointer-events: none; font: 13.5px/1.65 var(--font-mono); tab-size: 4; white-space: pre; color: transparent; background: transparent; }
+.ed-dg .sq { text-decoration: underline wavy #e5484d; text-decoration-skip-ink: none; text-underline-offset: 4px; text-decoration-thickness: 1.5px; background: rgb(229 72 77 / 0.12); border-radius: 2px; }
+.ed-dg .sq.w { text-decoration-color: #e0a100; background: rgb(224 161 0 / 0.1); }
+.ed-dg .bm { outline: 1px solid color-mix(in srgb, var(--accent) 70%, transparent); background: color-mix(in srgb, var(--accent) 22%, transparent); border-radius: 2px; }
+.ed-wrap .ed-ln span.err { color: #e5484d; font-weight: 700; }
+.ed-wrap .ed-ln span.warn { color: #e0a100; font-weight: 700; }
+.ed-probs { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--surface); font-size: 0.84rem; }
+.ed-probs b.e { color: #c93135; } .ed-probs b.w { color: #a87800; }
+.ed-prob { display: flex; gap: 10px; text-align: left; border: 0; background: none; padding: 3px 4px; border-radius: 6px; cursor: pointer; font: inherit; color: var(--ink); }
+.ed-prob:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.ed-prob span { flex: none; min-width: 64px; font-weight: 600; color: #c93135; }
+.ed-prob.w span { color: #a87800; }
+.dg-msg { margin: 0; } .dg-msg.e b { color: #e5484d; } .dg-msg.w b { color: #e0a100; }
 .ed-hover { z-index: 78; max-width: min(460px, calc(100vw - 16px)); }
 .ed-sig code span.on { font-weight: 700; color: var(--accent); text-decoration: underline; }
 .ed-sig p { margin: 0; }
@@ -1149,6 +1162,7 @@ function paintEditor(ta) {
   else code.textContent = src;
   paintGutter(ta);
   fitEditor(ta); syncEditor(ta);
+  try { edDiagSchedule(ta, ta._dgFor === ta.value ? 0 : 650); } catch (e) {}
 }
 function paintGutter(ta) {
   const g = ta.parentElement.querySelector(".ed-ln"); if (!g) return;
@@ -1176,7 +1190,7 @@ function fitEditor(ta) {
   if (ta.dataset.userH) return;
   ta.style.height = h + "px";
 }
-function syncEditor(ta) { const pre = ta.previousElementSibling; if (pre) { pre.scrollTop = ta.scrollTop; pre.scrollLeft = ta.scrollLeft; } const g = ta.parentElement && ta.parentElement.querySelector(".ed-ln"); if (g) g.scrollTop = ta.scrollTop; }
+function syncEditor(ta) { const pre = ta.previousElementSibling; if (pre) { pre.scrollTop = ta.scrollTop; pre.scrollLeft = ta.scrollLeft; } const dg = ta.parentElement && ta.parentElement.querySelector(".ed-dg"); if (dg) { dg.scrollTop = ta.scrollTop; dg.scrollLeft = ta.scrollLeft; } const g = ta.parentElement && ta.parentElement.querySelector(".ed-ln"); if (g) g.scrollTop = ta.scrollTop; }
 function paintEditors(root) { (root || document).querySelectorAll(".ed-wrap textarea.editor").forEach(paintEditor); }
 document.addEventListener("scroll", (e) => { if (e.target.classList && e.target.classList.contains("hl")) syncEditor(e.target); }, true);
 document.addEventListener("mouseup", (e) => { const ta = e.target; if (ta.classList && ta.classList.contains("hl") && ta.style.height && ta.offsetHeight !== parseInt(ta.style.height, 10)) ta.dataset.userH = "1"; });
@@ -4670,6 +4684,14 @@ function edPosAt(ta, x, y) {
 }
 async function edHover(ta, x, y) {
   const pos = edPosAt(ta, x, y); const v = ta.value;
+  const dgd = pos >= 0 ? edDiagAt(ta, pos) : null;
+  if (dgd) {
+    const key = "dg:" + dgd.from + dgd.msg; if (edHov.open && edHov.key === key) return;
+    let box = $("#ed-hover"); if (!box) { box = document.createElement("div"); box.id = "ed-hover"; box.className = "ed-sig ed-hover"; document.body.appendChild(box); }
+    box.innerHTML = `<p class="dg-msg ${dgd.sev === "w" ? "w" : "e"}"><b>${dgd.sev === "w" ? "⚠" : "✕"}</b> ${esc(edShort(dgd.msg, 400))}</p>`; box.hidden = false; edHov.open = true; edHov.key = key;
+    const p = edCaret(ta, dgd.from); const H = box.offsetHeight, W = box.offsetWidth;
+    box.style.left = Math.max(8, Math.min(p.x, window.innerWidth - W - 8)) + "px"; box.style.top = (p.y - H - 4 > 8 ? p.y - H - 4 : p.y + p.lh + 4) + "px"; return;
+  }
   if (pos < 0 || !/[\w$]/.test(v[pos])) { edHoverClose(); return; }
   let s = pos, e = pos; while (s > 0 && /[\w$]/.test(v[s - 1])) s--; while (e < v.length && /[\w$]/.test(v[e])) e++;
   const word = v.slice(s, e); const key = ta.dataset.ed + ":" + s + ":" + word; if (edHov.open && edHov.key === key) return;
@@ -4704,6 +4726,145 @@ document.addEventListener("mousemove", (e) => {
   const x = e.clientX, y = e.clientY; edHov.t = setTimeout(() => edHover(ta, x, y).catch(() => {}), 350);
 });
 document.addEventListener("keydown", () => { if (edHov.open) edHoverClose(); }, true);
+/* ---------- Éditeur : erreurs en direct (soulignées en rouge), paires de parenthèses, liste des problèmes ---------- */
+const DIAG_ON = new Set(["php", "typescript", "javascript", "css", "scss", "json"]);
+const PH_OPEN = { "(": ")", "[": "]", "{": "}" }; const PH_CLOSE = { ")": "(", "]": "[", "}": "{" };
+function edLineOf(v, i) { let n = 0; for (let k = v.indexOf("\n"); k !== -1 && k < i; k = v.indexOf("\n", k + 1)) n++; return n; }
+/* Analyse « maison » (PHP, CSS, JSON) : chaînes, commentaires, paires ( [ {, point-virgule oublié en PHP. */
+function edScan(v, lang) {
+  const php = lang === "php"; const errs = []; const pairs = new Map(); const stack = [];
+  let i = 0; const n = v.length; let inPhp = !php || !/<\?(php|=)/.test(v);
+  const err = (from, to, msg, sev) => errs.push({ from, to: Math.max(to, from + 1), msg, sev: sev || "e" });
+  while (i < n) {
+    if (php && !inPhp) { const k = v.indexOf("<?", i); if (k < 0) break; i = k + (v.startsWith("<?php", k) ? 5 : 3); inPhp = true; continue; }
+    const c = v[i], d = v[i + 1];
+    if (php && c === "?" && d === ">") { inPhp = false; i += 2; continue; }
+    if ((c === "/" && d === "/" && lang !== "json") || (php && c === "#" && d !== "[")) { const k = v.indexOf("\n", i); i = k < 0 ? n : k; continue; }
+    if (c === "/" && d === "*") { const k = v.indexOf("*/", i + 2); if (k < 0) { err(i, i + 2, "Commentaire /* jamais fermé : il manque */"); break; } i = k + 2; continue; }
+    if (php && c === "<" && v.startsWith("<<<", i)) { const m = v.slice(i).match(/^<<<\s*['"]?(\w+)['"]?\n/); if (m) { const end = v.slice(i + m[0].length).search(new RegExp("^\\s*" + m[1] + "\\b", "m")); i = end < 0 ? n : i + m[0].length + end + m[1].length; continue; } }
+    if (c === "'" || c === '"' || (c === "`" && lang !== "php")) {
+      let k = i + 1; while (k < n && v[k] !== c) { if (v[k] === "\\") k++; else if (v[k] === "\n" && !php && lang !== "css") break; k++; }
+      if (k >= n || v[k] !== c) { const eol = v.indexOf("\n", i); err(i, eol < 0 ? n : eol, `Texte jamais fermé : il manque le ${c === "'" ? "guillemet simple ( ' )" : c === '"' ? "guillemet double ( \" )" : "accent grave ( ` )"} de fin`); return { errs, pairs }; }
+      i = k + 1; continue;
+    }
+    if (PH_OPEN[c]) { stack.push(i); i++; continue; }
+    if (c === ";" && lang === "php" && stack.length) {
+      const o = stack[stack.length - 1];
+      if (v[o] === "[" || (v[o] === "(" && !/\bfor\s*$/.test(v.slice(Math.max(0, o - 10), o)))) {
+        err(o, o + 1, `Ce « ${v[o]} » n'est pas fermé avant le « ; » de la ligne ${edLineOf(v, i) + 1} : il manque « ${PH_OPEN[v[o]]} »`);
+        err(i, i + 1, `« ; » alors que le « ${v[o]} » de la ligne ${edLineOf(v, o) + 1} est encore ouvert`, "w");
+        return { errs, pairs };   // une seule cause à la fois : la suite serait faussée
+      }
+    }
+    if (PH_CLOSE[c]) {
+      const o = stack.pop();
+      if (o === undefined) { err(i, i + 1, `« ${c} » en trop : il n'y a rien à fermer`); return { errs, pairs }; }
+      else if (v[o] !== PH_CLOSE[c]) { err(i, i + 1, `« ${PH_OPEN[v[o]]} » attendu ici pour fermer le « ${v[o]} » de la ligne ${edLineOf(v, o) + 1}, mais tu as écrit « ${c} »`); err(o, o + 1, `Ce « ${v[o]} » est fermé par « ${c} » ligne ${edLineOf(v, i) + 1} : il faudrait « ${PH_OPEN[v[o]]} »`, "w"); return { errs, pairs }; }
+      else { pairs.set(o, i); pairs.set(i, o); }
+      i++; continue;
+    }
+    i++;
+  }
+  if (stack.length) { const o = stack[stack.length - 1]; err(o, o + 1, `Ce « ${v[o]} » n'est jamais fermé : il manque « ${PH_OPEN[v[o]]} »${stack.length > 1 ? ` (et ${stack.length - 1} autre${stack.length > 2 ? "s" : ""} avant lui)` : ""}`); }
+  if (php && !errs.length) edPhpSemicolons(v, errs);
+  return { errs, pairs };
+}
+function edPhpSemicolons(v, errs) {
+  const lines = v.split("\n"); let off = 0, depth = 0; const offs = [];
+  for (const l of lines) { offs.push(off); off += l.length + 1; }
+  const strip = (l) => l.replace(/(["'])(?:\\.|(?!\1).)*\1/g, '""').replace(/\/\/.*$|#(?!\[).*$/, "").trimEnd();
+  const clean = lines.map(strip);
+  for (let k = 0; k < lines.length; k++) {
+    const l = clean[k]; const t = l.trim();
+    const before = depth; for (const ch of l) { if (ch === "(" || ch === "[") depth++; else if (ch === ")" || ch === "]") depth--; }
+    if (!t || depth > 0 || before > 0 || /^(<\?php|\?>|\*|\/\*|#\[|namespace\b.*[;{]$)/.test(t)) continue;
+    if (!/[\w)\]'"]$/.test(t) || /^(if|elseif|else|for|foreach|while|switch|function|class|interface|trait|enum|abstract|final|readonly|try|catch|finally|do|match|case|default|public|private|protected|static)\b/.test(t) && !/^(public|private|protected|static)\s+(?:readonly\s+)?(?:\??[\w\\|]+\s+)?\$\w+(\s*=.*)?$/.test(t) && !/^(public|private|protected)\s+const\b/.test(t)) continue;
+    if (/\bfn\s*\(.*\)\s*=>\s*.+$/.test(t) && !/^\$|^return\b/.test(t)) continue;
+    let j = k + 1; while (j < lines.length && !clean[j].trim()) j++;
+    const nx = j < lines.length ? clean[j].trim() : "";
+    if (/^(->|\?->|\.|\?|:|\)|\]|\{|,|&&|\|\||\+|-|\*|\/|=>|\?\?|instanceof\b|and\b|or\b)/.test(nx)) continue;
+    if (/^}/.test(nx) && /=>/.test(t)) continue;
+    if (/^(use|namespace|require|include|echo|return|throw|\$|[A-Za-z_\\][\w\\]*(::|->|\())|^(public|private|protected)\s/.test(t) || /\)$/.test(t)) {
+      const end = offs[k] + lines[k].length; const from = offs[k] + lines[k].search(/\S/);
+      errs.push({ from: Math.max(from, end - 1), to: end, msg: "Il manque sans doute un « ; » à la fin de cette ligne", sev: "w" });
+    }
+  }
+}
+/* JS / TS : diagnostics du service TypeScript (messages en français). */
+function edTsDiags(ta) {
+  const sv = edTsService(ta); if (!sv) return null; const ts = window.ts;
+  if (window.__TS_FR && !edTsDiags.fr) { try { ts.setLocalizedDiagnosticMessages(window.__TS_FR); } catch (e) {} edTsDiags.fr = true; }
+  const out = []; const isTs = /\.tsx?$/.test(edPath(ta));
+  const put = (d, sev) => { if (d.start === undefined) return; out.push({ from: d.start, to: d.start + Math.max(1, d.length || 0), msg: ts.flattenDiagnosticMessageText(d.messageText, "\n"), sev, code: d.code }); };
+  try { sv.ls.getSyntacticDiagnostics(sv.file).forEach((d) => put(d, "e")); } catch (e) {}
+  // Erreurs de types : toutes dans le parcours TypeScript (et les TD vérifiés par TypeScript) ; ailleurs, seulement les plus sûres
+  // (nom introuvable, faute de frappe, const modifiée…), car les types simplifiés des bibliothèques donneraient de fausses alertes.
+  const k = ta.dataset.ed || ""; const mm = /^td-(.+)-(\d+)$/.exec(k); const md = mm ? mod(mm[1]) : null; const td = md ? (md.tds || []).find((x) => String(x.level) === mm[2]) : null;
+  const full = !!(md && (md.track === "ts" || (td && td.run && td.run.typecheck)));
+  const SURES = [2304, 2552, 2551, 2588, 2451, 2448, 2349, 1005, 2365, 2367];
+  if (!out.length && isTs) { try { sv.ls.getSemanticDiagnostics(sv.file).filter((d) => ![2307, 2792, 7016, 2686, 1208, 6133, 6196].includes(d.code) && (full || SURES.includes(d.code))).forEach((d) => put(d, "w")); } catch (e) {} }
+  return out;
+}
+const edDg = { t: null };
+function edDiagSchedule(ta, delay) {
+  if (!DIAG_ON.has(ta.dataset.lang)) return;
+  clearTimeout(ta._dgT); ta._dgT = setTimeout(() => edDiagRun(ta), delay === undefined ? 650 : delay);
+}
+async function edDiagRun(ta) {
+  if (!ta.isConnected) return;
+  const v = ta.value; const lang = ta.dataset.lang; let errs = [], pairs = null;
+  if (ta._dgFor === v && ta._dg) { edDiagPaint(ta); return; }
+  if (lang === "typescript" || lang === "javascript") {
+    if (!(await edTsLoad())) return; if (ta.value !== v) return;
+    errs = edTsDiags(ta) || [];
+  } else ({ errs, pairs } = edScan(v, lang));
+  errs.sort((a, b) => a.from - b.from);
+  ta._dg = errs.slice(0, 50); ta._pairs = pairs; ta._dgFor = v;
+  edDiagPaint(ta);
+}
+function edMatchAt(ta) {
+  const v = ta.value, a = ta.selectionStart; if (a !== ta.selectionEnd) return null;
+  for (const p of [a - 1, a]) {
+    if (p < 0 || !(PH_OPEN[v[p]] || PH_CLOSE[v[p]])) continue;
+    if (ta._pairs && ta._pairs.has(p)) return [p, ta._pairs.get(p)];
+    if ((ta.dataset.lang === "typescript" || ta.dataset.lang === "javascript") && window.ts && edTs.ls) {
+      try { const sv = edTsService(ta); const r = sv.ls.getBraceMatchingAtPosition(sv.file, p); if (r && r.length === 2) return [r[0].start, r[1].start]; } catch (e) {}
+    }
+  }
+  return null;
+}
+function edDiagPaint(ta) {
+  const wrap = ta.parentElement; if (!wrap || !wrap.classList.contains("ed-wrap")) return;
+  let dg = wrap.querySelector(".ed-dg");
+  if (!dg) { dg = document.createElement("pre"); dg.className = "ed-dg"; dg.setAttribute("aria-hidden", "true"); wrap.insertBefore(dg, wrap.querySelector(".ed-hl")); }
+  const v = ta.value; const errs = ta._dgFor === v ? ta._dg || [] : []; const bm = edMatchAt(ta);
+  const marks = [];
+  for (const e of errs) { let f = Math.min(e.from, v.length), t = Math.min(e.to, v.length); if (f >= v.length || v[f] === "\n") { f = Math.max(0, f - 1); t = f + 1; } marks.push([f, Math.max(t, f + 1), e.sev === "w" ? "sq w" : "sq"]); }
+  if (bm) for (const p of bm) marks.push([p, p + 1, "bm"]);
+  marks.sort((x, y) => x[0] - y[0]);
+  let h = "", pos = 0;
+  for (const [f, t, cls] of marks) { if (f < pos) continue; h += esc(v.slice(pos, f)) + `<span class="${cls}">${esc(v.slice(f, t).replace(/\n/g, " "))}</span>`; pos = t; }
+  dg.innerHTML = h + esc(v.slice(pos)) + "\n ";
+  dg.scrollTop = ta.scrollTop; dg.scrollLeft = ta.scrollLeft;
+  const g = wrap.querySelector(".ed-ln");
+  if (g) { const bad = new Map(); for (const e of errs) { const ln = edLineOf(v, e.from); if (bad.get(ln) !== "err") bad.set(ln, e.sev === "w" ? "warn" : "err"); } [...g.children].forEach((s, i) => { s.classList.toggle("err", bad.get(i) === "err"); s.classList.toggle("warn", bad.get(i) === "warn"); }); }
+  let pb = wrap.nextElementSibling && wrap.nextElementSibling.classList.contains("ed-probs") ? wrap.nextElementSibling : null;
+  if (!errs.length) { if (pb) pb.remove(); return; }
+  if (!pb) { pb = document.createElement("div"); pb.className = "ed-probs"; wrap.after(pb); }
+  const ne = errs.filter((e) => e.sev !== "w").length, nw = errs.length - ne;
+  pb.innerHTML = `<div class="row"><b class="${ne ? "e" : "w"}">${ne ? `✕ ${ne} erreur${ne > 1 ? "s" : ""}` : ""}${ne && nw ? " · " : ""}${nw ? `⚠ ${nw} avertissement${nw > 1 ? "s" : ""}` : ""}</b><span class="muted small">clique pour aller à la ligne</span></div>${errs.slice(0, 4).map((e, i) => `<button type="button" class="ed-prob ${e.sev === "w" ? "w" : "e"}" data-i="${i}"><span>Ligne ${edLineOf(v, e.from) + 1}</span>${esc(edShort(e.msg, 180))}</button>`).join("")}${errs.length > 4 ? `<span class="muted small">+ ${errs.length - 4} autre${errs.length > 5 ? "s" : ""}</span>` : ""}`;
+  pb._ta = ta;
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest(".ed-prob"); if (!b) return;
+  const pb = b.closest(".ed-probs"); const ta = pb && pb._ta; if (!ta || !ta._dg) return; const d = ta._dg[+b.dataset.i]; if (!d) return;
+  ta.focus(); ta.setSelectionRange(d.from, d.from);
+  const cs = getComputedStyle(ta); const lh = parseFloat(cs.lineHeight) || 22; const ln = edLineOf(ta.value, d.from);
+  ta.scrollTop = Math.max(0, ln * lh - ta.clientHeight / 2); const r = ta.getBoundingClientRect(); if (r.top < 0 || r.top > window.innerHeight - 80) ta.scrollIntoView({ block: "center" });
+  edDiagPaint(ta);
+});
+document.addEventListener("selectionchange", () => { const a = document.activeElement; if (a && a.classList && a.classList.contains("editor") && a._dgFor !== undefined) { cancelAnimationFrame(edDg.t); edDg.t = requestAnimationFrame(() => edDiagPaint(a)); } });
+function edDiagAt(ta, pos) { return ta._dgFor === ta.value && ta._dg ? ta._dg.find((d) => pos >= d.from && pos < Math.max(d.to, d.from + 1)) : null; }
 let edTimer = null;
 function edAfterInput(ta, e) {
   const d = e.data || ""; const t = e.inputType || "";
