@@ -869,6 +869,21 @@ body.viewer-open { overflow: hidden; }
 .setup-item input { accent-color: var(--tc); }
 .r-undated > summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; padding: 4px 0; }
 .r-undated .r-list { margin-top: 6px; }
+.pk { position: relative; display: inline-flex; }
+.pk-btn { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 0.84rem; font-weight: 600; cursor: pointer; line-height: 1.2; }
+.pk-btn:hover { border-color: var(--muted); }
+.pk-btn[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.pk-chev { width: 14px; height: 14px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pk-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dc); flex: none; }
+.pk .t-blue { --dc: #3b5bdb; } .pk .t-green { --dc: #2f9e44; } .pk .t-amber { --dc: #e8a317; } .pk .t-red { --dc: #c92a2a; } .pk .t-grey { --dc: #9aa1ab; }
+.pk-btn.t-blue { background: color-mix(in srgb, #3b5bdb 9%, var(--surface)); } .pk-btn.t-green { background: color-mix(in srgb, #2f9e44 9%, var(--surface)); }
+.pk-btn.t-amber { background: color-mix(in srgb, #e8a317 11%, var(--surface)); } .pk-btn.t-red { background: color-mix(in srgb, #c92a2a 8%, var(--surface)); }
+.pk-menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; min-width: 170px; padding: 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); box-shadow: 0 10px 28px rgb(0 0 0 / 0.14); display: flex; flex-direction: column; gap: 1px; }
+.pk-menu[hidden] { display: none; }
+.pk-opt { display: flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 7px 9px; border-radius: 7px; font-size: 0.86rem; color: var(--ink); cursor: pointer; text-align: left; }
+.pk-opt:hover, .pk-opt:focus-visible { background: var(--bg); outline: none; }
+.pk-opt.on { font-weight: 600; }
+.pk-ok { margin-left: auto; color: var(--accent); }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
 .seg button { border: 0; background: transparent; padding: 5px 12px; font-size: 0.84rem; font-weight: 500; color: var(--muted); cursor: pointer; }
 .seg button + button { border-left: 1px solid var(--line); }
@@ -3314,6 +3329,16 @@ function fabOpen() { const b = $("#qfab"); return !!b && b.getAttribute("aria-ex
 const PROG = DATA.programme || { ue: {}, types: {}, modules: [] };
 const TYPE_COLOR = { dev: "blue", gestion: "orange", design: "rose", soft: "teal", langue: "indigo", droit: "slate", rse: "green", securite: "brick", projet: "violet", option: "graphite" };
 const ATELIER_ALIAS = { architecture: "arch" };
+/* Sélecteur de statut compact : bouton pastille + menu (remplace les longues barres de boutons). */
+const ST_TONE = { en_cours: "blue", encours: "blue", livree: "green", faite: "green", rendu: "green", note: "green", acceptee: "green",
+  en_pause: "amber", proposee: "amber", abandonnee: "red" };
+function statusPick(map, cur, act, attrs) {
+  const at = Object.entries(attrs).map(([k, v]) => ` data-${k}="${esc(v)}"`).join("");
+  const tone = (k) => ST_TONE[k] || "grey";
+  return `<span class="pk"><button type="button" class="pk-btn t-${tone(cur)}" data-act="pkOpen" aria-haspopup="listbox" aria-expanded="false"><i class="pk-dot"></i>${esc(map[cur] || cur)}<svg class="pk-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>`
+    + `<span class="pk-menu" role="listbox" hidden>${Object.entries(map).map(([k, v]) => `<button type="button" role="option" aria-selected="${k === cur}" class="pk-opt t-${tone(k)} ${k === cur ? "on" : ""}" data-act="${act}"${at} data-s="${k}"><i class="pk-dot"></i>${esc(v)}${k === cur ? `<span class="pk-ok">✓</span>` : ""}</button>`).join("")}</span></span>`;
+}
+function pkCloseAll(except) { document.querySelectorAll(".pk-menu:not([hidden])").forEach((m) => { if (m !== except) { m.hidden = true; m.previousElementSibling?.setAttribute("aria-expanded", "false"); } }); }
 const R_STATUTS = { a_faire: "À faire", en_cours: "En cours", rendu: "Rendu", note: "Noté" };
 const KNOWN_RENDUS = [
   ["Audit d'entreprise", "Rapport d'entreprise", "Rapport d'entreprise de 1re année."],
@@ -3544,7 +3569,7 @@ function viewRendu(id) {
     <div class="row small"><a href="#cours">Mes cours</a><span class="muted">›</span>${m ? `<a href="#mat-${esc(m.id)}">${esc(m.nom)}</a><span class="muted">›</span>` : ""}<span class="muted">Rendu</span></div>
     <input class="title-input" data-ec="titre" data-kind="rendu" data-id="${esc(id)}" value="${esc(r.titre)}" maxlength="160" aria-label="Titre du rendu">
     <div class="row">
-      <span class="seg">${Object.entries(R_STATUTS).map(([k, v]) => `<button class="${s === k ? "on" : ""}" data-act="ecStatut" data-id="${esc(id)}" data-s="${k}">${v}</button>`).join("")}</span>
+      ${statusPick(R_STATUTS, s, "ecStatut", { id })}
       <label class="row small"><span class="muted">À rendre le</span><input class="field" type="date" data-ec="date" data-kind="rendu" data-id="${esc(id)}" value="${esc(r.date || "")}"></label>
       ${r.date && renduOpen(r) ? `<span class="r-date ${r.date < today() ? "late" : ""}">${r.date < today() ? "en retard" : relDays(r.date)}</span>` : ""}
       ${s === "note" ? `<label class="row small"><span class="muted">Note</span><input class="field" style="width:110px" data-ec="resultat" data-kind="rendu" data-id="${esc(id)}" value="${esc(r.resultat || "")}" placeholder="ex. 15/20"></label>` : ""}
@@ -4366,7 +4391,7 @@ function tachesBlock(m) {
       <input class="tk-t" data-ec="titre" data-kind="tache" data-id="${esc(ref)}" value="${esc(x.titre)}" maxlength="200" aria-label="Tâche">
       ${x.ticket ? `<span class="chip ghost">${esc(x.ticket)}</span>` : ""}${nj ? `<span class="muted small">${nj} j.</span>` : ""}${String(x.notes || "").trim() ? `<span class="muted small" title="a des notes">✎</span>` : ""}
       <button class="tk-more" data-act="tkOpen" data-ref="${esc(ref)}" aria-expanded="${!!o}" title="Détails">${o ? "▴" : "▾"}</button></div>
-      ${o ? `<div class="tk-det"><div class="row"><span class="seg">${Object.entries(T_STATUTS).map(([k, v]) => `<button class="${st === k ? "on" : ""}" data-act="tkSet" data-ref="${esc(ref)}" data-s="${k}">${v}</button>`).join("")}</span>
+      ${o ? `<div class="tk-det"><div class="row">${statusPick(T_STATUTS, st, "tkSet", { ref })}
         <label class="row small"><span class="muted">Ticket</span><input class="field" style="width:160px" data-ec="ticket" data-kind="tache" data-id="${esc(ref)}" value="${esc(x.ticket || "")}" placeholder="#123, JIRA-42…"></label>
         <span class="spacer"></span><button class="btn sm ghost danger" data-act="tkDel" data-ref="${esc(ref)}">Supprimer</button></div>
         <textarea class="field tk-notes" data-ec="notes" data-kind="tache" data-id="${esc(ref)}" placeholder="Notes sur cette tâche : ce que tu as fait, les pièges, la PR…" rows="3">${esc(x.notes || "")}</textarea>
@@ -4540,7 +4565,7 @@ function viewContrib(id) {
   return `<div class="wrap">
     ${entCrumb("Ma valeur ajoutée")}
     <input class="title-input" data-ec="titre" data-kind="contrib" data-id="${esc(id)}" value="${esc(c.titre)}" maxlength="160" aria-label="Titre">
-    <div class="row"><span class="seg">${Object.entries(C_STATUTS).map(([k, v]) => `<button class="${s === k ? "on" : ""}" data-act="coStatut" data-id="${esc(id)}" data-s="${k}">${v}</button>`).join("")}</span>
+    <div class="row">${statusPick(C_STATUTS, s, "coStatut", { id })}
       <label class="row small"><span class="muted">Type</span><select class="field" data-ec="type" data-kind="contrib" data-id="${esc(id)}">${Object.entries(C_TYPES).map(([k, v]) => `<option value="${k}" ${k === (c.type || "autre") ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label></div>
     ${optAll([
       optSec("contrib", id, "constat", "Ce que j'ai remarqué", "", c.constat, "Le problème ou le manque : « installer le projet m'a pris une journée, le README ne parle pas de Docker »", true),
@@ -4644,7 +4669,7 @@ function viewMission(id) {
   return `<div class="wrap">
     ${entCrumb("Mission")}
     <input class="title-input" data-ec="titre" data-kind="mission" data-id="${esc(id)}" value="${esc(m.titre)}" maxlength="160" aria-label="Titre de la mission">
-    <div class="row"><span class="seg">${Object.entries(M_STATUTS).map(([k, v]) => `<button class="${s === k ? "on" : ""}" data-act="entStatut" data-id="${esc(id)}" data-s="${k}">${v}</button>`).join("")}</span>
+    <div class="row">${statusPick(M_STATUTS, s, "entStatut", { id })}
       <label class="row small"><span class="muted">Début</span><input class="field" type="date" data-ec="debut" data-kind="mission" data-id="${esc(id)}" value="${esc(m.debut || "")}"></label>
       <label class="row small"><span class="muted">Fin</span><input class="field" type="date" data-ec="fin" data-kind="mission" data-id="${esc(id)}" value="${esc(m.fin || "")}"></label></div>
     ${optAll([
@@ -5262,6 +5287,7 @@ const ACTIONS = {
   entTab(el) { state.ui.entTab = el.dataset.t; try { localStorage.setItem("atelier-ent-tab", el.dataset.t); } catch (e) {} render(); },
   secOpen(el) { (state.ui.secOpen = state.ui.secOpen || {})[el.dataset.k] = true; const [kind, id, field] = el.dataset.k.split(":"); (state.ui.mdMode = state.ui.mdMode || {})[el.dataset.k] = "write"; render(); setTimeout(() => { const x = document.querySelector(`[data-kind="${kind}"][data-id="${CSS.escape(id)}"][data-ec="${field}"]`) || document.querySelector(`.files-card[data-drop="${kind}"]`); if (x) { x.scrollIntoView({ block: "center" }); if (x.focus) x.focus(); } }, 30); },
   tkCycle(el) { const x = tacheItem(el.dataset.ref); if (!x) return; const nx = { afaire: "encours", encours: "faite", faite: "afaire" }[x.statut || "afaire"]; tkSetStatut(el.dataset.ref, nx); },
+  pkOpen(el) { const m = el.nextElementSibling; const open = m.hidden; pkCloseAll(m); m.hidden = !open; el.setAttribute("aria-expanded", String(open)); if (open) (m.querySelector(".on") || m.firstElementChild)?.focus(); },
   tkSet(el) { tkSetStatut(el.dataset.ref, el.dataset.s); },
   tkOpen(el) { const o = state.ui.tkOpen || (state.ui.tkOpen = {}); o[el.dataset.ref] = !o[el.dataset.ref]; render(); },
   tkDel(el) { const [mid, tid] = el.dataset.ref.split(":"); const m = missionItem(mid); if (!m) return; m.taches = taches(m).filter((x) => x.id !== tid); m.ts = Date.now(); for (const j of ent().journal) if ((j.taches || []).includes(tid)) { j.taches = j.taches.filter((x) => x !== tid); j.ts = Date.now(); } saveEcole(); render(); },
@@ -5524,6 +5550,7 @@ document.addEventListener("click", (e) => {
   if (mr) { e.preventDefault(); openMemoPop(mr); return; }
   if (!e.target.closest("#mpop")) closeMemoPop();
   if (fabOpen() && !e.target.closest("#fab-menu, #qfab")) fabSetOpen(false);
+  if (!e.target.closest(".pk")) pkCloseAll();
   const a = e.target.closest("[data-act]");
   if (e.target.closest(".side a")) document.body.classList.remove("menu-open");
   if (!a) return;
@@ -5551,6 +5578,8 @@ document.addEventListener("click", (e) => {
   e.preventDefault(); e.stopPropagation(); runForm(f, b);
 }, true);
 document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.querySelector(".pk-menu:not([hidden])")) { const b = document.activeElement?.closest(".pk")?.querySelector(".pk-btn"); pkCloseAll(); b?.focus(); return; }
+  if ((e.key === "ArrowDown" || e.key === "ArrowUp") && document.activeElement?.classList.contains("pk-opt")) { e.preventDefault(); const o = [...document.activeElement.parentElement.children]; const j = o.indexOf(document.activeElement) + (e.key === "ArrowDown" ? 1 : -1); o[(j + o.length) % o.length].focus(); return; }
   if (e.key !== "Enter" || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
   const el = e.target; if (!el || el.tagName !== "INPUT" || ["checkbox", "radio", "button", "submit", "file"].includes(el.type)) return;
   if (el.classList.contains("tree-search")) return;
