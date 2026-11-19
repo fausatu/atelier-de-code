@@ -273,6 +273,11 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 - `journal.taches` = ids des tâches travaillées ce jour (cases `jTk` dans l'entrée liée à une mission ; cocher une tâche « à
   faire » la passe « en cours » ; changer de mission vide la liste). Carte du journal : mission · tâches. Carte mission : « 1/3 tâches ».
 - `lundiPrefill` : « Cette semaine » = tâches non faites des missions en cours.
+- Statuts « dev » (19/11) : mission `en_dev | en_test | en_review | terminee | en_pause | abandonnee` (`M_STATUTS`, lus via
+  `msStatut`, actifs = `msActive`) ; tâche `afaire | en_dev | en_test | en_review | faite` (`tkSt`, badge DEV/TEST/REVIEW, le
+  rond fait le cycle). Anciennes valeurs (en_cours, livree, encours) converties dans `ent()` (drapeau `_st2`) et par les lecteurs.
+- Tâche sur une plage de jours : `debut` / `fin` (« Du … au … » dans les détails, affiché « 12 nov. → 15 nov. » sur la ligne).
+  Remplis tout seuls au 1er passage hors « à faire » / à « terminée » s'ils sont vides.
 
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
