@@ -233,6 +233,11 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 - Aide aux paramètres (`#ed-sig`) à `(` et `,` : TS `getSignatureHelpItems`, sinon signature du mémo / de la fonction du fichier,
   paramètre courant en gras + explication du mémo. `memoFor(name, fam, member, recv)` exige le bon objet pour les clés `Math.min`, `api.get`…
 
+- Aller à la définition (19/11) : F12, F5 (Ana fait Fn+F5) ou Ctrl/Cmd+clic dans un éditeur → `edGoDef` : TS/JS via
+  `getDefinitionAtPosition` (ouvre l'onglet du bon fichier, sélectionne le nom ; symbole de lib → toast « vient d'une
+  bibliothèque » ; import pas encore écrit → toast), PHP par regex (`edPhpDef` : méthode, propriété, classe, const, variable
+  locale). Alt+← revient (`edNav.back`). Curseur main quand Ctrl est enfoncé (`.ed-ctrl`).
+
 ## Position dans un module (17/11)
 - `state.ui.step` (onglet Comprendre/Exemple/Quiz/TD) et `state.ui.level` (niveau de TD) sont gardés dans `localStorage["atelier-position"]`
   (`uiPos`, `saveUiPos`) : après un rechargement, on retombe sur le même onglet et le même TD.

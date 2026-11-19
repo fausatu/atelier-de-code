@@ -869,6 +869,7 @@ body.viewer-open { overflow: hidden; }
 .setup-item input { accent-color: var(--tc); }
 .r-undated > summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; padding: 4px 0; }
 .r-undated .r-list { margin-top: 6px; }
+textarea.editor.ed-ctrl { cursor: pointer; }
 .pk { position: relative; display: inline-flex; }
 .pk-btn { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 0.84rem; font-weight: 600; cursor: pointer; line-height: 1.2; }
 .pk-btn:hover { border-color: var(--muted); }
@@ -4734,6 +4735,8 @@ function edKeydown(e, ta) {
     if (e.key === "Escape") { e.preventDefault(); edAcClose(); return true; }
   }
   if (e.key === "Escape" && edSig.open) { e.preventDefault(); edSigClose(); return true; }
+  if ((e.key === "F12" || e.key === "F5") && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); edAcClose(); edGoDef(ta, ta.selectionStart).catch(() => {}); return true; }
+  if (e.altKey && e.key === "ArrowLeft" && edNav.back.length) { e.preventDefault(); edGoBack(); return true; }
   if ((e.ctrlKey || e.metaKey) && (e.key === " " || e.code === "Space")) { e.preventDefault(); edComplete(ta, true); return true; }
   if ((e.ctrlKey || e.metaKey) && (e.key === "/" || e.code === "Slash")) {
     const c = edComment(ta); if (!c) return false; e.preventDefault();
@@ -5057,6 +5060,64 @@ async function edHover(ta, x, y) {
   const p = edCaret(ta, s); const H = box.offsetHeight, W = box.offsetWidth;
   box.style.left = Math.max(8, Math.min(p.x, window.innerWidth - W - 8)) + "px"; box.style.top = (p.y - H - 4 > 8 ? p.y - H - 4 : p.y + p.lh + 4) + "px";
 }
+/* ---- Aller à la définition (F12, F5 ou Ctrl/Cmd+clic, comme VS Code ; Alt+← pour revenir) ---- */
+const edNav = { back: [] };
+function edSiblings(ta) { return [...document.querySelectorAll("textarea.editor")].filter((x) => x.dataset.ed === ta.dataset.ed); }
+function edWordAt(v, pos) { if (!/[\w$]/.test(v[pos] || "") && /[\w$]/.test(v[pos - 1] || "")) pos--; if (!/[\w$]/.test(v[pos] || "")) return null; let s = pos, e = pos; while (s > 0 && /[\w$]/.test(v[s - 1])) s--; while (e < v.length && /[\w$]/.test(v[e])) e++; return { s, e, word: v.slice(s, e) }; }
+function edReveal(ta, from, to) {
+  const box = ta.closest(".files"); const pane = ta.closest(".fpane");
+  if (box && pane && !pane.classList.contains("on")) { const i = [...box.querySelectorAll(".fpane")].indexOf(pane); const b = box.querySelector(`.ftab[data-i="${i}"]`); if (b) ACTIONS.ftab(b); }
+  ta.focus({ preventScroll: true }); ta.setSelectionRange(from, to);
+  const lh = parseFloat(getComputedStyle(ta).lineHeight) || 22; const line = ta.value.slice(0, from).split("\n").length - 1;
+  if (ta.scrollHeight > ta.clientHeight + 4) ta.scrollTop = Math.max(0, line * lh - ta.clientHeight / 3);
+  const p = edCaret(ta, from); if (p.y < 70 || p.y > window.innerHeight - 70) window.scrollBy({ top: p.y - window.innerHeight / 3, behavior: "smooth" });
+  document.dispatchEvent(new Event("selectionchange"));
+}
+function edPhpDef(ta, w, v) {
+  const word = w.word; const b4 = v.slice(Math.max(0, w.s - 3), w.s); const member = /->$/.test(b4) ? "->" : /::$/.test(b4) ? "::" : "";
+  const rx = (r) => new RegExp(r, "m"); const q = word.replace(/\$/g, "\\$");
+  const tries = [];
+  if (word.startsWith("$") && !member) {
+    if (word === "$this") return null;
+    // variable : 1re affectation ou paramètre dans la même fonction, sinon propriété
+    const fnStart = Math.max(v.lastIndexOf("function ", w.s), 0); const seg = v.slice(fnStart, w.s);
+    const m = seg.match(new RegExp("\\" + word + "\\b")); if (m && fnStart + m.index !== w.s) return { ta, from: fnStart + m.index, to: fnStart + m.index + word.length };
+    tries.push(rx("(?:public|protected|private)\\s+(?:readonly\\s+)?(?:static\\s+)?[\\w?|\\\\]*\\s*(" + q + ")\\b"));
+  } else if (member && v[w.e] !== "(" && !/^[A-Z_]+$/.test(word)) {
+    tries.push(rx("(?:public|protected|private)\\s+(?:readonly\\s+)?(?:static\\s+)?[\\w?|\\\\]*\\s*\\$(" + q + ")\\b"));
+    tries.push(rx("function\\s+(" + q + ")\\s*\\("));
+  } else {
+    tries.push(rx("function\\s+(" + q + ")\\s*\\("));
+    tries.push(rx("(?:class|interface|enum|trait)\\s+(" + q + ")\\b"));
+    tries.push(rx("const\\s+(" + q + ")\\b"));
+    tries.push(rx("case\\s+(" + q + ")\\b"));
+  }
+  const sib = edSiblings(ta); const order = [ta, ...sib.filter((x) => x !== ta)];
+  for (const r of tries) for (const x of order) { const m = r.exec(x.value); if (m) { const from = m.index + m[0].lastIndexOf(m[1]); if (x === ta && from === w.s) continue; return { ta: x, from, to: from + m[1].length }; } }
+  return null;
+}
+async function edGoDef(ta, pos) {
+  const v = ta.value; const w = edWordAt(v, pos); if (!w) return;
+  const fam = edFam(ta); let hit = null, lib = false;
+  if (fam === "js") {
+    if (!(await edTsLoad())) { toast("Le moteur TypeScript n'a pas pu se charger."); return; }
+    const sv = edTsService(ta); let defs = [];
+    try { defs = sv.ls.getDefinitionAtPosition(sv.file, w.s) || []; } catch (e) {}
+    const mine = defs.filter((d) => edTs.current.includes(d.fileName));
+    lib = defs.length > 0 && !mine.length;
+    const d = mine.find((x) => !(x.fileName === sv.file && x.textSpan.start <= w.s && w.s < x.textSpan.start + x.textSpan.length)) || mine[0];
+    if (d) { const t = edSiblings(ta).find((x) => "/" + edPath(x).replace(/^\/+/, "") === d.fileName); if (t) hit = { ta: t, from: d.textSpan.start, to: d.textSpan.start + d.textSpan.length }; }
+  } else if (fam === "php") hit = edPhpDef(ta, w, v);
+  else { const r = new RegExp("(?:function|const|let|var|class)\\s+(" + w.word.replace(/\$/g, "\\$") + ")\\b"); for (const x of edSiblings(ta)) { const m = r.exec(x.value); if (m) { const from = m.index + m[0].lastIndexOf(m[1]); hit = { ta: x, from, to: from + m[1].length }; break; } } }
+  if (!hit) { toast(lib ? `« ${w.word} » vient du langage ou d'une bibliothèque (React, axios…) : pas défini dans tes fichiers. Survole-le pour voir sa doc.` : `Pas de définition trouvée pour « ${w.word} » dans les fichiers de l'exercice.`); return; }
+  if (hit.ta === ta && hit.from === w.s) { const ln = v.slice(v.lastIndexOf("\n", w.s - 1) + 1, v.indexOf("\n", w.s) < 0 ? v.length : v.indexOf("\n", w.s)); const fm = ln.match(/^\s*import\b.*from\s+['"]([^'"]+)['"]/); toast(fm ? `« ${w.word} » est importé de '${fm[1]}', mais ce fichier ne le définit pas (encore).` : `Tu es déjà sur la définition de « ${w.word} ».`); return; }
+  edNav.back.push({ ta, pos }); if (edNav.back.length > 30) edNav.back.shift();
+  edHoverClose(); edReveal(hit.ta, hit.from, hit.to);
+  if (hit.ta !== ta) toast(`Défini dans ${edPath(hit.ta)} (Alt+← pour revenir)`);
+}
+function edGoBack() { const b = edNav.back.pop(); if (!b || !b.ta.isConnected) return false; edReveal(b.ta, b.pos, b.pos); return true; }
+document.addEventListener("click", (e) => { const ta = e.target; if (!(e.ctrlKey || e.metaKey) || !ta.classList || !ta.classList.contains("editor")) return; const pos = edPosAt(ta, e.clientX, e.clientY); if (pos >= 0) { e.preventDefault(); edGoDef(ta, pos).catch(() => {}); } });
+document.addEventListener("mousemove", (e) => { const ta = e.target; if (ta.classList && ta.classList.contains("editor")) ta.classList.toggle("ed-ctrl", e.ctrlKey || e.metaKey); });
 function edHoverClose() { edHov.open = false; edHov.key = ""; const b = $("#ed-hover"); if (b) b.hidden = true; }
 document.addEventListener("mousemove", (e) => {
   const ta = e.target; clearTimeout(edHov.t);
