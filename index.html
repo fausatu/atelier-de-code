@@ -631,6 +631,14 @@ body.q-open .qfab { display: none; }
 .ent-j .r-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .ent-j-meta { display: flex; gap: 8px; align-items: center; flex: none; }
 .ent-bloque { color: var(--warn); background: var(--warn-soft); padding: 1px 6px; border-radius: 4px; font-size: 0.74rem; }
+.ent-jgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: start; }
+@media (max-width: 760px) { .ent-jgrid { grid-template-columns: 1fr; } }
+.ent-jc { display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; text-decoration: none; color: inherit; }
+.ent-jc:hover { border-color: var(--accent); }
+.ent-jc .row { gap: 8px; }
+.ent-jm { font-size: 0.9rem; color: var(--ink); }
+.ent-jt { display: flex; flex-wrap: wrap; gap: 4px; }
+.ent-jt .chip { font-size: 0.74rem; }
 /* En entreprise */
 .ent-nudge { width: 100%; text-align: left; font: inherit; cursor: pointer; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
 .ent-nudge:hover { border-color: var(--accent); }
@@ -4310,11 +4318,9 @@ function jourItems(s, n) { return String(s || "").split("\n").map((x) => x.repla
 function jourJour(d) { try { return new Date(d + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }); } catch (e) { return frDate(d); } }
 function jourRow(j) {
   const m = j.mission ? missionItem(j.mission) : null; const imgs = nbImages(j); const fs = (j.fichiers || []).length;
-  let main;
-  if (m) main = `<b>${esc(m.titre)}</b>`;
-  else { const items = jourItems(j.fait, 3); const nb = jourItems(j.fait, 99).length; main = items.length ? `<span>${esc(items.map((x) => x.length > 70 ? x.slice(0, 69) + "…" : x).join(" · ") + (nb > 3 ? ` · +${nb - 3}` : ""))}</span>` : `<span class="muted">Journée sans description</span>`; }
-  return `<a class="r-row ent-j" href="#j-${esc(j.id)}"><span class="ent-date"><b>${esc(jourJour(j.date))}</b></span><span class="r-main">${main}${(j.notions || []).length ? `<small>${j.notions.slice(0, 4).map((n) => `<span class="chip ghost">${esc(n)}</span>`).join(" ")}</small>` : ""}</span>
-    <span class="ent-j-meta muted small">${String(j.bloque || "").trim() ? `<span class="ent-bloque" title="${esc(firstLine(j.bloque))}">blocage</span>` : ""}${imgs ? `<span>${imgs} capture${imgs > 1 ? "s" : ""}</span>` : ""}${fs > imgs ? `<span>${fs - imgs} doc${fs - imgs > 1 ? "s" : ""}</span>` : ""}</span></a>`;
+  const tags = (j.notions || []).slice(0, 4).map((n) => `<span class="chip ghost">${esc(n)}</span>`).join("");
+  return `<a class="card ent-jc" href="#j-${esc(j.id)}"><div class="row"><b>${esc(jourJour(j.date))}</b><span class="spacer"></span>${String(j.bloque || "").trim() ? `<span class="ent-bloque" title="${esc(firstLine(j.bloque))}">blocage</span>` : ""}${imgs ? `<span class="muted small">${imgs} capture${imgs > 1 ? "s" : ""}</span>` : ""}${fs > imgs ? `<span class="muted small">${fs - imgs} doc${fs - imgs > 1 ? "s" : ""}</span>` : ""}</div>
+    ${m ? `<span class="ent-jm">${esc(m.titre)}</span>` : ""}${tags ? `<div class="ent-jt">${tags}</div>` : ""}${!m && !tags && !String(j.fait || "").trim() ? `<span class="muted small">Pas encore rempli</span>` : ""}</a>`;
 }
 function missionCard(m) {
   const nj = ent().journal.filter((j) => j.mission === m.id).length; const imgs = nbImages(m);
@@ -4336,7 +4342,7 @@ function viewEntreprise() {
     <section class="home-sec">
       <div class="sec-head"><h2>Journal</h2><span class="muted small">${e.journal.length} entrée${e.journal.length > 1 ? "s" : ""}${moisCount ? ` · ${moisCount} ce mois-ci` : ""}</span><span class="spacer"></span>
         <label class="row small"><input class="field" type="date" id="ent-jdate" value="${today()}" style="width:150px"></label><button class="btn sm primary" data-act="entJour" data-pick="1">Nouvelle entrée</button></div>
-      ${js.length ? `<div class="stack" style="gap:6px">${shownJ.map(jourRow).join("")}</div>${js.length > 8 ? `<button class="btn sm ghost" data-act="entAllJ">${u.entAllJ ? "Voir moins" : `Voir les ${js.length} entrées`}</button>` : ""}`
+      ${js.length ? `<div class="ent-jgrid">${shownJ.map(jourRow).join("")}</div>${js.length > 8 ? `<button class="btn sm ghost" data-act="entAllJ">${u.entAllJ ? "Voir moins" : `Voir les ${js.length} entrées`}</button>` : ""}`
         : `<p class="muted">Pas encore d'entrée. Une entrée par jour en entreprise (ou par semaine) : ce que tu as fait, appris, ce qui t'a bloquée, avec des captures. Ctrl+V colle une capture d'écran directement.</p>`}
     </section>
     ${entSectionsReunions()}
@@ -4557,7 +4563,7 @@ function viewMission(id) {
     <div class="card stack"><h3 style="margin:0">Ce que j'ai appris</h3>${mdEditor("mission", id, "appris", m.appris, "Compétences techniques, méthodes, savoir-être…")}</div>
     ${filesCard("mission", id, m).replace("<h3 style=\"margin:0\">Fichiers</h3>", "<h3 style=\"margin:0\">Captures et documents</h3>")}
     <div class="card stack"><h3 style="margin:0">Liens</h3><span class="muted small">la pull request, le ticket, la maquette, la doc…</span>${(m.liens || []).length ? `<div class="tool-list">${linkChips(m.liens, "mission", id)}</div>` : ""}${linkForm("mission", id)}</div>
-    <div class="card stack"><div class="row"><h3 style="margin:0">Journal de la mission</h3><span class="muted small">${js.length}</span></div>${js.length ? js.map(jourRow).join("") : `<p class="muted small" style="margin:0">Dans une entrée du journal, choisis cette mission pour la retrouver ici.</p>`}</div>
+    <div class="card stack"><div class="row"><h3 style="margin:0">Journal de la mission</h3><span class="muted small">${js.length}</span></div>${js.length ? `<div class="ent-jgrid">${js.map(jourRow).join("")}</div>` : `<p class="muted small" style="margin:0">Dans une entrée du journal, choisis cette mission pour la retrouver ici.</p>`}</div>
     ${delRow("mission", id, "cette mission")}
   </div>`;
 }
