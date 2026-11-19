@@ -628,6 +628,9 @@ body.q-open .qfab { display: none; }
 .r-st.co-acceptee { background: var(--warn-soft); color: var(--warn); }
 .r-st.co-faite { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
 .r-st.co-abandonnee { background: color-mix(in srgb, var(--muted) 10%, transparent); color: var(--muted); text-decoration: line-through; }
+.ent-j .r-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ent-j-meta { display: flex; gap: 8px; align-items: center; flex: none; }
+.ent-bloque { color: var(--warn); background: var(--warn-soft); padding: 1px 6px; border-radius: 4px; font-size: 0.74rem; }
 /* En entreprise */
 .ent-nudge { width: 100%; text-align: left; font: inherit; cursor: pointer; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
 .ent-nudge:hover { border-color: var(--accent); }
@@ -3529,7 +3532,7 @@ function ecApply(el) {
   if (field === "prepa" && o.dit) o.dit = false;
   if (field === "tags" || field === "notions" || field === "stack") v = v.split(",").map((x) => x.trim().replace(/^#/, "")).filter(Boolean).slice(0, 20);
   else if (field === "date" || field === "debut" || field === "fin") v = v || null;
-  else if (field === "titre" || field === "nom") { if (!v.trim()) return false; v = v.slice(0, 160); }
+  else if (field === "titre" || field === "nom") { if (!v.trim() && kind !== "jour" && kind !== "reunion") return false; v = v.slice(0, 160); }
   else v = String(v).slice(0, 60000);
   o[field] = v; o.ts = Date.now();
   return true;
@@ -4303,9 +4306,15 @@ function entNudge() {
   return `<button type="button" class="card ent-nudge" data-act="entJour" data-date="${miss[0]}"><span class="ent-ic">${ENT_IC}</span><span class="r-main"><b>${auj ? "Tu es en entreprise aujourd'hui : note ta journée" : `Journée en entreprise du ${esc(frDate(miss[0]))} pas encore notée`}</b><small>${miss.length > 1 ? `${miss.length} jours en entreprise sans note ces 10 derniers jours. ` : ""}Deux minutes suffisent : ce que tu as fait, appris, ce qui t'a bloquée.</small></span><span class="btn sm primary">Noter</span></button>`;
 }
 const ENT_IC = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>';
+function jourItems(s, n) { return String(s || "").split("\n").map((x) => x.replace(/^\s*([-*+]|\d+[.)])\s+(\[[ xX]\]\s+)?/, "").replace(/[*_`#>]/g, "").trim()).filter(Boolean).slice(0, n || 3); }
+function jourJour(d) { try { return new Date(d + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }); } catch (e) { return frDate(d); } }
 function jourRow(j) {
   const m = j.mission ? missionItem(j.mission) : null; const imgs = nbImages(j); const fs = (j.fichiers || []).length;
-  return `<a class="r-row ent-j" href="#j-${esc(j.id)}"><span class="ent-date"><b>${esc(frDate(j.date))}</b></span><span class="r-main"><b>${esc(firstLine(j.fait) || "Journée sans description")}</b><small>${m ? `<span class="chip">${esc(m.titre)}</span> ` : ""}${(j.notions || []).slice(0, 4).map((n) => `<span class="chip ghost">${esc(n)}</span>`).join(" ")}</small></span>${fs ? `<span class="muted small">${imgs ? `${imgs} capture${imgs > 1 ? "s" : ""}` : ""}${imgs && fs > imgs ? " · " : ""}${fs > imgs ? `${fs - imgs} doc${fs - imgs > 1 ? "s" : ""}` : ""}</span>` : ""}</a>`;
+  const items = jourItems(j.fait, 3); const nb = jourItems(j.fait, 99).length;
+  const titre = (j.titre || "").trim() || (m ? m.titre : "") || (items.length ? "" : "Journée sans description");
+  const apercu = items.map((x) => x.length > 70 ? x.slice(0, 69) + "…" : x).join(" · ") + (nb > 3 ? ` · +${nb - 3}` : "");
+  return `<a class="r-row ent-j" href="#j-${esc(j.id)}"><span class="ent-date"><b>${esc(jourJour(j.date))}</b></span><span class="r-main">${titre ? `<b>${esc(titre)}</b>` : ""}${apercu ? `<span class="${titre ? "muted small" : ""}">${esc(apercu)}</span>` : ""}<small>${m && titre !== m.titre ? `<span class="chip">${esc(m.titre)}</span> ` : ""}${(j.notions || []).slice(0, 4).map((n) => `<span class="chip ghost">${esc(n)}</span>`).join(" ")}</small></span>
+    <span class="ent-j-meta muted small">${String(j.bloque || "").trim() ? `<span class="ent-bloque" title="${esc(firstLine(j.bloque))}">blocage</span>` : ""}${imgs ? `<span>${imgs} capture${imgs > 1 ? "s" : ""}</span>` : ""}${fs > imgs ? `<span>${fs - imgs} doc${fs - imgs > 1 ? "s" : ""}</span>` : ""}</span></a>`;
 }
 function missionCard(m) {
   const nj = ent().journal.filter((j) => j.mission === m.id).length; const imgs = nbImages(m);
@@ -4516,7 +4525,8 @@ function viewJour(id) {
   const ms = ent().missions;
   return `<div class="wrap">
     ${entCrumb("Journal")}
-    <h1 style="margin:0">Journal du ${esc(frDate(j.date))}</h1>
+    <div class="eyebrow">Journal · ${esc(jourJour(j.date))}</div>
+    <input class="title-input" data-ec="titre" data-kind="jour" data-id="${esc(id)}" value="${esc(j.titre || "")}" maxlength="120" placeholder="Titre de la journée (facultatif) : ex. « Tests du panier et première revue de code »" aria-label="Titre de la journée">
     <div class="row"><label class="row small"><span class="muted">Date</span><input class="field" type="date" data-ec="date" data-kind="jour" data-id="${esc(id)}" value="${esc(j.date || "")}"></label>
       <label class="row small"><span class="muted">Mission</span><select class="field" data-ec="mission" data-kind="jour" data-id="${esc(id)}"><option value="">— aucune —</option>${ms.map((m) => `<option value="${esc(m.id)}" ${m.id === j.mission ? "selected" : ""}>${esc(m.titre)}</option>`).join("")}</select></label>
       ${j.mission && missionItem(j.mission) ? `<a class="small" href="#ms-${esc(j.mission)}">Ouvrir la mission →</a>` : ""}</div>

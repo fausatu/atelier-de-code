@@ -184,6 +184,8 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   stack, notions, contexte, realise, difficultes, appris, liens, fichiers, ts}]. Fusion par id/ts comme matières et cours.
 - Kinds `jour`, `mission`, `entreprise` (id `infos`) branchés sur `ecObj` : `filesCard`, `uploadFiles`, `linkForm`, `mdEditor`,
   `data-ec` marchent tels quels.
+- Journal (19/11) : champ facultatif `titre` (titre de la journée). Ligne de liste (`jourRow`) : jour de semaine, titre (ou titre
+  de la mission liée), aperçu des 3 premières puces de « fait » (`jourItems`), pastille « blocage », captures/docs.
 - Tableau de bord : `entNudge()` propose de noter les jours « entreprise » du calendrier sans entrée.
 - Notions croisées : agrégées depuis journal + missions ; `notionModules` cherche les modules (titre, objectif, prérequis,
   leçons) et la fiche du mémo ; sinon « Ajouter à Mes questions » (`qSave`). « Je maîtrise » → `entreprise.notionsOk`.
