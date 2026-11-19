@@ -639,6 +639,16 @@ body.q-open .qfab { display: none; }
 .ent-jm { font-size: 0.9rem; color: var(--ink); }
 .ent-jt { display: flex; flex-wrap: wrap; gap: 4px; }
 .ent-jt .chip { font-size: 0.74rem; }
+.ent-tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin: 4px 0 6px; }
+.ent-tabs button { border: 0; background: none; padding: 8px 12px; font: inherit; font-size: 0.92rem; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.ent-tabs button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.ent-tabs .n { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
+.sec-card h3 { margin: 0; font-size: 1rem; }
+.add-secs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.add-sec { border: 1px dashed var(--line); background: none; border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 0.84rem; color: var(--muted); cursor: pointer; }
+.add-sec:hover { color: var(--accent); border-color: var(--accent); }
+.sec-in { max-width: 520px; }
+.ai-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 /* En entreprise */
 .ent-nudge { width: 100%; text-align: left; font: inherit; cursor: pointer; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
 .ent-nudge:hover { border-color: var(--accent); }
@@ -874,7 +884,7 @@ body.viewer-open { overflow: hidden; }
 .md-box { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
 .md-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--line); background: var(--bg); }
 .md-head .n-tools { border: 0; padding: 0; background: transparent; }
-.md-area { display: block; width: 100%; min-height: 260px; resize: vertical; border: 0; padding: 12px 14px; background: var(--surface); color: var(--ink); font: 14px/1.6 var(--font-mono); outline: none; }
+.md-area { display: block; width: 100%; min-height: 96px; max-height: 70vh; field-sizing: content; resize: vertical; border: 0; padding: 12px 14px; background: var(--surface); color: var(--ink); font: 14px/1.6 var(--font-mono); outline: none; }
 .md-area::placeholder { font-family: var(--font-body); color: var(--muted); }
 .md-prev { padding: 14px 16px; max-width: none; }
 .ck-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -3493,15 +3503,12 @@ function viewCoursItem(id) {
       <label class="row small" style="flex:1"><span class="muted">Étiquettes</span><input class="field" style="flex:1;min-width:180px" data-ec="tags" data-kind="cours" data-id="${esc(id)}" value="${esc((c.tags || []).join(", "))}" placeholder="séparées par des virgules : cours, TD, révision…"></label></div>
     ${(c.creneaux || []).length || (c.salles || []).length || (c.profs || []).length ? `<div class="c-info">${c.annule ? `<span class="c-pill warn">plus dans l'emploi du temps</span>` : ""}${(c.creneaux || []).length ? `<span><b>Horaires</b> ${esc(creneauxTxt(c))}</span>` : ""}${(c.salles || []).length ? `<span><b>Salle</b> ${esc(c.salles.join(", "))}</span>` : ""}${(c.profs || []).length ? `<span><b>Prof</b> ${esc(c.profs.join(", "))}</span>` : ""}${c.edtKey ? `<span class="muted small">depuis Pronote</span>` : ""}</div>` : ""}
     ${String(c.contenu || "").trim() ? `<details class="card stack" open><summary><b>Programme de la séance</b> <span class="muted small">· donné par l'école</span></summary><div class="prose" style="margin-top:8px">${md(contenuMd(c.contenu))}</div></details>` : ""}
-    ${filesCard("cours", id, c)}
-    ${coursCardsCard(c)}
-    <div class="card stack"><h3 style="margin:0">Liens et outils</h3>
-      ${(c.liens || []).length ? `<div class="tool-list">${linkChips(c.liens, "cours", id)}</div>` : ""}
-      ${linkForm("cours", id)}
-    </div>
     <div class="card stack"><h3 style="margin:0">Notes de cours</h3>
       ${mdEditor("cours", id, "notes", c.notes, "Ce que dit le prof, les définitions, les exemples…\n\n## Points clés\n- …\n\n| Terme | Définition |\n| --- | --- |")}
     </div>
+    ${coursCardsCard(c)}
+    ${optAll([optFiles("cours", id, c, "Fichiers"), optLinks("cours", id, c)])}
+
     <div class="row">${confirm ? `<span class="small">Supprimer ce cours ?</span><button class="btn sm danger" data-act="ecDelCours" data-id="${esc(id)}">Oui, supprimer</button><button class="btn sm ghost" data-act="ecCancelDel">Annuler</button>` : `<button class="btn sm ghost danger" data-act="ecAskDel" data-key="cours:${esc(id)}">Supprimer ce cours</button>`}<span class="spacer"></span><span class="muted small">Enregistrement automatique</span></div>
   </div>`;
 }
@@ -3525,11 +3532,7 @@ function viewRendu(id) {
       <form class="row" data-form="ecCk" data-id="${esc(id)}"><input class="field" name="t" placeholder="Ajouter une étape : relire, exporter en PDF, déposer sur Moodle…" required maxlength="200" style="flex:1"><button class="btn sm">Ajouter</button></form>
     </div>
     <div class="card stack"><h3 style="margin:0">Consignes</h3>${mdEditor("rendu", id, "consignes", r.consignes, "Colle ici les consignes du prof : format, nombre de pages, critères…")}</div>
-    ${filesCard("rendu", id, r)}
-    <div class="card stack"><h3 style="margin:0">Liens et outils</h3>
-      ${(r.liens || []).length ? `<div class="tool-list">${linkChips(r.liens, "rendu", id)}</div>` : ""}
-      ${linkForm("rendu", id)}
-    </div>
+    ${optAll([optFiles("rendu", id, r, "Fichiers"), optLinks("rendu", id, r)])}
     <div class="row">${confirm ? `<span class="small">Supprimer ce rendu ?</span><button class="btn sm danger" data-act="ecDelRendu" data-id="${esc(id)}">Oui, supprimer</button><button class="btn sm ghost" data-act="ecCancelDel">Annuler</button>` : `<button class="btn sm ghost danger" data-act="ecAskDel" data-key="rendu:${esc(id)}">Supprimer ce rendu</button>`}<span class="spacer"></span><span class="muted small">Enregistrement automatique · visible dans le calendrier</span></div>
   </div>`;
 }
@@ -4328,6 +4331,7 @@ function missionCard(m) {
     <b class="ent-m-t">${esc(m.titre)}</b>${firstLine(m.contexte) ? `<span class="muted small">${esc(firstLine(m.contexte))}</span>` : ""}
     <div class="row small">${(m.stack || []).slice(0, 5).map((s) => `<span class="chip ghost">${esc(s)}</span>`).join("")}<span class="spacer"></span><span class="muted">${nj ? `${nj} jour${nj > 1 ? "s" : ""}` : ""}${nj && imgs ? " · " : ""}${imgs ? `${imgs} capture${imgs > 1 ? "s" : ""}` : ""}</span></div></a>`;
 }
+function entTab() { if (!state.ui.entTab) { try { state.ui.entTab = localStorage.getItem("atelier-ent-tab") || "journal"; } catch (e) { state.ui.entTab = "journal"; } } return state.ui.entTab; }
 function viewEntreprise() {
   const e = ent(); const inf = e.entreprise; const u = state.ui;
   const js = journalSorted(); const shownJ = u.entAllJ ? js : js.slice(0, 8);
@@ -4335,24 +4339,22 @@ function viewEntreprise() {
   const ok = new Set(inf.notionsOk || []); const notions = entNotions(); const aTravailler = notions.filter((n) => !ok.has(n.key)); const maitrisees = notions.filter((n) => ok.has(n.key));
   const field = (k, label, ph, type) => `<label class="ent-f"><span class="muted small">${label}</span><input class="field" ${type ? `type="${type}"` : ""} data-ec="${k}" data-kind="entreprise" data-id="infos" value="${esc(k === "stack" ? (inf.stack || []).join(", ") : inf[k] || "")}" placeholder="${esc(ph)}"></label>`;
   const moisCount = e.journal.filter((j) => String(j.date || "").slice(0, 7) === today().slice(0, 7)).length;
-  return `<div class="wrap home">
-    <header class="home-head"><div class="eyebrow">Alternance${inf.nom ? " · " + esc(inf.nom) : ""}</div><h1>En entreprise</h1>
-      <p class="lead">Ton journal, tes missions et tes documents d'alternance : la matière de ton rapport d'entreprise, de ton mémoire et de tes points avec ton tuteur. Tout reste dans tes données privées, jamais dans le dépôt GitHub.</p></header>
-    ${entNudge()}
-    <section class="home-sec">
-      <div class="sec-head"><h2>Journal</h2><span class="muted small">${e.journal.length} entrée${e.journal.length > 1 ? "s" : ""}${moisCount ? ` · ${moisCount} ce mois-ci` : ""}</span><span class="spacer"></span>
+  const R = entSectionsReunions(); const tab = entTab();
+  const nRe = reunions().length, nCo = contribs().length, nNo = aTravailler.length;
+  const TABS = [["journal", "Journal", e.journal.length], ["reunions", "Réunions", nRe], ["missions", "Missions", e.missions.length], ["valeur", "Ma valeur ajoutée", nCo], ["notions", "Notions", nNo], ["alternance", "Mon alternance", 0]];
+  const body = { journal: `    <section class="home-sec">
+      <div class="sec-head"><span class="muted small">${e.journal.length} entrée${e.journal.length > 1 ? "s" : ""}${moisCount ? ` · ${moisCount} ce mois-ci` : ""}</span><span class="spacer"></span>
         <label class="row small"><input class="field" type="date" id="ent-jdate" value="${today()}" style="width:150px"></label><button class="btn sm primary" data-act="entJour" data-pick="1">Nouvelle entrée</button></div>
       ${js.length ? `<div class="ent-jgrid">${shownJ.map(jourRow).join("")}</div>${js.length > 8 ? `<button class="btn sm ghost" data-act="entAllJ">${u.entAllJ ? "Voir moins" : `Voir les ${js.length} entrées`}</button>` : ""}`
         : `<p class="muted">Pas encore d'entrée. Une entrée par jour en entreprise (ou par semaine) : ce que tu as fait, appris, ce qui t'a bloquée, avec des captures. Ctrl+V colle une capture d'écran directement.</p>`}
     </section>
-    ${entSectionsReunions()}
-    <section class="home-sec">
-      <div class="sec-head"><h2>Missions</h2><span class="muted small">${e.missions.filter((m) => (m.statut || "en_cours") === "en_cours").length} en cours</span></div>
+`, reunions: R.reunions, missions: `    <section class="home-sec">
+      <div class="sec-head"><span class="muted small">${e.missions.filter((m) => (m.statut || "en_cours") === "en_cours").length} en cours</span></div>
       ${ms.length ? `<div class="ent-grid">${ms.map(missionCard).join("")}</div>` : `<p class="muted">Une mission = un ticket, une fonctionnalité, un projet que tu prends en charge. C'est ce que tu raconteras dans ton rapport.</p>`}
       <form class="row" data-form="entMission"><input class="field" name="titre" placeholder="Nouvelle mission : refonte de la page panier, API d'export CSV, correction du bug de connexion…" required maxlength="160" style="flex:1;min-width:240px"><button class="btn sm">Créer la mission</button></form>
     </section>
-    <section class="home-sec">
-      <div class="sec-head"><h2>Notions croisées au travail</h2><span class="muted small">ajoutées dans le journal et les missions</span></div>
+`, valeur: R.valeur, notions: `    <section class="home-sec">
+      <div class="sec-head"><span class="muted small">ajoutées dans le journal et les missions</span></div>
       ${aTravailler.length ? `<div class="stack" style="gap:8px">${aTravailler.map((n) => { const r = notionModules(n.label);
         return `<div class="card notion-row"><div class="row"><b>${esc(n.label)}</b><span class="muted small">${n.count} fois · ${n.srcs.slice(0, 2).map((s) => `<a href="${s.href}">${esc(s.label)}</a>`).join(", ")}</span><span class="spacer"></span><button class="btn sm ghost" data-act="entNotionOk" data-k="${esc(n.key)}">Je maîtrise</button></div>
           <div class="row small notion-sugg">${r.memo ? `<span class="mref" data-m="${esc(r.memo.id)}" tabindex="0" role="button">Fiche ${esc(r.memo.nom)}</span>` : ""}${r.mods.map((m) => `<a class="chip" href="#m-${esc(m.id)}" style="${tc(track(m.track))}"><i class="dot"></i>${esc(m.title)}</a>`).join("")}
@@ -4360,9 +4362,8 @@ function viewEntreprise() {
         : `<p class="muted">${notions.length ? "Tout est marqué comme maîtrisé. Bravo." : "Quand tu notes une notion (dans le champ « Notions » d'une entrée ou d'une mission), elle apparaît ici avec les modules de l'atelier qui l'expliquent."}</p>`}
       ${maitrisees.length ? `<details class="small"><summary class="muted">Maîtrisées (${maitrisees.length})</summary><div class="row" style="margin-top:6px">${maitrisees.map((n) => `<span class="chip">${esc(n.label)} <button class="q-x" data-act="entNotionOk" data-k="${esc(n.key)}" aria-label="Remettre à travailler">↺</button></span>`).join("")}</div></details>` : ""}
     </section>
-    <section class="home-sec">
-      <div class="sec-head"><h2>Mon alternance</h2></div>
-      <div class="card stack"><div class="ent-fields">
+`, alternance: `    <section class="home-sec">
+            <div class="card stack"><div class="ent-fields">
         ${field("nom", "Entreprise", "Nom de l'entreprise")}${field("poste", "Mon poste", "Développeuse full stack en alternance")}${field("service", "Équipe / service", "Équipe produit, pôle web…")}
         ${field("tuteur", "Tuteur ou tutrice", "Prénom Nom")}${field("tuteurContact", "Contact du tuteur", "email ou téléphone")}${field("stack", "Stack de l'entreprise", "séparée par des virgules : Symfony, React, MySQL, Docker…")}
         ${field("debut", "Début du contrat", "", "date")}${field("fin", "Fin du contrat", "", "date")}
@@ -4370,6 +4371,13 @@ function viewEntreprise() {
       <div class="card stack"><h3 style="margin:0">Outils de l'entreprise</h3>${(inf.liens || []).length ? `<div class="tool-list">${linkChips(inf.liens, "entreprise", "infos")}</div>` : ""}${linkForm("entreprise", "infos")}</div>
       ${filesCard("entreprise", "infos", inf).replace("<h3 style=\"margin:0\">Fichiers</h3>", "<h3 style=\"margin:0\">Documents</h3><span class=\"muted small\">contrat d'apprentissage, fiche de poste, attestations, livret d'apprentissage…</span>")}
     </section>
+` }[tab];
+  return `<div class="wrap home">
+    <header class="home-head"><div class="eyebrow">Alternance${inf.nom ? " · " + esc(inf.nom) : ""}</div><h1>En entreprise</h1></header>
+    ${entNudge()}
+    ${R.banners}
+    <nav class="ent-tabs" role="tablist">${TABS.map(([k, label, n]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? "on" : ""}" data-act="entTab" data-t="${k}">${label}${n ? ` <span class="n">${n}</span>` : ""}</button>`).join("")}</nav>
+    ${body}
   </div>`;
 }
 /* ---------- En entreprise : réunions et « ma valeur ajoutée » (contributions) ---------- */
@@ -4430,23 +4438,26 @@ function entSectionsReunions() {
   const ad = aDire(); const cs = contribs().slice().sort((a, b) => Object.keys(C_STATUTS).indexOf(a.statut || "idee") - Object.keys(C_STATUTS).indexOf(b.statut || "idee") || (b.ts || 0) - (a.ts || 0));
   const faites = cs.filter((c) => c.statut === "faite" || c.statut === "acceptee").length;
   const ideas = u.coIdeas || {};
-  return `
-    ${new Date().getDay() === 1 && dayKind(today()) === "entreprise" && !rs.some((x) => x.date === today() && x.type === "tech") ? `<div class="card a-dire"><div class="row"><b>C'est lundi : réunion technique</b><span class="spacer"></span><button class="btn sm primary" data-act="reNew" data-type="tech">Préparer mon point</button></div><span class="small muted">L'atelier prépare ton « semaine dernière / cette semaine / blocages » à partir de ton journal et de tes missions en cours.</span></div>` : ""}
+  return {
+    banners: `    ${new Date().getDay() === 1 && dayKind(today()) === "entreprise" && !rs.some((x) => x.date === today() && x.type === "tech") ? `<div class="card a-dire"><div class="row"><b>C'est lundi : réunion technique</b><span class="spacer"></span><button class="btn sm primary" data-act="reNew" data-type="tech">Préparer mon point</button></div><span class="small muted">L'atelier prépare ton « semaine dernière / cette semaine / blocages » à partir de ton journal et de tes missions en cours.</span></div>` : ""}
     ${ad ? `<div class="card a-dire"><div class="row"><b>À dire à la prochaine réunion</b><span class="muted small">noté le ${esc(frDate(ad.date))}</span><span class="spacer"></span><button class="btn sm ghost" data-act="reDit" data-id="${esc(ad.id)}">C'est dit</button></div><div class="prose">${md(ad.prepa)}</div></div>` : ""}
-    <section class="home-sec">
-      <div class="sec-head"><h2>Réunions</h2><span class="muted small">${rs.length}</span><span class="spacer"></span>
+`,
+    reunions: `    <section class="home-sec">
+      <div class="sec-head"><span class="spacer"></span>
         <select class="field" id="re-type" style="width:auto">${Object.entries(R_TYPES).map(([k, v]) => `<option value="${k}" ${k === (new Date().getDay() === 1 ? "tech" : "equipe") ? "selected" : ""}>${esc(v)}</option>`).join("")}</select>
         <button class="btn sm primary" data-act="reNew">Nouvelle réunion</button></div>
       ${rs.length ? `<div class="stack" style="gap:6px">${shown.map(reunionRow).join("")}</div>${rs.length > 5 ? `<button class="btn sm ghost" data-act="entAllR">${u.entAllR ? "Voir moins" : `Voir les ${rs.length} réunions`}</button>` : ""}`
         : `<p class="muted">Une fiche par réunion : tes notes, les décisions, qui fait quoi, ce que tu n'as pas compris, et ce que tu veux dire la prochaine fois.</p>`}
     </section>
-    <section class="home-sec">
-      <div class="sec-head"><h2>Ma valeur ajoutée</h2><span class="muted small">${cs.length ? `${faites} acceptée${faites > 1 ? "s" : ""} ou faite${faites > 1 ? "s" : ""} sur ${cs.length}` : "ce que tu apportes en plus de tes tickets"}</span></div>
+`,
+    valeur: `    <section class="home-sec">
+      <div class="sec-head"><span class="muted small">${cs.length ? `${faites} acceptée${faites > 1 ? "s" : ""} ou faite${faites > 1 ? "s" : ""} sur ${cs.length}` : "ce que tu apportes en plus de tes tickets"}</span></div>
       ${cs.length ? `<div class="ent-grid">${cs.map(contribCard).join("")}</div>` : `<p class="muted">Une doc qui manque, un test, un petit correctif, une question qui fait avancer, une trouvaille à partager… Note l'idée ici, puis suis-la jusqu'à « faite ». C'est aussi de la matière pour ton rapport et pour ton tuteur.</p>`}
       <form class="row" data-form="coNew"><input class="field" name="titre" placeholder="Une idée de contribution : compléter le README d'installation, écrire les tests du panier…" required maxlength="160" style="flex:1;min-width:240px"><button class="btn sm">Ajouter</button></form>
       <div class="card stack ai-block ai-only"><div class="row"><b>Trouver des idées</b><span class="muted small">Claude relit ton journal, tes missions et tes réunions récentes</span><span class="spacer"></span><button class="btn sm" data-act="coIdeas" ${ideas.busy ? "disabled" : ""}>${ideas.busy ? "Claude réfléchit…" : "Me proposer des idées"}</button></div>
         ${ideas.texte ? `<div class="prose">${md(ideas.texte)}</div><div class="row"><button class="btn sm ghost" data-act="coIdeasClear">Effacer</button></div>` : ideas.err ? `<p class="err small">${esc(ideas.err)}</p>` : ""}</div>
-    </section>`;
+    </section>`,
+  };
 }
 function viewReunion(id) {
   const r = reunionItem(id); if (!r) return `<div class="wrap"><h1>Réunion introuvable</h1><p><a href="#entreprise">Retour</a></p></div>`;
@@ -4459,15 +4470,15 @@ function viewReunion(id) {
     <div class="row"><label class="row small"><span class="muted">Date</span><input class="field" type="date" data-ec="date" data-kind="reunion" data-id="${esc(id)}" value="${esc(r.date || "")}"></label>
       <label class="row small"><span class="muted">Type</span><select class="field" data-ec="type" data-kind="reunion" data-id="${esc(id)}">${Object.entries(R_TYPES).map(([k, v]) => `<option value="${k}" ${k === r.type ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label></div>
     ${prev && !prev.dit ? `<div class="card a-dire"><div class="row"><b>Ce que tu voulais dire</b><span class="muted small">préparé après la réunion du ${esc(frDate(prev.date))}</span><span class="spacer"></span><button class="btn sm ghost" data-act="reDit" data-id="${esc(prev.id)}">C'est dit</button></div><div class="prose">${md(prev.prepa)}</div></div>` : ""}
-    <div class="ent-fields">${f("participants", "Participants", "Léa (lead dev), Karim (PO), …")}${f("notions", "Notions ou mots que je ne connaissais pas (virgules)", "story points, feature flag, CI…")}</div>
-    ${(R_FIELDS[r.type] || R_FIELDS._).map(([k, label, sub, ph]) => `<div class="card stack"><div class="row"><h3 style="margin:0">${esc(label)}</h3>${sub ? `<span class="muted small">${esc(sub)}</span>` : ""}${k === "monPoint" ? `<span class="spacer"></span><button class="btn sm ghost" data-act="rePrefill" data-id="${esc(id)}">Préremplir avec mon journal</button>` : ""}</div>${mdEditor("reunion", id, k, r[k], ph)}</div>`).join("")}
-    <div class="card stack a-dire-edit"><h3 style="margin:0">Ce que je veux dire à la prochaine réunion</h3><span class="muted small">une question, une idée, un point d'avancement : il s'affichera en haut de l'espace Entreprise</span>${mdEditor("reunion", id, "prepa", r.prepa, "- Demander pourquoi on garde jQuery sur la page compte\n- Dire que j'ai fini les tests du panier")}</div>
-    <div class="card stack ai-block ai-only"><h3 style="margin:0">Avec Claude</h3>
-      <div class="row">${(R_AI[r.type] || R_AI._).map(([w, label]) => `<button class="btn sm" data-act="reAi" data-id="${esc(id)}" data-what="${w}" ${ai.busy ? "disabled" : ""}>${esc(label)}</button>`).join("")}${ai.busy ? `<span class="muted small"><span class="spin"></span> Claude écrit…</span>` : ""}</div>
-      ${ai.texte ? `<div class="prose">${md(ai.texte)}</div><div class="row"><button class="btn sm" data-act="reAiCopy" data-id="${esc(id)}">Copier</button>${ai.what === "cr" ? `<button class="btn sm" data-act="reAiKeepCr" data-id="${esc(id)}">Garder comme compte rendu</button>` : ai.what === "point" ? `<button class="btn sm primary" data-act="reAiKeepField" data-id="${esc(id)}" data-f="monPoint">Mettre dans « Mon point »</button>` : ai.what === "memoire" ? `<button class="btn sm primary" data-act="reAiKeepField" data-id="${esc(id)}" data-f="retenu">Ajouter à « Ce que j'en retiens »</button>` : ai.what === "idee" ? `<button class="btn sm primary" data-act="reAiContrib" data-id="${esc(id)}">Garder dans « Ma valeur ajoutée »</button>` : `<button class="btn sm primary" data-act="reAiKeep" data-id="${esc(id)}">Ajouter à « ce que je veux dire »</button>`}<button class="btn sm ghost" data-act="reAiClear" data-id="${esc(id)}">Effacer</button></div>` : ai.err ? `<p class="err small">${esc(ai.err)}</p>` : ""}
-      ${r.cr ? `<details class="small"><summary>Compte rendu gardé</summary><div class="prose">${md(r.cr)}</div><button class="btn sm" data-act="reCrCopy" data-id="${esc(id)}">Copier le compte rendu</button></details>` : ""}
-    </div>
-    ${filesCard("reunion", id, r).replace('<h3 style="margin:0">Fichiers</h3>', '<h3 style="margin:0">Supports et captures</h3>')}
+    ${optAll([
+      ...(R_FIELDS[r.type] || R_FIELDS._).map(([k, label, sub, ph], i) => { const o = optSec("reunion", id, k, label, sub, r[k], ph, i === 0); if (o.html && k === "monPoint") o.html = o.html.replace("</h3>", `</h3><span class="spacer"></span><button class="btn sm ghost" data-act="rePrefill" data-id="${esc(id)}">Préremplir avec mon journal</button>`); return o; }),
+      optSec("reunion", id, "prepa", "À dire la prochaine fois", "s'affiche en haut de l'espace Entreprise jusqu'à « C'est dit »", r.prepa, "- Demander pourquoi on garde jQuery sur la page compte\n- Dire que j'ai fini les tests du panier"),
+      optInput("reunion", id, "participants", "Participants", r.participants, "Léa (lead dev), Karim (PO), …"),
+      optInput("reunion", id, "notions", "Mots que je ne connaissais pas", r.notions, "story points, feature flag… (virgules)"),
+      optFiles("reunion", id, r, "Supports et captures"),
+    ])}
+    <div class="ai-only ai-bar"><span class="muted small">Claude :</span>${(R_AI[r.type] || R_AI._).map(([w, label]) => `<button class="btn sm ghost" data-act="reAi" data-id="${esc(id)}" data-what="${w}" ${ai.busy ? "disabled" : ""}>${esc(label)}</button>`).join("")}${ai.busy ? `<span class="muted small"><span class="spin"></span> Claude écrit…</span>` : ""}${r.cr ? `<button class="btn sm ghost" data-act="reCrCopy" data-id="${esc(id)}">Copier le compte rendu gardé</button>` : ""}</div>
+    ${ai.texte ? `<div class="card stack ai-only"><div class="prose">${md(ai.texte)}</div><div class="row"><button class="btn sm" data-act="reAiCopy" data-id="${esc(id)}">Copier</button>${ai.what === "cr" ? `<button class="btn sm" data-act="reAiKeepCr" data-id="${esc(id)}">Garder comme compte rendu</button>` : ai.what === "point" ? `<button class="btn sm primary" data-act="reAiKeepField" data-id="${esc(id)}" data-f="monPoint">Mettre dans « Mon point »</button>` : ai.what === "memoire" ? `<button class="btn sm primary" data-act="reAiKeepField" data-id="${esc(id)}" data-f="retenu">Ajouter à « Ce que j'en retiens »</button>` : ai.what === "idee" ? `<button class="btn sm primary" data-act="reAiContrib" data-id="${esc(id)}">Garder dans « Ma valeur ajoutée »</button>` : `<button class="btn sm primary" data-act="reAiKeep" data-id="${esc(id)}">Ajouter à « À dire la prochaine fois »</button>`}<button class="btn sm ghost" data-act="reAiClear" data-id="${esc(id)}">Effacer</button></div></div>` : ai.err ? `<p class="err small ai-only">${esc(ai.err)}</p>` : ""}
     ${delRow("reunion", id, "cette réunion")}
   </div>`;
 }
@@ -4479,11 +4490,13 @@ function viewContrib(id) {
     <input class="title-input" data-ec="titre" data-kind="contrib" data-id="${esc(id)}" value="${esc(c.titre)}" maxlength="160" aria-label="Titre">
     <div class="row"><span class="seg">${Object.entries(C_STATUTS).map(([k, v]) => `<button class="${s === k ? "on" : ""}" data-act="coStatut" data-id="${esc(id)}" data-s="${k}">${v}</button>`).join("")}</span>
       <label class="row small"><span class="muted">Type</span><select class="field" data-ec="type" data-kind="contrib" data-id="${esc(id)}">${Object.entries(C_TYPES).map(([k, v]) => `<option value="${k}" ${k === (c.type || "autre") ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label></div>
-    <div class="ent-fields"><label class="ent-f"><span class="muted small">À qui en parler</span><input class="field" data-ec="aQui" data-kind="contrib" data-id="${esc(id)}" value="${esc(c.aQui || "")}" placeholder="mon tuteur, Léa, en rétro…"></label></div>
-    <div class="card stack"><h3 style="margin:0">Ce que j'ai remarqué</h3>${mdEditor("contrib", id, "constat", c.constat, "Le problème ou le manque : « installer le projet m'a pris une journée, le README ne parle pas de Docker »")}</div>
-    <div class="card stack"><h3 style="margin:0">Ce que je propose</h3>${mdEditor("contrib", id, "proposition", c.proposition, "Concret et petit : « j'écris une page Démarrer le projet en 30 minutes »")}</div>
-    <div class="card stack"><h3 style="margin:0">Ce qui s'est passé</h3>${mdEditor("contrib", id, "suite", c.suite, "La réponse de l'équipe, ce que tu as livré, les retours…")}</div>
-    ${filesCard("contrib", id, c).replace('<h3 style="margin:0">Fichiers</h3>', '<h3 style="margin:0">Captures et documents</h3>')}
+    ${optAll([
+      optSec("contrib", id, "constat", "Ce que j'ai remarqué", "", c.constat, "Le problème ou le manque : « installer le projet m'a pris une journée, le README ne parle pas de Docker »", true),
+      optSec("contrib", id, "proposition", "Ce que je propose", "", c.proposition, "Concret et petit : « j'écris une page Démarrer le projet en 30 minutes »", true),
+      optInput("contrib", id, "aQui", "À qui en parler", c.aQui, "mon tuteur, Léa, en rétro…"),
+      optSec("contrib", id, "suite", "Ce qui s'est passé", "", c.suite, "La réponse de l'équipe, ce que tu as livré, les retours…"),
+      optFiles("contrib", id, c, "Captures et documents"),
+    ])}
     ${delRow("contrib", id, "cette contribution")}
   </div>`;
 }
@@ -4521,6 +4534,32 @@ async function coIdeas() {
   } catch (e) { u.err = "Claude n'a pas pu répondre. Réessaie."; }
   u.busy = false; if (currentRoute() === "entreprise") render();
 }
+/* Fiches allégées : une rubrique vide n'est pas affichée, seulement un bouton « + Rubrique » qui l'ouvre. */
+function secIsOpen(k) { return !!(state.ui.secOpen || {})[k]; }
+function optSec(kind, id, field, label, sub, value, ph, always) {
+  const k = kind + ":" + id + ":" + field;
+  if (!always && !String(value || "").trim() && !secIsOpen(k)) return { chip: `<button class="add-sec" data-act="secOpen" data-k="${esc(k)}">+ ${esc(label)}</button>` };
+  return { html: `<div class="card stack sec-card"><div class="row"><h3>${esc(label)}</h3>${sub ? `<span class="muted small">${esc(sub)}</span>` : ""}</div>${mdEditor(kind, id, field, value, ph)}</div>` };
+}
+function optFiles(kind, id, o, label) {
+  const k = kind + ":" + id + ":fichiers";
+  if (!(o.fichiers || []).length && !secIsOpen(k)) return { chip: `<button class="add-sec" data-act="secOpen" data-k="${esc(k)}">+ ${esc(label)}</button>`, html2: `<div data-drop="${kind}" data-id="${esc(id)}" hidden></div>` };
+  return { html: filesCard(kind, id, o).replace('<h3 style="margin:0">Fichiers</h3>', `<h3 style="margin:0">${esc(label)}</h3>`) };
+}
+function optLinks(kind, id, o, sub) {
+  const k = kind + ":" + id + ":liens";
+  if (!(o.liens || []).length && !secIsOpen(k)) return { chip: `<button class="add-sec" data-act="secOpen" data-k="${esc(k)}">+ Liens</button>` };
+  return { html: `<div class="card stack sec-card"><div class="row"><h3>Liens</h3>${sub ? `<span class="muted small">${esc(sub)}</span>` : ""}</div>${(o.liens || []).length ? `<div class="tool-list">${linkChips(o.liens, kind, id)}</div>` : ""}${linkForm(kind, id)}</div>` };
+}
+function optInput(kind, id, field, label, value, ph) {
+  const k = kind + ":" + id + ":" + field; const v = Array.isArray(value) ? value.join(", ") : value || "";
+  if (!String(v).trim() && !secIsOpen(k)) return { chip: `<button class="add-sec" data-act="secOpen" data-k="${esc(k)}">+ ${esc(label)}</button>` };
+  return { html: `<label class="ent-f sec-in"><span class="muted small">${esc(label)}</span><input class="field" data-ec="${field}" data-kind="${kind}" data-id="${esc(id)}" value="${esc(v)}" placeholder="${esc(ph)}"></label>` };
+}
+function optAll(list) {
+  const cards = list.map((x) => (x.html || "") + (x.html2 || "")).join(""); const chips = list.filter((x) => x.chip).map((x) => x.chip).join("");
+  return cards + (chips ? `<div class="add-secs">${chips}</div>` : "");
+}
 function entCrumb(label) { return `<div class="row small"><a href="#entreprise">En entreprise</a><span class="muted">›</span><span class="muted">${label}</span></div>`; }
 function delRow(kind, id, label) {
   const confirm = state.ui.confirmDel === kind + ":" + id;
@@ -4535,12 +4574,14 @@ function viewJour(id) {
     <div class="row"><label class="row small"><span class="muted">Date</span><input class="field" type="date" data-ec="date" data-kind="jour" data-id="${esc(id)}" value="${esc(j.date || "")}"></label>
       <label class="row small"><span class="muted">Mission</span><select class="field" data-ec="mission" data-kind="jour" data-id="${esc(id)}"><option value="">— aucune —</option>${ms.map((m) => `<option value="${esc(m.id)}" ${m.id === j.mission ? "selected" : ""}>${esc(m.titre)}</option>`).join("")}</select></label>
       ${j.mission && missionItem(j.mission) ? `<a class="small" href="#ms-${esc(j.mission)}">Ouvrir la mission →</a>` : ""}</div>
-    <div class="card stack"><h3 style="margin:0">Ce que j'ai fait</h3>${mdEditor("jour", id, "fait", j.fait, "- Réunion d'équipe (daily)\n- Ticket #123 : …\n- Revue de la PR de …")}</div>
-    <div class="card stack"><h3 style="margin:0">Ce que j'ai appris</h3>${mdEditor("jour", id, "appris", j.appris, "Une notion, un outil, une façon de faire de l'équipe…")}</div>
-    <div class="card stack"><h3 style="margin:0">Ce qui m'a bloquée, mes questions</h3>${mdEditor("jour", id, "bloque", j.bloque, "Ce qui t'a pris du temps, ce que tu n'as pas compris, ce que tu veux demander à ton tuteur…")}</div>
-    <label class="ent-f"><span class="muted small">Notions croisées (séparées par des virgules) : elles apparaissent dans « Notions croisées au travail » avec les modules qui les expliquent</span><input class="field" data-ec="notions" data-kind="jour" data-id="${esc(id)}" value="${esc((j.notions || []).join(", "))}" placeholder="intercepteurs axios, migration Doctrine, Docker…"></label>
-    ${filesCard("jour", id, j).replace("<h3 style=\"margin:0\">Fichiers</h3>", "<h3 style=\"margin:0\">Captures et documents</h3>")}
-    <div class="card stack"><h3 style="margin:0">Liens</h3>${(j.liens || []).length ? `<div class="tool-list">${linkChips(j.liens, "jour", id)}</div>` : ""}${linkForm("jour", id)}</div>
+    ${optAll([
+      optSec("jour", id, "fait", "Ce que j'ai fait", "", j.fait, "- Réunion technique\n- Ticket #123 : …\n- Revue de la PR de …", true),
+      optSec("jour", id, "appris", "Ce que j'ai appris", "", j.appris, "Une notion, un outil, une façon de faire de l'équipe…"),
+      optSec("jour", id, "bloque", "Ce qui m'a bloquée", "", j.bloque, "Ce qui t'a pris du temps, ce que tu n'as pas compris, ce que tu veux demander…"),
+      optInput("jour", id, "notions", "Notions croisées", j.notions, "intercepteurs axios, migration Doctrine… (virgules)"),
+      optFiles("jour", id, j, "Captures et documents"),
+      optLinks("jour", id, j),
+    ])}
     ${delRow("jour", id, "cette entrée")}
   </div>`;
 }
@@ -4553,16 +4594,16 @@ function viewMission(id) {
     <div class="row"><span class="seg">${Object.entries(M_STATUTS).map(([k, v]) => `<button class="${s === k ? "on" : ""}" data-act="entStatut" data-id="${esc(id)}" data-s="${k}">${v}</button>`).join("")}</span>
       <label class="row small"><span class="muted">Début</span><input class="field" type="date" data-ec="debut" data-kind="mission" data-id="${esc(id)}" value="${esc(m.debut || "")}"></label>
       <label class="row small"><span class="muted">Fin</span><input class="field" type="date" data-ec="fin" data-kind="mission" data-id="${esc(id)}" value="${esc(m.fin || "")}"></label></div>
-    <div class="ent-fields">
-      <label class="ent-f"><span class="muted small">Stack et outils (virgules)</span><input class="field" data-ec="stack" data-kind="mission" data-id="${esc(id)}" value="${esc((m.stack || []).join(", "))}" placeholder="Symfony, React, TanStack Query…"></label>
-      <label class="ent-f"><span class="muted small">Notions croisées (virgules)</span><input class="field" data-ec="notions" data-kind="mission" data-id="${esc(id)}" value="${esc((m.notions || []).join(", "))}" placeholder="pagination, cache, migrations…"></label>
-    </div>
-    <div class="card stack"><h3 style="margin:0">Contexte et besoin</h3>${mdEditor("mission", id, "contexte", m.contexte, "Pour qui ? Quel problème ? Ce qui existait avant ?")}</div>
-    <div class="card stack"><h3 style="margin:0">Ce que j'ai fait et livré</h3>${mdEditor("mission", id, "realise", m.realise, "Les étapes, tes choix techniques, ce qui a été mis en production…")}</div>
-    <div class="card stack"><h3 style="margin:0">Difficultés et solutions</h3>${mdEditor("mission", id, "difficultes", m.difficultes, "Le problème, ce que tu as essayé, ce qui a marché, l'aide reçue…")}</div>
-    <div class="card stack"><h3 style="margin:0">Ce que j'ai appris</h3>${mdEditor("mission", id, "appris", m.appris, "Compétences techniques, méthodes, savoir-être…")}</div>
-    ${filesCard("mission", id, m).replace("<h3 style=\"margin:0\">Fichiers</h3>", "<h3 style=\"margin:0\">Captures et documents</h3>")}
-    <div class="card stack"><h3 style="margin:0">Liens</h3><span class="muted small">la pull request, le ticket, la maquette, la doc…</span>${(m.liens || []).length ? `<div class="tool-list">${linkChips(m.liens, "mission", id)}</div>` : ""}${linkForm("mission", id)}</div>
+    ${optAll([
+      optSec("mission", id, "contexte", "Contexte et besoin", "", m.contexte, "Pour qui ? Quel problème ? Ce qui existait avant ?", true),
+      optSec("mission", id, "realise", "Ce que j'ai fait et livré", "", m.realise, "Les étapes, tes choix techniques, ce qui a été mis en production…"),
+      optSec("mission", id, "difficultes", "Difficultés et solutions", "", m.difficultes, "Le problème, ce que tu as essayé, ce qui a marché, l'aide reçue…"),
+      optSec("mission", id, "appris", "Ce que j'ai appris", "", m.appris, "Compétences techniques, méthodes, savoir-être…"),
+      optInput("mission", id, "stack", "Stack et outils", m.stack, "Symfony, React, TanStack Query… (virgules)"),
+      optInput("mission", id, "notions", "Notions croisées", m.notions, "pagination, cache, migrations… (virgules)"),
+      optFiles("mission", id, m, "Captures et documents"),
+      optLinks("mission", id, m, "la pull request, le ticket, la maquette, la doc…"),
+    ])}
     <div class="card stack"><div class="row"><h3 style="margin:0">Journal de la mission</h3><span class="muted small">${js.length}</span></div>${js.length ? `<div class="ent-jgrid">${js.map(jourRow).join("")}</div>` : `<p class="muted small" style="margin:0">Dans une entrée du journal, choisis cette mission pour la retrouver ici.</p>`}</div>
     ${delRow("mission", id, "cette mission")}
   </div>`;
@@ -5164,6 +5205,8 @@ function keepDrafts() {
 }
 const ACTIONS = {
   entJour(el) { let d = el.dataset.date || (el.dataset.pick && ($("#ent-jdate") || {}).value) || today(); const e = ent(); let j = e.journal.find((x) => x.date === d); if (!j) { j = { id: "j" + rid(), date: d, ts: Date.now(), fait: "", appris: "", bloque: "", notions: [], mission: "" }; e.journal.push(j); saveEcole(); } location.hash = "#j-" + j.id; },
+  entTab(el) { state.ui.entTab = el.dataset.t; try { localStorage.setItem("atelier-ent-tab", el.dataset.t); } catch (e) {} render(); },
+  secOpen(el) { (state.ui.secOpen = state.ui.secOpen || {})[el.dataset.k] = true; const [kind, id, field] = el.dataset.k.split(":"); (state.ui.mdMode = state.ui.mdMode || {})[el.dataset.k] = "write"; render(); setTimeout(() => { const x = document.querySelector(`[data-kind="${kind}"][data-id="${CSS.escape(id)}"][data-ec="${field}"]`) || document.querySelector(`.files-card[data-drop="${kind}"]`); if (x) { x.scrollIntoView({ block: "center" }); if (x.focus) x.focus(); } }, 30); },
   entAllJ() { state.ui.entAllJ = !state.ui.entAllJ; render(); },
   entAllR() { state.ui.entAllR = !state.ui.entAllR; render(); },
   reNew(el) { const type = (el && el.dataset.type) || ($("#re-type") || {}).value || "equipe"; const d = today(); let r = reunions().find((x) => x.date === d && x.type === type); if (!r) { r = { id: "re" + rid(), date: d, type, titre: "", participants: "", notes: "", decisions: "", actions: "", questions: "", prepa: "", notions: [], fichiers: [], ts: Date.now() }; if (type === "tech") r.monPoint = lundiPrefill(); reunions().push(r); saveEcole(); } location.hash = "#re-" + r.id; },
@@ -5572,6 +5615,7 @@ document.addEventListener("focusout", (e) => {
     if (v && v !== orig) handleForm(f, null); else { state.ui.sbNew = false; state.ui.sbRename = null; render(); }
   }, 120);
 });
+document.addEventListener("input", (e) => { const a = e.target; if (a.classList && a.classList.contains("md-area") && !CSS.supports("field-sizing", "content")) { a.style.height = "auto"; a.style.height = Math.min(a.scrollHeight + 2, window.innerHeight * 0.7) + "px"; } });
 document.addEventListener("paste", (e) => {
   const fl = [...((e.clipboardData && e.clipboardData.files) || [])]; if (!fl.length) return;
   const zones = [...document.querySelectorAll("#main [data-drop], main [data-drop], [data-drop]")]; const z = zones[0]; if (!z || !fileStore()) return;

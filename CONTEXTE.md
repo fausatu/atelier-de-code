@@ -252,6 +252,16 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   `x-ratelimit-reset`, sinon 1, 2, 4… min), envoi au passage en arrière-plan. `gh()` lit le message de GitHub : 403
   « not accessible by personal access token » = jeton fine-grained collé à la place du jeton classique « gist ».
 
+## Pages allégées (19/11, Ana : « les pages sont surchargées »)
+- Règle : par défaut, on n'affiche que l'essentiel. Une rubrique vide est remplacée par un bouton « + Rubrique » (`optSec`,
+  `optFiles`, `optLinks`, `optInput`, assemblés par `optAll` ; ouverture `secOpen`). La 1re rubrique d'une fiche est toujours là.
+  `optFiles` laisse une zone `[data-drop]` cachée pour que Ctrl+V d'une capture marche quand même.
+- Espace Entreprise en onglets (`entTab`, gardé dans `localStorage["atelier-ent-tab"]`) : Journal, Réunions, Missions,
+  Ma valeur ajoutée, Notions, Mon alternance ; les bandeaux (journée à noter, lundi, à dire) restent au-dessus.
+- Boutons Claude des réunions en une ligne (`.ai-bar`). Zones de texte markdown : 96 px min, grandissent avec le texte.
+- Appliqué aussi à Mes cours (fiche de cours : notes d'abord, Fichiers/Liens repliés ; rendu : Fichiers/Liens repliés).
+- Pour toute nouvelle page : même principe.
+
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
 2. **Espace « Mes cours » (école)** — étape 1 faite (voir ci-dessus). Étape 2 faite aussi (fichiers, Ma semaine, emploi du temps ; réimporter l'emploi du temps après le 02/01/2027). Idée suivante possible : TD / cartes générés par Claude depuis les fichiers et notes d'un cours. — PAS seulement du code : management de projet, anglais, UX/UI, etc.
