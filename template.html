@@ -649,6 +649,23 @@ body.q-open .qfab { display: none; }
 .add-sec:hover { color: var(--accent); border-color: var(--accent); }
 .sec-in { max-width: 520px; }
 .ai-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tk-bar { height: 4px; border-radius: 4px; background: color-mix(in srgb, var(--muted) 18%, transparent); overflow: hidden; }
+.tk-bar i { display: block; height: 100%; background: var(--good); }
+.tk-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.tk-row { display: flex; align-items: center; gap: 8px; padding: 3px 4px; border-radius: 6px; }
+.tk-row:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.tk-st { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--muted); background: none; cursor: pointer; font-size: 0.72rem; line-height: 1; display: grid; place-items: center; color: var(--surface); padding: 0; }
+.tk-st.tk-encours { border-color: var(--accent); color: var(--accent); }
+.tk-st.tk-faite { background: var(--good); border-color: var(--good); }
+.tk-t { flex: 1; min-width: 0; border: 0; background: none; font: inherit; color: var(--ink); padding: 3px 4px; border-radius: 4px; }
+.tk-t:focus { outline: 1px solid var(--line); background: var(--surface); }
+.tk-faite .tk-t { color: var(--muted); text-decoration: line-through; }
+.tk-more { border: 0; background: none; cursor: pointer; color: var(--muted); padding: 2px 6px; }
+.tk-det { margin: 2px 0 8px 28px; display: flex; flex-direction: column; gap: 8px; }
+.tk-notes { width: 100%; resize: vertical; font: 0.88rem/1.5 var(--font-body, inherit); }
+.tk-pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.tk-pk { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 0.86rem; cursor: pointer; }
+.tk-pk.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
 /* En entreprise */
 .ent-nudge { width: 100%; text-align: left; font: inherit; cursor: pointer; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
 .ent-nudge:hover { border-color: var(--accent); }
@@ -3542,7 +3559,7 @@ function viewRendu(id) {
     <div class="row">${confirm ? `<span class="small">Supprimer ce rendu ?</span><button class="btn sm danger" data-act="ecDelRendu" data-id="${esc(id)}">Oui, supprimer</button><button class="btn sm ghost" data-act="ecCancelDel">Annuler</button>` : `<button class="btn sm ghost danger" data-act="ecAskDel" data-key="rendu:${esc(id)}">Supprimer ce rendu</button>`}<span class="spacer"></span><span class="muted small">Enregistrement automatique · visible dans le calendrier</span></div>
   </div>`;
 }
-function ecObj(kind, id) { return kind === "mat" ? matiere(id) : kind === "cours" ? coursItem(id) : kind === "rendu" ? renduItem(id) : kind === "jour" ? jourItem(id) : kind === "mission" ? missionItem(id) : kind === "entreprise" ? ent().entreprise : kind === "reunion" ? reunionItem(id) : kind === "contrib" ? contribItem(id) : null; }
+function ecObj(kind, id) { return kind === "mat" ? matiere(id) : kind === "cours" ? coursItem(id) : kind === "rendu" ? renduItem(id) : kind === "jour" ? jourItem(id) : kind === "mission" ? missionItem(id) : kind === "entreprise" ? ent().entreprise : kind === "reunion" ? reunionItem(id) : kind === "contrib" ? contribItem(id) : kind === "tache" ? tacheItem(id) : null; }
 function ecApply(el) {
   const { ec: field, kind, id } = el.dataset; const o = ecObj(kind, id); if (!o) return false;
   let v = el.value;
@@ -3552,6 +3569,8 @@ function ecApply(el) {
   else if (field === "titre" || field === "nom") { if (!v.trim() && kind !== "jour" && kind !== "reunion") return false; v = v.slice(0, 160); }
   else v = String(v).slice(0, 60000);
   o[field] = v; o.ts = Date.now();
+  if (kind === "tache") { const m = missionItem(String(id).split(":")[0]); if (m) m.ts = o.ts; }
+  if (kind === "jour" && field === "mission") o.taches = [];
   return true;
 }
 let ecTimer = null; const ecPending = new Set();
@@ -4329,13 +4348,39 @@ function jourRow(j) {
   const m = j.mission ? missionItem(j.mission) : null; const imgs = nbImages(j); const fs = (j.fichiers || []).length;
   const tags = (j.notions || []).slice(0, 4).map((n) => `<span class="chip ghost">${esc(n)}</span>`).join("");
   return `<a class="card ent-jc" href="#j-${esc(j.id)}"><div class="row"><b>${esc(jourJour(j.date))}</b><span class="spacer"></span>${String(j.bloque || "").trim() ? `<span class="ent-bloque" title="${esc(firstLine(j.bloque))}">blocage</span>` : ""}${imgs ? `<span class="muted small">${imgs} capture${imgs > 1 ? "s" : ""}</span>` : ""}${fs > imgs ? `<span class="muted small">${fs - imgs} doc${fs - imgs > 1 ? "s" : ""}</span>` : ""}</div>
-    ${m ? `<span class="ent-jm">${esc(m.titre)}</span>` : ""}${tags ? `<div class="ent-jt">${tags}</div>` : ""}${!m && !tags && !String(j.fait || "").trim() ? `<span class="muted small">Pas encore rempli</span>` : ""}</a>`;
+    ${m ? `<span class="ent-jm">${esc(m.titre)}${(j.taches || []).length ? `<span class="muted small"> · ${(j.taches || []).map((tid) => (taches(m).find((x) => x.id === tid) || {}).titre).filter(Boolean).map(esc).join(", ")}</span>` : ""}</span>` : ""}${tags ? `<div class="ent-jt">${tags}</div>` : ""}${!m && !tags && !String(j.fait || "").trim() ? `<span class="muted small">Pas encore rempli</span>` : ""}</a>`;
 }
+/* ---------- Tâches d'une mission ---------- */
+const T_STATUTS = { afaire: "À faire", encours: "En cours", faite: "Faite" };
+function taches(m) { if (!Array.isArray(m.taches)) m.taches = []; return m.taches; }
+function tacheItem(ref) { const [mid, tid] = String(ref).split(":"); const m = missionItem(mid); return m ? taches(m).find((x) => x.id === tid) : null; }
+function tacheJours(mid, tid) { return ent().journal.filter((j) => j.mission === mid && (j.taches || []).includes(tid)); }
+function tachesBlock(m) {
+  const ts = taches(m); const open = (state.ui.tkOpen || {});
+  const nf = ts.filter((x) => x.statut === "faite").length;
+  const order = { encours: 0, afaire: 1, faite: 2 };
+  const sorted = ts.map((x, i) => [x, i]).sort((a, b) => (order[a[0].statut || "afaire"] - order[b[0].statut || "afaire"]) || a[1] - b[1]).map((x) => x[0]);
+  const row = (x) => { const ref = m.id + ":" + x.id; const st = x.statut || "afaire"; const nj = tacheJours(m.id, x.id).length; const o = open[ref];
+    return `<li class="tk tk-${st}"><div class="tk-row">
+      <button class="tk-st tk-${st}" data-act="tkCycle" data-ref="${esc(ref)}" title="Changer le statut (à faire → en cours → faite)" aria-label="Statut : ${T_STATUTS[st]}">${st === "faite" ? "✓" : st === "encours" ? "◐" : ""}</button>
+      <input class="tk-t" data-ec="titre" data-kind="tache" data-id="${esc(ref)}" value="${esc(x.titre)}" maxlength="200" aria-label="Tâche">
+      ${x.ticket ? `<span class="chip ghost">${esc(x.ticket)}</span>` : ""}${nj ? `<span class="muted small">${nj} j.</span>` : ""}${String(x.notes || "").trim() ? `<span class="muted small" title="a des notes">✎</span>` : ""}
+      <button class="tk-more" data-act="tkOpen" data-ref="${esc(ref)}" aria-expanded="${!!o}" title="Détails">${o ? "▴" : "▾"}</button></div>
+      ${o ? `<div class="tk-det"><div class="row"><span class="seg">${Object.entries(T_STATUTS).map(([k, v]) => `<button class="${st === k ? "on" : ""}" data-act="tkSet" data-ref="${esc(ref)}" data-s="${k}">${v}</button>`).join("")}</span>
+        <label class="row small"><span class="muted">Ticket</span><input class="field" style="width:160px" data-ec="ticket" data-kind="tache" data-id="${esc(ref)}" value="${esc(x.ticket || "")}" placeholder="#123, JIRA-42…"></label>
+        <span class="spacer"></span><button class="btn sm ghost danger" data-act="tkDel" data-ref="${esc(ref)}">Supprimer</button></div>
+        <textarea class="field tk-notes" data-ec="notes" data-kind="tache" data-id="${esc(ref)}" placeholder="Notes sur cette tâche : ce que tu as fait, les pièges, la PR…" rows="3">${esc(x.notes || "")}</textarea>
+        ${nj ? `<div class="small muted">Travaillée le ${tacheJours(m.id, x.id).map((j) => `<a href="#j-${esc(j.id)}">${esc(jourJour(j.date))}</a>`).join(", ")}</div>` : ""}</div>` : ""}</li>`; };
+  return `<div class="card stack sec-card"><div class="row"><h3>Tâches</h3><span class="muted small">${ts.length ? `${nf}/${ts.length} faite${nf > 1 ? "s" : ""}` : "découpe la mission en petites étapes"}</span></div>
+    ${ts.length ? `<div class="tk-bar"><i style="width:${Math.round((nf / ts.length) * 100)}%"></i></div><ul class="tk-list">${sorted.map(row).join("")}</ul>` : ""}
+    <form class="row" data-form="tkAdd" data-id="${esc(m.id)}"><input class="field" name="titre" placeholder="Nouvelle tâche : créer la route GET /export, écrire les tests…" required maxlength="200" style="flex:1;min-width:220px" autocomplete="off"><button class="btn sm">Ajouter</button></form></div>`;
+}
+function tkSetStatut(ref, s) { const x = tacheItem(ref); const m = missionItem(ref.split(":")[0]); if (!x || !m) return; x.statut = s; x.ts = m.ts = Date.now(); if (s === "faite") x.fini = today(); saveEcole(); render(); if (s === "faite" && taches(m).every((y) => y.statut === "faite")) toast("Toutes les tâches sont faites : tu peux passer la mission en « Livrée »."); }
 function missionCard(m) {
   const nj = ent().journal.filter((j) => j.mission === m.id).length; const st = m.statut || "en_cours";
   const dates = m.debut ? jourJour(m.debut) + (m.fin ? " → " + jourJour(m.fin) : "") : "";
   return `<a class="card ent-mc" href="#ms-${esc(m.id)}"><div class="row"><b class="ent-mc-t">${esc(m.titre)}</b><span class="spacer"></span><span class="r-st ms-${st}">${M_STATUTS[st]}</span></div>
-    <span class="muted small">${esc(dates)}${dates && nj ? " · " : ""}${nj ? `${nj} jour${nj > 1 ? "s" : ""} au journal` : ""}</span></a>`;
+    <span class="muted small">${[dates, taches(m).length ? `${taches(m).filter((x) => x.statut === "faite").length}/${taches(m).length} tâches` : "", nj ? `${nj} jour${nj > 1 ? "s" : ""} au journal` : ""].filter(Boolean).map(esc).join(" · ")}</span></a>`;
 }
 function entTab() { if (!state.ui.entTab) { try { state.ui.entTab = localStorage.getItem("atelier-ent-tab") || "journal"; } catch (e) { state.ui.entTab = "journal"; } } return state.ui.entTab; }
 function viewEntreprise() {
@@ -4420,7 +4465,7 @@ function lundiPrefill() {
   const t = today(); const from = dPlus(t, -7); const e = ent();
   const js = e.journal.filter((j) => (j.date || "") >= from && (j.date || "") < t).sort((a, b) => String(a.date).localeCompare(String(b.date)));
   const fait = js.map((j) => firstLine(j.fait)).filter(Boolean); const bloque = js.map((j) => firstLine(j.bloque)).filter(Boolean);
-  const ms = e.missions.filter((m) => (m.statut || "en_cours") === "en_cours").map((m) => m.titre);
+  const ms = e.missions.filter((m) => (m.statut || "en_cours") === "en_cours").flatMap((m) => { const tk = taches(m).filter((x) => x.statut !== "faite"); return tk.length ? tk.slice(0, 3).map((x) => x.titre + " (" + m.titre + ")") : [m.titre]; });
   return `**Semaine dernière** : ${fait.length ? fait.join(" ; ") : "…"}\n\n**Cette semaine** : ${ms.length ? ms.join(" ; ") : "…"}\n\n**Blocages** : ${bloque.length ? bloque.join(" ; ") : "rien de bloquant"}`;
 }
 const C_STATUTS = { idee: "Idée", proposee: "Proposée", acceptee: "Acceptée", faite: "Faite", abandonnee: "Abandonnée" };
@@ -4581,6 +4626,7 @@ function viewJour(id) {
     <div class="row"><label class="row small"><span class="muted">Date</span><input class="field" type="date" data-ec="date" data-kind="jour" data-id="${esc(id)}" value="${esc(j.date || "")}"></label>
       <label class="row small"><span class="muted">Mission</span><select class="field" data-ec="mission" data-kind="jour" data-id="${esc(id)}"><option value="">— aucune —</option>${ms.map((m) => `<option value="${esc(m.id)}" ${m.id === j.mission ? "selected" : ""}>${esc(m.titre)}</option>`).join("")}</select></label>
       ${j.mission && missionItem(j.mission) ? `<a class="small" href="#ms-${esc(j.mission)}">Ouvrir la mission →</a>` : ""}</div>
+    ${j.mission && missionItem(j.mission) && taches(missionItem(j.mission)).length ? `<div class="card stack sec-card"><div class="row"><h3>Tâches travaillées ce jour</h3><span class="muted small">coche celles sur lesquelles tu as avancé</span></div><div class="tk-pick">${taches(missionItem(j.mission)).filter((x) => x.statut !== "faite" || (j.taches || []).includes(x.id)).map((x) => `<label class="tk-pk ${(j.taches || []).includes(x.id) ? "on" : ""}"><input type="checkbox" data-act="jTk" data-id="${esc(id)}" data-t="${esc(x.id)}" ${(j.taches || []).includes(x.id) ? "checked" : ""}> ${esc(x.titre)}${x.statut === "faite" ? ` <span class="muted small">(faite)</span>` : ""}</label>`).join("")}</div></div>` : ""}
     ${optAll([
       optSec("jour", id, "fait", "Ce que j'ai fait", "", j.fait, "- Réunion technique\n- Ticket #123 : …\n- Revue de la PR de …", true),
       optSec("jour", id, "appris", "Ce que j'ai appris", "", j.appris, "Une notion, un outil, une façon de faire de l'équipe…"),
@@ -4602,7 +4648,8 @@ function viewMission(id) {
       <label class="row small"><span class="muted">Début</span><input class="field" type="date" data-ec="debut" data-kind="mission" data-id="${esc(id)}" value="${esc(m.debut || "")}"></label>
       <label class="row small"><span class="muted">Fin</span><input class="field" type="date" data-ec="fin" data-kind="mission" data-id="${esc(id)}" value="${esc(m.fin || "")}"></label></div>
     ${optAll([
-      optSec("mission", id, "contexte", "Contexte et besoin", "", m.contexte, "Pour qui ? Quel problème ? Ce qui existait avant ?", true),
+      { html: tachesBlock(m) },
+      optSec("mission", id, "contexte", "Contexte et besoin", "", m.contexte, "Pour qui ? Quel problème ? Ce qui existait avant ?"),
       optSec("mission", id, "realise", "Ce que j'ai fait et livré", "", m.realise, "Les étapes, tes choix techniques, ce qui a été mis en production…"),
       optSec("mission", id, "difficultes", "Difficultés et solutions", "", m.difficultes, "Le problème, ce que tu as essayé, ce qui a marché, l'aide reçue…"),
       optSec("mission", id, "appris", "Ce que j'ai appris", "", m.appris, "Compétences techniques, méthodes, savoir-être…"),
@@ -5214,6 +5261,11 @@ const ACTIONS = {
   entJour(el) { let d = el.dataset.date || (el.dataset.pick && ($("#ent-jdate") || {}).value) || today(); const e = ent(); let j = e.journal.find((x) => x.date === d); if (!j) { j = { id: "j" + rid(), date: d, ts: Date.now(), fait: "", appris: "", bloque: "", notions: [], mission: "" }; e.journal.push(j); saveEcole(); } location.hash = "#j-" + j.id; },
   entTab(el) { state.ui.entTab = el.dataset.t; try { localStorage.setItem("atelier-ent-tab", el.dataset.t); } catch (e) {} render(); },
   secOpen(el) { (state.ui.secOpen = state.ui.secOpen || {})[el.dataset.k] = true; const [kind, id, field] = el.dataset.k.split(":"); (state.ui.mdMode = state.ui.mdMode || {})[el.dataset.k] = "write"; render(); setTimeout(() => { const x = document.querySelector(`[data-kind="${kind}"][data-id="${CSS.escape(id)}"][data-ec="${field}"]`) || document.querySelector(`.files-card[data-drop="${kind}"]`); if (x) { x.scrollIntoView({ block: "center" }); if (x.focus) x.focus(); } }, 30); },
+  tkCycle(el) { const x = tacheItem(el.dataset.ref); if (!x) return; const nx = { afaire: "encours", encours: "faite", faite: "afaire" }[x.statut || "afaire"]; tkSetStatut(el.dataset.ref, nx); },
+  tkSet(el) { tkSetStatut(el.dataset.ref, el.dataset.s); },
+  tkOpen(el) { const o = state.ui.tkOpen || (state.ui.tkOpen = {}); o[el.dataset.ref] = !o[el.dataset.ref]; render(); },
+  tkDel(el) { const [mid, tid] = el.dataset.ref.split(":"); const m = missionItem(mid); if (!m) return; m.taches = taches(m).filter((x) => x.id !== tid); m.ts = Date.now(); for (const j of ent().journal) if ((j.taches || []).includes(tid)) { j.taches = j.taches.filter((x) => x !== tid); j.ts = Date.now(); } saveEcole(); render(); },
+  jTk(el) { const j = jourItem(el.dataset.id); if (!j) return; const s = new Set(j.taches || []); el.checked ? s.add(el.dataset.t) : s.delete(el.dataset.t); j.taches = [...s]; j.ts = Date.now(); const m = missionItem(j.mission); const x = m && taches(m).find((y) => y.id === el.dataset.t); if (el.checked && x && (x.statut || "afaire") === "afaire") { x.statut = "encours"; m.ts = Date.now(); } saveEcole(); render(); },
   entAllJ() { state.ui.entAllJ = !state.ui.entAllJ; render(); },
   entAllR() { state.ui.entAllR = !state.ui.entAllR; render(); },
   reNew(el) { const type = (el && el.dataset.type) || ($("#re-type") || {}).value || "equipe"; const d = today(); let r = reunions().find((x) => x.date === d && x.type === type); if (!r) { r = { id: "re" + rid(), date: d, type, titre: "", participants: "", notes: "", decisions: "", actions: "", questions: "", prepa: "", notions: [], fichiers: [], ts: Date.now() }; if (type === "tech") r.monPoint = lundiPrefill(); reunions().push(r); saveEcole(); } location.hash = "#re-" + r.id; },
@@ -5527,6 +5579,7 @@ function handleForm(f, submitter) {
   if (f.dataset.form === "ecSetup") { const idx = [...f.querySelectorAll("input[name=m]:checked")].map((x) => +x.value); setupEcole(idx, f.rendus.checked); render(); toast(`${idx.length} matière${idx.length > 1 ? "s" : ""} créée${idx.length > 1 ? "s" : ""}.`); return; }
   if (f.dataset.form === "ecNewCours") { const titre = f.titre.value.trim(); if (!titre) return; const c = { id: "co" + rid(), matiere: f.dataset.mat, titre: titre.slice(0, 160), date: f.date.value || null, tags: [], notes: "", liens: [], created: Date.now(), ts: Date.now() }; ecole().cours.push(c); saveEcole(); location.hash = "#c-" + c.id; return; }
   if (f.dataset.form === "coNew") { const titre = f.titre.value.trim(); if (!titre) return; const c = { id: "co" + rid(), titre: titre.slice(0, 160), statut: "idee", type: "autre", aQui: "", constat: "", proposition: "", suite: "", date: today(), fichiers: [], ts: Date.now() }; contribs().push(c); saveEcole(); location.hash = "#co-" + c.id; return; }
+  if (f.dataset.form === "tkAdd") { const m = missionItem(f.dataset.id); const titre = f.titre.value.trim(); if (!m || !titre) return; taches(m).push({ id: "t" + rid(), titre: titre.slice(0, 200), statut: "afaire", ticket: "", notes: "", ts: Date.now() }); m.ts = Date.now(); saveEcole(); render(); setTimeout(() => { const i = document.querySelector('form[data-form="tkAdd"] input[name=titre]'); if (i) i.focus(); }, 20); return; }
   if (f.dataset.form === "entMission") { const titre = f.titre.value.trim(); if (!titre) return; const m = { id: "ms" + rid(), titre: titre.slice(0, 160), statut: "en_cours", debut: today(), fin: null, stack: (ent().entreprise.stack || []).slice(0, 6), notions: [], contexte: "", realise: "", difficultes: "", appris: "", liens: [], fichiers: [], ts: Date.now() }; ent().missions.push(m); saveEcole(); location.hash = "#ms-" + m.id; return; }
   if (f.dataset.form === "ecLink") { let url = f.url.value.trim(); if (!url) return; if (!/^https?:\/\//i.test(url)) url = "https://" + url; try { new URL(url); } catch (err) { toast("Ce lien n'a pas l'air valide."); return; } const o = ecObj(f.dataset.kind, f.dataset.id); if (!o) return; (o.liens = o.liens || []).push({ url, titre: f.titre.value.trim().slice(0, 80) }); o.ts = Date.now(); ecSaveKind(f.dataset.kind); render(); toast(toolOf(url).name + " ajouté."); return; }
   if (f.dataset.form === "ecCk") { const t = f.t.value.trim(); const r = renduItem(f.dataset.id); if (!t || !r) return; (r.checklist = r.checklist || []).push({ t: t.slice(0, 200), ok: false }); r.ts = Date.now(); saveProgress(); render(); const i = document.querySelector("form[data-form=ecCk] input"); if (i) i.focus(); return; }

@@ -263,6 +263,15 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 - Cartes de missions et de contributions compactes (`.ent-mc`, 2 colonnes) : titre sur une ligne + statut, puis dates / type.
 - Pour toute nouvelle page : même principe.
 
+## Tâches d'une mission (19/11, Ana : « une mission a plusieurs tâches »)
+- `mission.taches = [{id, titre, statut afaire|encours|faite, ticket, notes, fini, ts}]`. Bloc `tachesBlock(m)` en tête de la
+  fiche mission : barre de progression, rond de statut (clic = cycle `tkCycle`), titre modifiable (kind `tache`, id
+  `"msId:tkId"` lu par `tacheItem`), détails dépliables (statut, ticket, notes, jours travaillés, supprimer), formulaire `tkAdd`.
+  Toutes faites → toast qui propose de passer la mission « Livrée ».
+- `journal.taches` = ids des tâches travaillées ce jour (cases `jTk` dans l'entrée liée à une mission ; cocher une tâche « à
+  faire » la passe « en cours » ; changer de mission vide la liste). Carte du journal : mission · tâches. Carte mission : « 1/3 tâches ».
+- `lundiPrefill` : « Cette semaine » = tâches non faites des missions en cours.
+
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
 1. ~~Notes par module~~ : fait (voir ci-dessus).
 2. **Espace « Mes cours » (école)** — étape 1 faite (voir ci-dessus). Étape 2 faite aussi (fichiers, Ma semaine, emploi du temps ; réimporter l'emploi du temps après le 02/01/2027). Idée suivante possible : TD / cartes générés par Claude depuis les fichiers et notes d'un cours. — PAS seulement du code : management de projet, anglais, UX/UI, etc.
