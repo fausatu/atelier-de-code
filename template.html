@@ -2097,6 +2097,9 @@ function joinPhpFiles(files) {
   const seenUse = new Set();
   files.forEach((f, i) => {
     let c = f.code.replace(/^﻿/, "");
+    // Dans l'atelier tout le code est dans un seul script, sans namespace : on neutralise `namespace App\…;` et les
+    // `use App\…;` (les classes du projet sont déjà là) en gardant les numéros de ligne.
+    c = c.replace(/^[ \t]*namespace\s+[\w\\]+\s*;[ \t]*$/gm, (l) => "// " + l.trim() + " (ignoré dans l'atelier)").replace(/^[ \t]*use\s+App\\[^;\n]+;[ \t]*$/gm, (l) => "// " + l.trim() + " (ignoré dans l'atelier)");
     c = c.replace(/^use\s+[^;\n]+;[ \t]*$/gm, (line) => { const k = line.replace(/\s+/g, " ").trim(); if (seenUse.has(k)) return "// " + k + " (déjà importé)"; seenUse.add(k); return line; });
     if (i > 0) { c = c.replace(/^\s*<\?php\s*/i, "").replace(/^\s*declare\s*\(\s*strict_types\s*=\s*1\s*\)\s*;\s*/i, ""); }
     body += (i ? "\n\n// ---- " + f.path + " ----\n" : "") + c;

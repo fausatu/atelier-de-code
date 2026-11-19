@@ -257,6 +257,11 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   `x-ratelimit-reset`, sinon 1, 2, 4… min), envoi au passage en arrière-plan. `gh()` lit le message de GitHub : 403
   « not accessible by personal access token » = jeton fine-grained collé à la place du jeton classique « gist ».
 
+## PHP : namespace accepté (19/11)
+- `joinPhpFiles` concatène tous les fichiers PHP d'un TD en un seul script (services.php d'abord). Ana avait recopié
+  `namespace App\Controller;` → erreur fatale « Namespace declaration … very first statement ». Maintenant les lignes
+  `namespace X;` et `use App\…;` sont mises en commentaire (« ignoré dans l'atelier »), numéros de ligne inchangés.
+
 ## Pages allégées (19/11, Ana : « les pages sont surchargées »)
 - Règle : par défaut, on n'affiche que l'essentiel. Une rubrique vide est remplacée par un bouton « + Rubrique » (`optSec`,
   `optFiles`, `optLinks`, `optInput`, assemblés par `optAll` ; ouverture `secOpen`). La 1re rubrique d'une fiche est toujours là.
