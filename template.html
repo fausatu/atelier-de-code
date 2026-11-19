@@ -4310,10 +4310,10 @@ function jourItems(s, n) { return String(s || "").split("\n").map((x) => x.repla
 function jourJour(d) { try { return new Date(d + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }); } catch (e) { return frDate(d); } }
 function jourRow(j) {
   const m = j.mission ? missionItem(j.mission) : null; const imgs = nbImages(j); const fs = (j.fichiers || []).length;
-  const items = jourItems(j.fait, 3); const nb = jourItems(j.fait, 99).length;
-  const titre = (j.titre || "").trim() || (m ? m.titre : "") || (items.length ? "" : "Journée sans description");
-  const apercu = items.map((x) => x.length > 70 ? x.slice(0, 69) + "…" : x).join(" · ") + (nb > 3 ? ` · +${nb - 3}` : "");
-  return `<a class="r-row ent-j" href="#j-${esc(j.id)}"><span class="ent-date"><b>${esc(jourJour(j.date))}</b></span><span class="r-main">${titre ? `<b>${esc(titre)}</b>` : ""}${apercu ? `<span class="${titre ? "muted small" : ""}">${esc(apercu)}</span>` : ""}<small>${m && titre !== m.titre ? `<span class="chip">${esc(m.titre)}</span> ` : ""}${(j.notions || []).slice(0, 4).map((n) => `<span class="chip ghost">${esc(n)}</span>`).join(" ")}</small></span>
+  let main;
+  if (m) main = `<b>${esc(m.titre)}</b>`;
+  else { const items = jourItems(j.fait, 3); const nb = jourItems(j.fait, 99).length; main = items.length ? `<span>${esc(items.map((x) => x.length > 70 ? x.slice(0, 69) + "…" : x).join(" · ") + (nb > 3 ? ` · +${nb - 3}` : ""))}</span>` : `<span class="muted">Journée sans description</span>`; }
+  return `<a class="r-row ent-j" href="#j-${esc(j.id)}"><span class="ent-date"><b>${esc(jourJour(j.date))}</b></span><span class="r-main">${main}${(j.notions || []).length ? `<small>${j.notions.slice(0, 4).map((n) => `<span class="chip ghost">${esc(n)}</span>`).join(" ")}</small>` : ""}</span>
     <span class="ent-j-meta muted small">${String(j.bloque || "").trim() ? `<span class="ent-bloque" title="${esc(firstLine(j.bloque))}">blocage</span>` : ""}${imgs ? `<span>${imgs} capture${imgs > 1 ? "s" : ""}</span>` : ""}${fs > imgs ? `<span>${fs - imgs} doc${fs - imgs > 1 ? "s" : ""}</span>` : ""}</span></a>`;
 }
 function missionCard(m) {
@@ -4525,8 +4525,7 @@ function viewJour(id) {
   const ms = ent().missions;
   return `<div class="wrap">
     ${entCrumb("Journal")}
-    <div class="eyebrow">Journal · ${esc(jourJour(j.date))}</div>
-    <input class="title-input" data-ec="titre" data-kind="jour" data-id="${esc(id)}" value="${esc(j.titre || "")}" maxlength="120" placeholder="Titre de la journée (facultatif) : ex. « Tests du panier et première revue de code »" aria-label="Titre de la journée">
+    <h1 style="margin:0">Journal du ${esc(jourJour(j.date))}</h1>
     <div class="row"><label class="row small"><span class="muted">Date</span><input class="field" type="date" data-ec="date" data-kind="jour" data-id="${esc(id)}" value="${esc(j.date || "")}"></label>
       <label class="row small"><span class="muted">Mission</span><select class="field" data-ec="mission" data-kind="jour" data-id="${esc(id)}"><option value="">— aucune —</option>${ms.map((m) => `<option value="${esc(m.id)}" ${m.id === j.mission ? "selected" : ""}>${esc(m.titre)}</option>`).join("")}</select></label>
       ${j.mission && missionItem(j.mission) ? `<a class="small" href="#ms-${esc(j.mission)}">Ouvrir la mission →</a>` : ""}</div>
@@ -5158,7 +5157,7 @@ function keepDrafts() {
   draftWriter.schedule();
 }
 const ACTIONS = {
-  entJour(el) { let d = el.dataset.date || (el.dataset.pick && ($("#ent-jdate") || {}).value) || today(); const e = ent(); let j = e.journal.find((x) => x.date === d); if (!j) { j = { id: "j" + rid(), date: d, ts: Date.now(), fait: "", appris: "", bloque: "", notions: [], mission: (e.missions.find((m) => (m.statut || "en_cours") === "en_cours") || {}).id || "" }; e.journal.push(j); saveEcole(); } location.hash = "#j-" + j.id; },
+  entJour(el) { let d = el.dataset.date || (el.dataset.pick && ($("#ent-jdate") || {}).value) || today(); const e = ent(); let j = e.journal.find((x) => x.date === d); if (!j) { j = { id: "j" + rid(), date: d, ts: Date.now(), fait: "", appris: "", bloque: "", notions: [], mission: "" }; e.journal.push(j); saveEcole(); } location.hash = "#j-" + j.id; },
   entAllJ() { state.ui.entAllJ = !state.ui.entAllJ; render(); },
   entAllR() { state.ui.entAllR = !state.ui.entAllR; render(); },
   reNew(el) { const type = (el && el.dataset.type) || ($("#re-type") || {}).value || "equipe"; const d = today(); let r = reunions().find((x) => x.date === d && x.type === type); if (!r) { r = { id: "re" + rid(), date: d, type, titre: "", participants: "", notes: "", decisions: "", actions: "", questions: "", prepa: "", notions: [], fichiers: [], ts: Date.now() }; if (type === "tech") r.monPoint = lundiPrefill(); reunions().push(r); saveEcole(); } location.hash = "#re-" + r.id; },
