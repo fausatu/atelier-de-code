@@ -621,6 +621,13 @@ body.q-open .qfab { display: none; }
 .ed-sig p { margin: 0; }
 .err-aide { color: var(--warn, #b7791f); white-space: pre-wrap; }
 .err-aide code { background: rgb(255 255 255 / 0.08); color: inherit; }
+.a-dire { background: color-mix(in srgb, var(--accent) 7%, var(--surface)); display: flex; flex-direction: column; gap: 6px; }
+.a-dire .prose { font-size: 0.93rem; }
+.r-st.co-idee { background: color-mix(in srgb, var(--muted) 14%, transparent); color: var(--muted); }
+.r-st.co-proposee { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.r-st.co-acceptee { background: var(--warn-soft); color: var(--warn); }
+.r-st.co-faite { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.r-st.co-abandonnee { background: color-mix(in srgb, var(--muted) 10%, transparent); color: var(--muted); text-decoration: line-through; }
 /* En entreprise */
 .ent-nudge { width: 100%; text-align: left; font: inherit; cursor: pointer; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
 .ent-nudge:hover { border-color: var(--accent); }
@@ -1441,7 +1448,7 @@ function renderSide() {
       <a class="nav-link ${r === "revision" || r.startsWith("cartes") || r.startsWith("paquet-") ? "on" : ""}" href="#revision">Révisions <span class="count ${due + dueCards().length ? "" : "zero"}">${due + dueCards().length}</span></a>
       <a class="nav-link ${r === "parcours" ? "on" : ""}" href="#parcours">Parcours</a>
       <a class="nav-link ${r === "cours" || /^(mat|c|r)-/.test(r) ? "on" : ""}" href="#cours">Mes cours <span class="count ${soonRendus(14).length ? "" : "zero"}" title="Rendus dans les 14 prochains jours">${soonRendus(14).length}</span></a>
-      <a class="nav-link ${r === "entreprise" || /^(j|ms)-/.test(r) ? "on" : ""}" href="#entreprise">En entreprise${joursSansNote(10).length ? ` <span class="count" title="Jours en entreprise sans note (10 derniers jours)">${joursSansNote(10).length}</span>` : ""}</a>
+      <a class="nav-link ${r === "entreprise" || /^(j|ms|re|co)-/.test(r) ? "on" : ""}" href="#entreprise">En entreprise${joursSansNote(10).length ? ` <span class="count" title="Jours en entreprise sans note (10 derniers jours)">${joursSansNote(10).length}</span>` : ""}</a>
       <a class="nav-link ${r === "questions" ? "on" : ""}" href="#questions">Mes questions <span class="count ${qOpenCount() ? "" : "zero"}">${qOpenCount()}</span></a>
     </nav>
     <div class="tool-row" role="navigation" aria-label="Outils">
@@ -2956,7 +2963,7 @@ function mergeData(inc) {
   if (Array.isArray(inc.progress.agenda)) { const mine = myEvents(); for (const ev of inc.progress.agenda) { const i = mine.findIndex((x) => x.id === ev.id); if (i < 0) mine.push(ev); else if ((ev.ts || 0) > (mine[i].ts || 0)) mine[i] = ev; } }
   if (inc.ecole && typeof inc.ecole === "object") {
     const e = ecole(); const del = new Set([...e.deleted, ...(inc.ecole.deleted || [])]); e.deleted = [...del];
-    for (const key of ["matieres", "cours", "journal", "missions"]) { if (!Array.isArray(e[key])) e[key] = []; const mine = e[key]; for (const x of inc.ecole[key] || []) { if (del.has(x.id)) continue; const i = mine.findIndex((y) => y.id === x.id); if (i < 0) mine.push(x); else if ((x.ts || 0) > (mine[i].ts || 0)) mine[i] = x; } e[key] = mine.filter((y) => !del.has(y.id)); }
+    for (const key of ["matieres", "cours", "journal", "missions", "reunions", "contribs"]) { if (!Array.isArray(e[key])) e[key] = []; const mine = e[key]; for (const x of inc.ecole[key] || []) { if (del.has(x.id)) continue; const i = mine.findIndex((y) => y.id === x.id); if (i < 0) mine.push(x); else if ((x.ts || 0) > (mine[i].ts || 0)) mine[i] = x; } e[key] = mine.filter((y) => !del.has(y.id)); }
     if (inc.ecole.setup) e.setup = true;
     if (inc.ecole.entreprise && typeof inc.ecole.entreprise === "object" && (inc.ecole.entreprise.ts || 0) > ((e.entreprise || {}).ts || 0)) e.entreprise = inc.ecole.entreprise;
   }
@@ -3515,10 +3522,11 @@ function viewRendu(id) {
     <div class="row">${confirm ? `<span class="small">Supprimer ce rendu ?</span><button class="btn sm danger" data-act="ecDelRendu" data-id="${esc(id)}">Oui, supprimer</button><button class="btn sm ghost" data-act="ecCancelDel">Annuler</button>` : `<button class="btn sm ghost danger" data-act="ecAskDel" data-key="rendu:${esc(id)}">Supprimer ce rendu</button>`}<span class="spacer"></span><span class="muted small">Enregistrement automatique · visible dans le calendrier</span></div>
   </div>`;
 }
-function ecObj(kind, id) { return kind === "mat" ? matiere(id) : kind === "cours" ? coursItem(id) : kind === "rendu" ? renduItem(id) : kind === "jour" ? jourItem(id) : kind === "mission" ? missionItem(id) : kind === "entreprise" ? ent().entreprise : null; }
+function ecObj(kind, id) { return kind === "mat" ? matiere(id) : kind === "cours" ? coursItem(id) : kind === "rendu" ? renduItem(id) : kind === "jour" ? jourItem(id) : kind === "mission" ? missionItem(id) : kind === "entreprise" ? ent().entreprise : kind === "reunion" ? reunionItem(id) : kind === "contrib" ? contribItem(id) : null; }
 function ecApply(el) {
   const { ec: field, kind, id } = el.dataset; const o = ecObj(kind, id); if (!o) return false;
   let v = el.value;
+  if (field === "prepa" && o.dit) o.dit = false;
   if (field === "tags" || field === "notions" || field === "stack") v = v.split(",").map((x) => x.trim().replace(/^#/, "")).filter(Boolean).slice(0, 20);
   else if (field === "date" || field === "debut" || field === "fin") v = v || null;
   else if (field === "titre" || field === "nom") { if (!v.trim()) return false; v = v.slice(0, 160); }
@@ -4272,6 +4280,7 @@ function entNotions() {
   const add = (n, src) => { const k = norm(n); if (!k) return; const cur = map.get(k) || { label: n.trim(), key: k, count: 0, last: "", srcs: [] }; cur.count++; if (src.date > cur.last) cur.last = src.date; if (cur.srcs.length < 4) cur.srcs.push(src); map.set(k, cur); };
   for (const j of ent().journal) for (const n of j.notions || []) add(n, { href: "#j-" + j.id, label: "Journal du " + frDate(j.date), date: j.date || "" });
   for (const m of ent().missions) for (const n of m.notions || []) add(n, { href: "#ms-" + m.id, label: "Mission « " + m.titre + " »", date: m.debut || "" });
+  for (const r of reunions()) for (const n of r.notions || []) add(n, { href: "#re-" + r.id, label: "Réunion du " + frDate(r.date), date: r.date || "" });
   return [...map.values()].sort((a, b) => b.last.localeCompare(a.last) || b.count - a.count);
 }
 function notionModules(n) {
@@ -4321,6 +4330,7 @@ function viewEntreprise() {
       ${js.length ? `<div class="stack" style="gap:6px">${shownJ.map(jourRow).join("")}</div>${js.length > 8 ? `<button class="btn sm ghost" data-act="entAllJ">${u.entAllJ ? "Voir moins" : `Voir les ${js.length} entrées`}</button>` : ""}`
         : `<p class="muted">Pas encore d'entrée. Une entrée par jour en entreprise (ou par semaine) : ce que tu as fait, appris, ce qui t'a bloquée, avec des captures. Ctrl+V colle une capture d'écran directement.</p>`}
     </section>
+    ${entSectionsReunions()}
     <section class="home-sec">
       <div class="sec-head"><h2>Missions</h2><span class="muted small">${e.missions.filter((m) => (m.statut || "en_cours") === "en_cours").length} en cours</span></div>
       ${ms.length ? `<div class="ent-grid">${ms.map(missionCard).join("")}</div>` : `<p class="muted">Une mission = un ticket, une fonctionnalité, un projet que tu prends en charge. C'est ce que tu raconteras dans ton rapport.</p>`}
@@ -4346,6 +4356,116 @@ function viewEntreprise() {
       ${filesCard("entreprise", "infos", inf).replace("<h3 style=\"margin:0\">Fichiers</h3>", "<h3 style=\"margin:0\">Documents</h3><span class=\"muted small\">contrat d'apprentissage, fiche de poste, attestations, livret d'apprentissage…</span>")}
     </section>
   </div>`;
+}
+/* ---------- En entreprise : réunions et « ma valeur ajoutée » (contributions) ---------- */
+const R_TYPES = { equipe: "Réunion d'équipe", sprint: "Sprint / planning", retro: "Rétro", demo: "Démo", tuteur: "Point avec mon tuteur", client: "Réunion client", autre: "Autre" };
+const C_STATUTS = { idee: "Idée", proposee: "Proposée", acceptee: "Acceptée", faite: "Faite", abandonnee: "Abandonnée" };
+const C_TYPES = { doc: "Documentation", test: "Tests", correctif: "Petit correctif", outil: "Outil / automatisation", amelioration: "Amélioration", veille: "Partage de veille", question: "Question utile", autre: "Autre" };
+function reunions() { const e = ent(); if (!Array.isArray(e.reunions)) e.reunions = []; return e.reunions; }
+function contribs() { const e = ent(); if (!Array.isArray(e.contribs)) e.contribs = []; return e.contribs; }
+function reunionItem(id) { return reunions().find((x) => x.id === id); }
+function contribItem(id) { return contribs().find((x) => x.id === id); }
+function reunionsSorted() { return reunions().slice().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || (b.ts || 0) - (a.ts || 0)); }
+function aDire() { const r = reunionsSorted().find((x) => String(x.prepa || "").trim()); return r && (!r.dit) ? r : null; }
+function reunionRow(r) {
+  const nAct = (String(r.actions || "").match(/^\s*[-*] \[ \]/gm) || []).length;
+  return `<a class="r-row ent-j" href="#re-${esc(r.id)}"><span class="ent-date"><b>${esc(frDate(r.date))}</b></span><span class="r-main"><b>${esc(r.titre || R_TYPES[r.type] || "Réunion")}</b><small>${r.type && r.titre ? `<span class="chip ghost">${esc(R_TYPES[r.type] || r.type)}</span> ` : ""}${esc(firstLine(r.decisions) || firstLine(r.notes) || "")}</small></span>${nAct ? `<span class="muted small">${nAct} action${nAct > 1 ? "s" : ""} ouverte${nAct > 1 ? "s" : ""}</span>` : ""}</a>`;
+}
+function contribCard(c) {
+  const s = c.statut || "idee";
+  return `<a class="card ent-m" href="#co-${esc(c.id)}"><div class="row"><span class="r-st co-${s}">${C_STATUTS[s]}</span><span class="chip ghost">${esc(C_TYPES[c.type] || "Autre")}</span><span class="spacer"></span><span class="muted small">${c.date ? esc(frDate(c.date)) : ""}</span></div><b class="ent-m-t">${esc(c.titre)}</b>${firstLine(c.constat) ? `<span class="muted small">${esc(firstLine(c.constat))}</span>` : ""}${c.aQui ? `<span class="small">À proposer à : ${esc(c.aQui)}</span>` : ""}</a>`;
+}
+function entSectionsReunions() {
+  const rs = reunionsSorted(); const u = state.ui; const shown = u.entAllR ? rs : rs.slice(0, 5);
+  const ad = aDire(); const cs = contribs().slice().sort((a, b) => Object.keys(C_STATUTS).indexOf(a.statut || "idee") - Object.keys(C_STATUTS).indexOf(b.statut || "idee") || (b.ts || 0) - (a.ts || 0));
+  const faites = cs.filter((c) => c.statut === "faite" || c.statut === "acceptee").length;
+  const ideas = u.coIdeas || {};
+  return `
+    ${ad ? `<div class="card a-dire"><div class="row"><b>À dire à la prochaine réunion</b><span class="muted small">noté le ${esc(frDate(ad.date))}</span><span class="spacer"></span><button class="btn sm ghost" data-act="reDit" data-id="${esc(ad.id)}">C'est dit</button></div><div class="prose">${md(ad.prepa)}</div></div>` : ""}
+    <section class="home-sec">
+      <div class="sec-head"><h2>Réunions</h2><span class="muted small">${rs.length}</span><span class="spacer"></span>
+        <select class="field" id="re-type" style="width:auto">${Object.entries(R_TYPES).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select>
+        <button class="btn sm primary" data-act="reNew">Nouvelle réunion</button></div>
+      ${rs.length ? `<div class="stack" style="gap:6px">${shown.map(reunionRow).join("")}</div>${rs.length > 5 ? `<button class="btn sm ghost" data-act="entAllR">${u.entAllR ? "Voir moins" : `Voir les ${rs.length} réunions`}</button>` : ""}`
+        : `<p class="muted">Une fiche par réunion : tes notes, les décisions, qui fait quoi, ce que tu n'as pas compris, et ce que tu veux dire la prochaine fois.</p>`}
+    </section>
+    <section class="home-sec">
+      <div class="sec-head"><h2>Ma valeur ajoutée</h2><span class="muted small">${cs.length ? `${faites} acceptée${faites > 1 ? "s" : ""} ou faite${faites > 1 ? "s" : ""} sur ${cs.length}` : "ce que tu apportes en plus de tes tickets"}</span></div>
+      ${cs.length ? `<div class="ent-grid">${cs.map(contribCard).join("")}</div>` : `<p class="muted">Une doc qui manque, un test, un petit correctif, une question qui fait avancer, une trouvaille à partager… Note l'idée ici, puis suis-la jusqu'à « faite ». C'est aussi de la matière pour ton rapport et pour ton tuteur.</p>`}
+      <form class="row" data-form="coNew"><input class="field" name="titre" placeholder="Une idée de contribution : compléter le README d'installation, écrire les tests du panier…" required maxlength="160" style="flex:1;min-width:240px"><button class="btn sm">Ajouter</button></form>
+      <div class="card stack ai-block ai-only"><div class="row"><b>Trouver des idées</b><span class="muted small">Claude relit ton journal, tes missions et tes réunions récentes</span><span class="spacer"></span><button class="btn sm" data-act="coIdeas" ${ideas.busy ? "disabled" : ""}>${ideas.busy ? "Claude réfléchit…" : "Me proposer des idées"}</button></div>
+        ${ideas.texte ? `<div class="prose">${md(ideas.texte)}</div><div class="row"><button class="btn sm ghost" data-act="coIdeasClear">Effacer</button></div>` : ideas.err ? `<p class="err small">${esc(ideas.err)}</p>` : ""}</div>
+    </section>`;
+}
+function viewReunion(id) {
+  const r = reunionItem(id); if (!r) return `<div class="wrap"><h1>Réunion introuvable</h1><p><a href="#entreprise">Retour</a></p></div>`;
+  const prev = reunionsSorted().find((x) => x.id !== id && String(x.date || "") <= String(r.date || "") && String(x.prepa || "").trim());
+  const ai = (state.ui.reAi || {})[id] || {};
+  const f = (k, label, ph) => `<label class="ent-f"><span class="muted small">${label}</span><input class="field" data-ec="${k}" data-kind="reunion" data-id="${esc(id)}" value="${esc(k === "notions" ? (r.notions || []).join(", ") : r[k] || "")}" placeholder="${esc(ph)}"></label>`;
+  return `<div class="wrap">
+    ${entCrumb("Réunion")}
+    <input class="title-input" data-ec="titre" data-kind="reunion" data-id="${esc(id)}" value="${esc(r.titre || "")}" placeholder="${esc(R_TYPES[r.type] || "Réunion")}" maxlength="160" aria-label="Titre de la réunion">
+    <div class="row"><label class="row small"><span class="muted">Date</span><input class="field" type="date" data-ec="date" data-kind="reunion" data-id="${esc(id)}" value="${esc(r.date || "")}"></label>
+      <label class="row small"><span class="muted">Type</span><select class="field" data-ec="type" data-kind="reunion" data-id="${esc(id)}">${Object.entries(R_TYPES).map(([k, v]) => `<option value="${k}" ${k === r.type ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label></div>
+    ${prev && !prev.dit ? `<div class="card a-dire"><div class="row"><b>Ce que tu voulais dire</b><span class="muted small">préparé après la réunion du ${esc(frDate(prev.date))}</span><span class="spacer"></span><button class="btn sm ghost" data-act="reDit" data-id="${esc(prev.id)}">C'est dit</button></div><div class="prose">${md(prev.prepa)}</div></div>` : ""}
+    <div class="ent-fields">${f("participants", "Participants", "Léa (lead dev), Karim (PO), …")}${f("notions", "Notions ou mots que je ne connaissais pas (virgules)", "story points, feature flag, CI…")}</div>
+    <div class="card stack"><h3 style="margin:0">Mes notes</h3>${mdEditor("reunion", id, "notes", r.notes, "Ce qui s'est dit, au fil de l'eau. Pas besoin de faire joli.")}</div>
+    <div class="card stack"><h3 style="margin:0">Décisions prises</h3>${mdEditor("reunion", id, "decisions", r.decisions, "- On passe la page panier en React\n- La mise en prod est décalée à jeudi")}</div>
+    <div class="card stack"><h3 style="margin:0">Actions : qui fait quoi</h3>${mdEditor("reunion", id, "actions", r.actions, "- [ ] Moi : corriger le tri du catalogue\n- [ ] Léa : relire la PR #42")}</div>
+    <div class="card stack"><h3 style="margin:0">Ce que je n'ai pas compris</h3>${mdEditor("reunion", id, "questions", r.questions, "Un mot, une décision, un sujet technique… à demander à ton tuteur ou à travailler dans l'atelier.")}</div>
+    <div class="card stack a-dire-edit"><h3 style="margin:0">Ce que je veux dire à la prochaine réunion</h3><span class="muted small">une question, une idée, un point d'avancement : il s'affichera en haut de l'espace Entreprise</span>${mdEditor("reunion", id, "prepa", r.prepa, "- Demander pourquoi on garde jQuery sur la page compte\n- Dire que j'ai fini les tests du panier")}</div>
+    <div class="card stack ai-block ai-only"><h3 style="margin:0">Avec Claude</h3>
+      <div class="row"><button class="btn sm" data-act="reAi" data-id="${esc(id)}" data-what="prepa" ${ai.busy ? "disabled" : ""}>Préparer ma prochaine intervention</button><button class="btn sm" data-act="reAi" data-id="${esc(id)}" data-what="cr" ${ai.busy ? "disabled" : ""}>Rédiger le compte rendu</button>${ai.busy ? `<span class="muted small"><span class="spin"></span> Claude écrit…</span>` : ""}</div>
+      ${ai.texte ? `<div class="prose">${md(ai.texte)}</div><div class="row"><button class="btn sm" data-act="reAiCopy" data-id="${esc(id)}">Copier</button>${ai.what === "prepa" ? `<button class="btn sm primary" data-act="reAiKeep" data-id="${esc(id)}">Ajouter à « ce que je veux dire »</button>` : `<button class="btn sm" data-act="reAiKeepCr" data-id="${esc(id)}">Garder comme compte rendu</button>`}<button class="btn sm ghost" data-act="reAiClear" data-id="${esc(id)}">Effacer</button></div>` : ai.err ? `<p class="err small">${esc(ai.err)}</p>` : ""}
+      ${r.cr ? `<details class="small"><summary>Compte rendu gardé</summary><div class="prose">${md(r.cr)}</div><button class="btn sm" data-act="reCrCopy" data-id="${esc(id)}">Copier le compte rendu</button></details>` : ""}
+    </div>
+    ${filesCard("reunion", id, r).replace('<h3 style="margin:0">Fichiers</h3>', '<h3 style="margin:0">Supports et captures</h3>')}
+    ${delRow("reunion", id, "cette réunion")}
+  </div>`;
+}
+function viewContrib(id) {
+  const c = contribItem(id); if (!c) return `<div class="wrap"><h1>Contribution introuvable</h1><p><a href="#entreprise">Retour</a></p></div>`;
+  const s = c.statut || "idee";
+  return `<div class="wrap">
+    ${entCrumb("Ma valeur ajoutée")}
+    <input class="title-input" data-ec="titre" data-kind="contrib" data-id="${esc(id)}" value="${esc(c.titre)}" maxlength="160" aria-label="Titre">
+    <div class="row"><span class="seg">${Object.entries(C_STATUTS).map(([k, v]) => `<button class="${s === k ? "on" : ""}" data-act="coStatut" data-id="${esc(id)}" data-s="${k}">${v}</button>`).join("")}</span>
+      <label class="row small"><span class="muted">Type</span><select class="field" data-ec="type" data-kind="contrib" data-id="${esc(id)}">${Object.entries(C_TYPES).map(([k, v]) => `<option value="${k}" ${k === (c.type || "autre") ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label></div>
+    <div class="ent-fields"><label class="ent-f"><span class="muted small">À qui en parler</span><input class="field" data-ec="aQui" data-kind="contrib" data-id="${esc(id)}" value="${esc(c.aQui || "")}" placeholder="mon tuteur, Léa, en rétro…"></label></div>
+    <div class="card stack"><h3 style="margin:0">Ce que j'ai remarqué</h3>${mdEditor("contrib", id, "constat", c.constat, "Le problème ou le manque : « installer le projet m'a pris une journée, le README ne parle pas de Docker »")}</div>
+    <div class="card stack"><h3 style="margin:0">Ce que je propose</h3>${mdEditor("contrib", id, "proposition", c.proposition, "Concret et petit : « j'écris une page Démarrer le projet en 30 minutes »")}</div>
+    <div class="card stack"><h3 style="margin:0">Ce qui s'est passé</h3>${mdEditor("contrib", id, "suite", c.suite, "La réponse de l'équipe, ce que tu as livré, les retours…")}</div>
+    ${filesCard("contrib", id, c).replace('<h3 style="margin:0">Fichiers</h3>', '<h3 style="margin:0">Captures et documents</h3>')}
+    ${delRow("contrib", id, "cette contribution")}
+  </div>`;
+}
+function entContext(days) {
+  const lim = dPlus(today(), -(days || 30)); const e = ent(); const cut = (s, n) => String(s || "").slice(0, n);
+  const j = e.journal.filter((x) => (x.date || "") >= lim).slice(-12).map((x) => `- ${x.date} : ${cut(x.fait, 300)} | appris : ${cut(x.appris, 150)} | bloquée : ${cut(x.bloque, 150)}`).join("\n");
+  const m = e.missions.slice(-6).map((x) => `- ${x.titre} (${M_STATUTS[x.statut || "en_cours"]}) : ${cut(x.contexte, 200)} | stack : ${(x.stack || []).join(", ")}`).join("\n");
+  const r = reunionsSorted().slice(0, 4).map((x) => `- ${x.date} ${R_TYPES[x.type] || ""} : ${cut(x.notes, 500)} | décisions : ${cut(x.decisions, 250)}`).join("\n");
+  const done = allModules().filter((x) => prog(x.id)?.done).map((x) => x.title).slice(-25).join(", ");
+  const inf = e.entreprise || {};
+  return `Alternante en développement web (MBA, alternance). Entreprise : ${inf.nom || "?"}, poste : ${inf.poste || "développeuse en alternance"}, stack : ${(inf.stack || []).join(", ") || "?"}.\nModules de formation déjà faits : ${done || "?"}.\nJournal récent :\n${j || "(vide)"}\nMissions :\n${m || "(aucune)"}\nRéunions récentes :\n${r || "(aucune)"}`;
+}
+async function reAi(id, what) {
+  const r = reunionItem(id); if (!r) return; const st = state.ui.reAi || (state.ui.reAi = {}); const u = st[id] = { busy: true, what }; render();
+  const notes = `Réunion du ${r.date} (${R_TYPES[r.type] || "réunion"}${r.participants ? ", participants : " + r.participants : ""}).\nNotes :\n${String(r.notes || "").slice(0, 4000)}\nDécisions :\n${String(r.decisions || "").slice(0, 1500)}\nActions :\n${String(r.actions || "").slice(0, 1500)}\nCe que je n'ai pas compris :\n${String(r.questions || "").slice(0, 1000)}`;
+  const prompt = what === "cr"
+    ? `Rédige en français un compte rendu clair et court de cette réunion, prêt à envoyer à l'équipe par une alternante qui a pris les notes. Markdown, sans introduction, avec exactement : **Contexte** (1 phrase), **Décisions** (liste), **Actions** (liste « personne : action », avec l'échéance si elle est connue), **Points ouverts** (liste, seulement s'il y en a). N'invente rien qui ne soit pas dans les notes ; si une info manque, n'en parle pas. Termine par une ligne « Dites-moi si j'ai oublié ou mal compris quelque chose. »\n\n${notes}`
+    : `Tu aides une alternante discrète à prendre la parole utilement à la prochaine réunion de son équipe, sans se forcer. À partir de ses notes et de son contexte, propose en français, en markdown, sans introduction :\n**Questions à poser** : 2 ou 3 questions courtes et pertinentes (qui montrent qu'elle a suivi, ou qui clarifient une décision), chacune formulée comme elle la dirait à l'oral.\n**Ce que je pourrais apporter** : 1 ou 2 contributions concrètes et petites, à sa portée (doc, test, correctif, vérification, partage), chacune avec une phrase pour la proposer.\n**Point d'avancement** : une phrase type pour dire où elle en est sur sa mission en cours, si le contexte le permet.\nReste réaliste pour une alternante ; pas de flatterie, pas de conseils généraux.\n\n${notes}\n\nContexte :\n${entContext(30)}`;
+  try { const res = await sample(prompt, { cache: false }); u.texte = String(res.text || "").trim(); }
+  catch (e) { u.err = "Claude n'a pas pu répondre. Réessaie."; }
+  u.busy = false; if (currentRoute() === "re-" + id) render();
+}
+async function coIdeas() {
+  const u = state.ui.coIdeas = { busy: true }; render();
+  const deja = contribs().map((c) => "- " + c.titre).join("\n");
+  try {
+    const res = await sample(`Tu aides une alternante développeuse à apporter de la valeur à son équipe au-delà de ses tickets. À partir de son contexte, propose en français, en markdown, sans introduction, 4 idées de contributions concrètes, petites et à sa portée (1 à 3 jours max), adaptées à ce qu'elle a vécu (blocages du journal, missions, réunions). Pour chacune : **titre court**, puis « Pourquoi c'est utile » (1 phrase), « Comment la proposer » (1 phrase qu'elle peut dire ou écrire), « À qui ». Types possibles : documentation (surtout ce qui l'a bloquée en arrivant), tests, petit correctif ou dette technique, outil/automatisation, partage de veille, compte rendu. Évite ce qu'elle a déjà noté :\n${deja || "(rien)"}\n\nContexte :\n${entContext(45)}`, { cache: false });
+    u.texte = String(res.text || "").trim();
+  } catch (e) { u.err = "Claude n'a pas pu répondre. Réessaie."; }
+  u.busy = false; if (currentRoute() === "entreprise") render();
 }
 function entCrumb(label) { return `<div class="row small"><a href="#entreprise">En entreprise</a><span class="muted">›</span><span class="muted">${label}</span></div>`; }
 function delRow(kind, id, label) {
@@ -4935,6 +5055,8 @@ function render() {
   else if (r === "entreprise") html = viewEntreprise();
   else if (r.startsWith("j-")) html = viewJour(r.slice(2));
   else if (r.startsWith("ms-")) html = viewMission(r.slice(3));
+  else if (r.startsWith("re-")) html = viewReunion(r.slice(3));
+  else if (r.startsWith("co-")) html = viewContrib(r.slice(3));
   else if (r === "cartes") html = viewCartes();
   else if (r === "methodes") html = viewMemo();
   else if (r === "cartes-revision") html = viewCardReview();
@@ -4989,8 +5111,20 @@ function keepDrafts() {
 const ACTIONS = {
   entJour(el) { let d = el.dataset.date || (el.dataset.pick && ($("#ent-jdate") || {}).value) || today(); const e = ent(); let j = e.journal.find((x) => x.date === d); if (!j) { j = { id: "j" + rid(), date: d, ts: Date.now(), fait: "", appris: "", bloque: "", notions: [], mission: (e.missions.find((m) => (m.statut || "en_cours") === "en_cours") || {}).id || "" }; e.journal.push(j); saveEcole(); } location.hash = "#j-" + j.id; },
   entAllJ() { state.ui.entAllJ = !state.ui.entAllJ; render(); },
+  entAllR() { state.ui.entAllR = !state.ui.entAllR; render(); },
+  reNew() { const type = ($("#re-type") || {}).value || "equipe"; const d = today(); let r = reunions().find((x) => x.date === d && x.type === type); if (!r) { r = { id: "re" + rid(), date: d, type, titre: "", participants: "", notes: "", decisions: "", actions: "", questions: "", prepa: "", notions: [], fichiers: [], ts: Date.now() }; reunions().push(r); saveEcole(); } location.hash = "#re-" + r.id; },
+  reDit(el) { const r = reunionItem(el.dataset.id); if (!r) return; r.dit = true; r.ts = Date.now(); saveEcole(); render(); toast("Bien joué."); },
+  reAi(el) { if (!sample) return; reAi(el.dataset.id, el.dataset.what); },
+  reAiClear(el) { const st = state.ui.reAi || {}; delete st[el.dataset.id]; render(); },
+  async reAiCopy(el) { const a = (state.ui.reAi || {})[el.dataset.id]; if (!a || !a.texte) return; try { await navigator.clipboard.writeText(a.texte); toast("Copié."); } catch (e) { toast("Copie impossible : sélectionne le texte à la main."); } },
+  async reCrCopy(el) { const r = reunionItem(el.dataset.id); if (!r || !r.cr) return; try { await navigator.clipboard.writeText(r.cr); toast("Compte rendu copié : colle-le dans un mail ou sur Slack/Teams."); } catch (e) { toast("Copie impossible : sélectionne le texte à la main."); } },
+  reAiKeep(el) { const r = reunionItem(el.dataset.id); const a = (state.ui.reAi || {})[el.dataset.id]; if (!r || !a) return; r.prepa = (String(r.prepa || "").trim() ? r.prepa.trim() + "\n\n" : "") + a.texte; r.dit = false; r.ts = Date.now(); delete state.ui.reAi[el.dataset.id]; saveEcole(); render(); toast("Ajouté à « ce que je veux dire »."); },
+  reAiKeepCr(el) { const r = reunionItem(el.dataset.id); const a = (state.ui.reAi || {})[el.dataset.id]; if (!r || !a) return; r.cr = a.texte; r.ts = Date.now(); delete state.ui.reAi[el.dataset.id]; saveEcole(); render(); toast("Compte rendu gardé."); },
+  coStatut(el) { const c = contribItem(el.dataset.id); if (!c) return; c.statut = el.dataset.s; c.ts = Date.now(); saveEcole(); render(); if (el.dataset.s === "faite") toast("Bravo : pense à le noter dans ton rapport."); },
+  coIdeas() { if (!sample) return; coIdeas(); },
+  coIdeasClear() { state.ui.coIdeas = null; render(); },
   entStatut(el) { const m = missionItem(el.dataset.id); if (!m) return; m.statut = el.dataset.s; if (el.dataset.s === "livree" && !m.fin) m.fin = today(); m.ts = Date.now(); saveEcole(); render(); },
-  entDel(el) { const e = ent(); const id = el.dataset.id; e.deleted.push(id); if (el.dataset.kind === "jour") e.journal = e.journal.filter((x) => x.id !== id); else { e.missions = e.missions.filter((x) => x.id !== id); for (const j of e.journal) if (j.mission === id) { j.mission = ""; j.ts = Date.now(); } } state.ui.confirmDel = null; saveEcole(); location.hash = "#entreprise"; toast("Supprimé."); },
+  entDel(el) { const e = ent(); const id = el.dataset.id; e.deleted.push(id); if (el.dataset.kind === "jour") e.journal = e.journal.filter((x) => x.id !== id); else if (el.dataset.kind === "reunion") e.reunions = reunions().filter((x) => x.id !== id); else if (el.dataset.kind === "contrib") e.contribs = contribs().filter((x) => x.id !== id); else { e.missions = e.missions.filter((x) => x.id !== id); for (const j of e.journal) if (j.mission === id) { j.mission = ""; j.ts = Date.now(); } } state.ui.confirmDel = null; saveEcole(); location.hash = "#entreprise"; toast("Supprimé."); },
   entNotionOk(el) { const inf = ent().entreprise; const s = new Set(inf.notionsOk || []); s.has(el.dataset.k) ? s.delete(el.dataset.k) : s.add(el.dataset.k); inf.notionsOk = [...s]; inf.ts = Date.now(); saveEcole(); render(); },
   entNotionAsk(el) { const u = qUi(); u.ctx = null; u.quote = ""; const q = qSave(`Explique-moi « ${el.dataset.l} » : je l'ai croisé en entreprise et l'atelier n'a pas de module dessus. À quoi ça sert, comment ça marche, un exemple.`); if (q) { saveProgress(); toast("Ajouté à Mes questions."); render(); } },
   memoOpen(el) { closeMemoPop(); state.ui.mFocus = el.dataset.id; state.ui.mFilter = ""; state.ui.mCat = ""; if (currentRoute() !== "methodes") location.hash = "#methodes"; else render(); setTimeout(() => { const d = document.getElementById("memo-" + el.dataset.id); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); } }, 60); },
@@ -5285,6 +5419,7 @@ function handleForm(f, submitter) {
   if (f.dataset.form === "ghFiles") { const m = $("#ghf-msg"); if (m) m.textContent = "Vérification…"; const old = { token: ghf.token, repo: ghf.repo, expired: ghf.expired }; ghfConnect(f.token.value, f.repo.value).then(() => { render(); toast("Jeton GitHub enregistré : tu peux ajouter tes fichiers."); }).catch((err) => { Object.assign(ghf, old); const mm = $("#ghf-msg"); if (mm) mm.innerHTML = `<span class="err">Ça n'a pas marché : ${esc(err.message)}.</span>`; }); return; }
   if (f.dataset.form === "ecSetup") { const idx = [...f.querySelectorAll("input[name=m]:checked")].map((x) => +x.value); setupEcole(idx, f.rendus.checked); render(); toast(`${idx.length} matière${idx.length > 1 ? "s" : ""} créée${idx.length > 1 ? "s" : ""}.`); return; }
   if (f.dataset.form === "ecNewCours") { const titre = f.titre.value.trim(); if (!titre) return; const c = { id: "co" + rid(), matiere: f.dataset.mat, titre: titre.slice(0, 160), date: f.date.value || null, tags: [], notes: "", liens: [], created: Date.now(), ts: Date.now() }; ecole().cours.push(c); saveEcole(); location.hash = "#c-" + c.id; return; }
+  if (f.dataset.form === "coNew") { const titre = f.titre.value.trim(); if (!titre) return; const c = { id: "co" + rid(), titre: titre.slice(0, 160), statut: "idee", type: "autre", aQui: "", constat: "", proposition: "", suite: "", date: today(), fichiers: [], ts: Date.now() }; contribs().push(c); saveEcole(); location.hash = "#co-" + c.id; return; }
   if (f.dataset.form === "entMission") { const titre = f.titre.value.trim(); if (!titre) return; const m = { id: "ms" + rid(), titre: titre.slice(0, 160), statut: "en_cours", debut: today(), fin: null, stack: (ent().entreprise.stack || []).slice(0, 6), notions: [], contexte: "", realise: "", difficultes: "", appris: "", liens: [], fichiers: [], ts: Date.now() }; ent().missions.push(m); saveEcole(); location.hash = "#ms-" + m.id; return; }
   if (f.dataset.form === "ecLink") { let url = f.url.value.trim(); if (!url) return; if (!/^https?:\/\//i.test(url)) url = "https://" + url; try { new URL(url); } catch (err) { toast("Ce lien n'a pas l'air valide."); return; } const o = ecObj(f.dataset.kind, f.dataset.id); if (!o) return; (o.liens = o.liens || []).push({ url, titre: f.titre.value.trim().slice(0, 80) }); o.ts = Date.now(); ecSaveKind(f.dataset.kind); render(); toast(toolOf(url).name + " ajouté."); return; }
   if (f.dataset.form === "ecCk") { const t = f.t.value.trim(); const r = renduItem(f.dataset.id); if (!t || !r) return; (r.checklist = r.checklist || []).push({ t: t.slice(0, 200), ok: false }); r.ts = Date.now(); saveProgress(); render(); const i = document.querySelector("form[data-form=ecCk] input"); if (i) i.focus(); return; }

@@ -192,6 +192,12 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   sinon GitHub met 30 jours (cas d'Ana le 17/11 : « jeton GitHub refusé »).
 - **Ctrl+V d'une capture d'écran** : écouteur `paste` global → envoie les fichiers collés dans la 1re zone `[data-drop]` de la page
   (journal, mission, documents, cours, rendus), renommés `capture-AAAA-MM-JJ-HHhMM.png`.
+- **Réunions** (19/11) : `ecole.reunions` [{id, date, type (R_TYPES), titre, participants, notes, decisions, actions (cases
+  markdown), questions, prepa (« ce que je veux dire à la prochaine réunion », bandeau `.a-dire` tant que `dit` est faux), cr
+  (compte rendu gardé), notions, fichiers}] ; route `#re-<id>`. Claude (`reAi`) : « Préparer ma prochaine intervention » et
+  « Rédiger le compte rendu » (copiable). Ana prend des notes en réunion le mardi mais parle peu.
+- **Ma valeur ajoutée** (19/11) : `ecole.contribs` [{id, titre, type (C_TYPES), statut idee|proposee|acceptee|faite|abandonnee,
+  aQui, constat, proposition, suite, fichiers}] ; route `#co-<id>` ; « Trouver des idées » (`coIdeas`, contexte = `entContext`).
 - Idées suivantes (proposées à Ana le 17/11, pas encore faites) : suivi tuteur (points d'étape, objectifs, prépa des questions),
   rapport d'entreprise et mémoire (plan + aide à la rédaction par Claude depuis le journal et les missions, problématiques pour la
   note d'intention), glossaire de l'entreprise (→ cartes mémo), grille de compétences. Ana n'a pas encore dit quel type d'entreprise.
