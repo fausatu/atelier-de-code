@@ -5027,6 +5027,51 @@ function edPosAt(ta, x, y) {
   const lines = ta.value.split("\n"); if (line < 0 || line >= lines.length || col < 0 || col >= lines[line].length) return -1;
   let pos = 0; for (let i = 0; i < line; i++) pos += lines[i].length + 1; return pos + col;
 }
+/* ---- survol PHP : classe (avec ses propriétés), variable (son type), ->propriété, méthode ---- */
+function phpBlock(t, i, open, close) { let d = 0; for (let k = i; k < t.length; k++) { const c = t[k]; if (c === "'" || c === '"') { const q = c; k++; while (k < t.length && t[k] !== q) { if (t[k] === "\\") k++; k++; } continue; } if (c === open) d++; else if (c === close && --d === 0) return k; } return -1; }
+function phpParams(src) {
+  const out = []; let d = 0, cur = "";
+  for (let k = 0; k < src.length; k++) { const c = src[k]; if ("([{".includes(c)) d++; else if (")]}".includes(c)) d--; if (c === "," && d === 0) { out.push(cur); cur = ""; } else cur += c; }
+  out.push(cur);
+  return out.map((p) => p.replace(/#\[[\s\S]*?\]\s*(?=(?:#\[|public|protected|private|readonly|[\w\\?]+\s+\$|\$))/g, "").replace(/\s+/g, " ").trim()).filter(Boolean);
+}
+function phpClassInfo(all, name) {
+  const m = new RegExp("((?:final\\s+|abstract\\s+|readonly\\s+)*(?:class|interface|enum|trait)\\s+" + name + "\\b[^{]*)\\{").exec(all); if (!m) return null;
+  const st = m.index + m[0].length - 1; const en = phpBlock(all, st, "{", "}"); const body = all.slice(st + 1, en < 0 ? all.length : en);
+  const props = [];
+  const ct = body.indexOf("__construct(");
+  if (ct >= 0) { const p0 = ct + "__construct".length; const p1 = phpBlock(body, p0, "(", ")"); phpParams(body.slice(p0 + 1, p1 < 0 ? body.length : p1)).forEach((p) => { if (/^(public|protected|private|readonly)\b/.test(p)) props.push(p.replace(/^(?:public|protected|private)\s+/, "").replace(/^readonly\s+/, "")); }); }
+  for (const pm of body.matchAll(/^\s*(?:public|protected|private)\s+(?:static\s+)?(?:readonly\s+)?([\w\\?|]+\s+)?(\$\w+)[^;]*;/gm)) props.push(((pm[1] || "") + pm[2]).trim());
+  const meths = [...body.matchAll(/function\s+(\w+)\s*\(/g)].map((x) => x[1]).filter((x) => x !== "__construct");
+  const doc = [props.length ? "**Propriétés** : " + props.map((p) => "`" + p.replace(/`/g, "") + "`").join(", ") : "", meths.length ? "**Méthodes** : " + meths.map((x) => "`" + x + "()`").join(", ") : ""].filter(Boolean).join(" · ");
+  return { sig: m[1].trim(), doc, mine: true };
+}
+function phpTypeOf(all, v, pos, varName) {
+  const q = varName.replace("$", "\\$");
+  const fn = v.lastIndexOf("function ", pos); const endSt = v.indexOf(";", pos); const stop = endSt < 0 ? v.length : endSt + 1; const scope = fn >= 0 ? v.slice(fn, stop) : v.slice(0, stop);
+  let m = new RegExp("([\\w\\\\?|]+)\\s+" + q + "\\b").exec(scope); if (m && !/^(public|protected|private|readonly|return|new|as|use|fn|function|echo)$/.test(m[1])) return { type: m[1], how: "param" };
+  m = new RegExp(q + "\\s*=\\s*new\\s+([\\w\\\\]+)").exec(scope); if (m) return { type: m[1], how: "new" };
+  m = new RegExp(q + "\\s*=\\s*([^;]+);").exec(scope); if (m) return { expr: m[1].replace(/\s+/g, " ").trim() };
+  m = new RegExp("(?:public|protected|private)\\s+(?:readonly\\s+)?([\\w\\\\?|]+)\\s+" + q + "\\b").exec(all); if (m) return { type: m[1], how: "prop" };
+  return null;
+}
+function phpHoverInfo(all, v, s, e, word, member) {
+  if (/^[A-Z]/.test(word) && !member) { const c = phpClassInfo(all, word); if (c) return c; }
+  if (word === "$this") { const c = [...v.slice(0, s).matchAll(/class\s+(\w+)/g)].pop(); return c ? { sig: "$this : " + c[1], doc: "L'objet en cours (une instance de `" + c[1] + "`).", mine: true } : null; }
+  if (member && v[e] === "(") { const m = new RegExp("((?:(?:public|protected|private|static|abstract|final)\\s+)*function\\s+" + word + "\\s*\\()").exec(all); if (m) { const p0 = m.index + m[0].length - 1; const p1 = phpBlock(all, p0, "(", ")"); const ret = (all.slice(p1 + 1).match(/^\s*:\s*([\w\\?|]+)/) || [])[1]; return { sig: m[1].replace(/\s+/g, " ").replace(/\($/, "") + "(" + phpParams(all.slice(p0 + 1, p1)).join(", ") + ")" + (ret ? ": " + ret : ""), mine: true }; } return null; }
+  if (member || (word.startsWith("$") && /(?:public|protected|private|readonly)\s+(?:readonly\s+)?(?:[\w\\?|]+\s+)?$/.test(v.slice(Math.max(0, s - 60), s)))) {
+    const name = word.replace(/^\$/, "");
+    const m = new RegExp("(?:public|protected|private)\\s+(?:static\\s+)?(?:readonly\\s+)?(?:([\\w\\\\?|]+)\\s+)?\\$" + name + "\\b(\\s*=\\s*[^,;)\\n]+)?").exec(all);
+    if (!m) return null;
+    const c = m[1] && /^[A-Z]/.test(m[1].replace("?", "")) ? phpClassInfo(all, m[1].replace("?", "")) : null;
+    return { sig: m[0].replace(/\s+/g, " ").trim(), doc: c ? "`" + m[1] + "` : " + c.sig + (c.doc ? " · " + c.doc : "") : "", mine: true };
+  }
+  if (!word.startsWith("$")) { const m = new RegExp("((?:(?:public|protected|private|static|abstract|final)\\s+)*function\\s+" + word + "\\s*\\()").exec(all); if (m) { const p0 = m.index + m[0].length - 1; const p1 = phpBlock(all, p0, "(", ")"); return { sig: m[1].replace(/\s+/g, " ").replace(/\($/, "") + "(" + phpParams(all.slice(p0 + 1, p1)).join(", ") + ")", mine: true }; } return null; }
+  const t = phpTypeOf(all, v, s, word); if (!t) return null;
+  if (t.expr) return { sig: word + " = " + edShort(t.expr, 120), mine: true };
+  const c = /^[A-Z]/.test(t.type.replace("?", "")) ? phpClassInfo(all, t.type.replace("?", "")) : null;
+  return { sig: t.type + " " + word, doc: c ? (c.doc || c.sig) : "", mine: true };
+}
 async function edHover(ta, x, y) {
   const pos = edPosAt(ta, x, y); const v = ta.value;
   const dgd = pos >= 0 ? edDiagAt(ta, pos) : null;
@@ -5049,16 +5094,16 @@ async function edHover(ta, x, y) {
     const memo = memoFor(word, "js", member, member ? edRecv(v, s - 1) : "");
     if (memo && (!doc || /[a-z] the |Returns|Calls|Creates|Determines|Adds/.test(doc))) doc = memo.desc;
   } else if (fam === "php") {
-    const memo = memoFor(word.replace(/^\$/, ""), "php", member) || (/^[A-Z]/.test(word) && v[e] === "(" ? null : null);
-    const all = [...document.querySelectorAll("textarea.editor")].filter((x) => x.dataset.ed === ta.dataset.ed).map((x) => x.value).join("\n");
-    const decl = word.startsWith("$") ? all.match(new RegExp("(?:public|protected|private)\\s+(?:readonly\\s+)?[^;=(]*\\" + word + "\\b[^;)]*")) : all.match(new RegExp("(?:(?:public|protected|private|static|abstract|final)\\s+)*(?:function\\s+" + word + "\\s*\\([^)]*\\)[^{;]*|(?:class|interface|enum|trait)\\s+" + word + "\\b[^{]*)"));
-    if (decl && !(memo && member)) sig = decl[0].trim(); else if (memo) sig = memo.sig.split("  ·  ")[0];
-    if (memo) doc = memo.desc;
+    const memo = memoFor(word.replace(/^\$/, ""), "php", member);
+    const all = edSiblings(ta).map((x) => x.value).join("\n");
+    const info = phpHoverInfo(all, v, s, e, word, member);
+    if (info && !(memo && member && !info.mine)) { sig = info.sig; doc = info.doc || (memo ? memo.desc : ""); }
+    else if (memo) { sig = memo.sig.split("  ·  ")[0]; doc = memo.desc; }
   }
   if (!sig && !doc) { edHoverClose(); return; }
   if (document.elementFromPoint(x, y) !== ta) return;
   let box = $("#ed-hover"); if (!box) { box = document.createElement("div"); box.id = "ed-hover"; box.className = "ed-sig ed-hover"; document.body.appendChild(box); }
-  box.innerHTML = `${sig ? `<code>${esc(edShort(sig, 260))}</code>` : ""}${doc ? `<p>${inl(edShort(doc, 320))}</p>` : ""}`;
+  box.innerHTML = `${sig ? `<code>${esc(edShort(sig, 260))}</code>` : ""}${doc ? `<p>${inl(edShort(doc, 520))}</p>` : ""}`;
   box.hidden = false; edHov.open = true; edHov.key = key;
   const p = edCaret(ta, s); const H = box.offsetHeight, W = box.offsetWidth;
   box.style.left = Math.max(8, Math.min(p.x, window.innerWidth - W - 8)) + "px"; box.style.top = (p.y - H - 4 > 8 ? p.y - H - 4 : p.y + p.lh + 4) + "px";

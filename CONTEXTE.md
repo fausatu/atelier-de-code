@@ -233,6 +233,9 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 - Aide aux paramètres (`#ed-sig`) à `(` et `,` : TS `getSignatureHelpItems`, sinon signature du mémo / de la fonction du fichier,
   paramètre courant en gras + explication du mémo. `memoFor(name, fam, member, recv)` exige le bon objet pour les clés `Math.min`, `api.get`…
 
+- Survol PHP enrichi (19/11) : `phpHoverInfo` → classe = signature + **Propriétés** (params promus du constructeur + propriétés
+  déclarées) + **Méthodes** ; `$variable` = son type (paramètre typé, `new X`, ou `$x = …`) + propriétés de la classe ;
+  `->prop` = déclaration + classe du type ; `->methode()` = signature avec params et type de retour ; `$this` = classe courante.
 - Aller à la définition (19/11) : F12, F5 (Ana fait Fn+F5) ou Ctrl/Cmd+clic dans un éditeur → `edGoDef` : TS/JS via
   `getDefinitionAtPosition` (ouvre l'onglet du bon fichier, sélectionne le nom ; symbole de lib → toast « vient d'une
   bibliothèque » ; import pas encore écrit → toast), PHP par regex (`edPhpDef` : méthode, propriété, classe, const, variable
