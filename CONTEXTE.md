@@ -195,7 +195,11 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 - **Réunions** (19/11) : `ecole.reunions` [{id, date, type (R_TYPES), titre, participants, notes, decisions, actions (cases
   markdown), questions, prepa (« ce que je veux dire à la prochaine réunion », bandeau `.a-dire` tant que `dit` est faux), cr
   (compte rendu gardé), notions, fichiers}] ; route `#re-<id>`. Claude (`reAi`) : « Préparer ma prochaine intervention » et
-  « Rédiger le compte rendu » (copiable). Ana prend des notes en réunion le mardi mais parle peu.
+  « Rédiger le compte rendu » (copiable). Ana prend des notes en réunion mais parle peu.
+  Ses 3 types (`R_TYPES`, rubriques `R_FIELDS`, boutons Claude `R_AI`) : `tech` (lundi : chacun dit semaine dernière / cette
+  semaine / problèmes → « Mon point » prérempli par `lundiPrefill` depuis le journal des 7 derniers jours + missions en cours,
+  bandeau le lundi), `equipe` (tout le monde : releases, boîte à idées → pitch gardé dans « Ma valeur ajoutée »), `consultant`
+  (organisation / communication : ce que j'en retiens, ce que j'applique, observations pour le mémoire). + `tuteur`, `autre`.
 - **Ma valeur ajoutée** (19/11) : `ecole.contribs` [{id, titre, type (C_TYPES), statut idee|proposee|acceptee|faite|abandonnee,
   aQui, constat, proposition, suite, fichiers}] ; route `#co-<id>` ; « Trouver des idées » (`coIdeas`, contexte = `entContext`).
 - Idées suivantes (proposées à Ana le 17/11, pas encore faites) : suivi tuteur (points d'étape, objectifs, prépa des questions),

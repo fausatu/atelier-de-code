@@ -4358,7 +4358,42 @@ function viewEntreprise() {
   </div>`;
 }
 /* ---------- En entreprise : réunions et « ma valeur ajoutée » (contributions) ---------- */
-const R_TYPES = { equipe: "Réunion d'équipe", sprint: "Sprint / planning", retro: "Rétro", demo: "Démo", tuteur: "Point avec mon tuteur", client: "Réunion client", autre: "Autre" };
+const R_TYPES = { tech: "Réunion technique du lundi", equipe: "Réunion de toute l'équipe", consultant: "Réunion avec le consultant", tuteur: "Point avec mon tuteur", autre: "Autre réunion" };
+/* Les rubriques de chaque type de réunion (celles d'Ana : technique le lundi, toute l'équipe, consultant organisation/communication). */
+const R_FIELDS = {
+  tech: [["monPoint", "Mon point", "ce que tu dis à ton tour : prépare-le avant, 30 secondes suffisent", "**Semaine dernière** : …\n**Cette semaine** : …\n**Blocages** : … (ou « rien de bloquant »)"],
+    ["notes", "Le point des autres", "qui fait quoi cette semaine", "- Léa : finit l'API d'export, bloquée sur…\n- Karim : …"],
+    ["problemes", "Problèmes remontés et solutions", "", "- La CI est lente → Léa regarde le cache\n- …"],
+    ["actions", "Actions : qui fait quoi", "", "- [ ] Moi : …\n- [ ] Léa : …"],
+    ["questions", "Ce que je n'ai pas compris", "à demander à ton tuteur ou à travailler dans l'atelier", "Un mot, un outil, un problème technique…"]],
+  equipe: [["notes", "Mes notes", "les sujets abordés, au fil de l'eau", "Ce qui s'est dit. Pas besoin de faire joli."],
+    ["releases", "Releases et calendrier", "", "- v2.3 en production jeudi 21/11\n- gel des mises en prod du 22/12 au 2/01"],
+    ["idees", "Boîte à idées", "les idées présentées, les tiennes comprises", "- Idée de Karim : …\n- Mon idée : …"],
+    ["decisions", "Décisions prises", "", "- …"],
+    ["actions", "Actions : qui fait quoi", "", "- [ ] Moi : …"],
+    ["questions", "Ce que je n'ai pas compris", "", "Un mot, une décision, un sujet…"]],
+  consultant: [["notes", "Sujets abordés", "ce que le consultant a fait travailler", "- Comment l'info circule entre le dev et le commercial\n- …"],
+    ["retenu", "Ce que j'en retiens", "les idées, méthodes ou outils d'organisation et de communication", "- Faire un compte rendu écrit après chaque réunion\n- …"],
+    ["appliquer", "Ce que je peux appliquer, moi", "même petit : dans tes mails, tes tickets, tes réunions", "- Annoncer mes blocages dès le lundi au lieu d'attendre"],
+    ["observations", "Mes observations sur l'équipe", "ce qui marche, ce qui coince : de la matière pour ton mémoire (MBA)", "…"],
+    ["actions", "Actions décidées", "", "- [ ] …"],
+    ["questions", "Ce que je n'ai pas compris", "", "…"]],
+  _: [["notes", "Mes notes", "", "Ce qui s'est dit, au fil de l'eau. Pas besoin de faire joli."],
+    ["decisions", "Décisions prises", "", "- …"],
+    ["actions", "Actions : qui fait quoi", "", "- [ ] Moi : …\n- [ ] Léa : …"],
+    ["questions", "Ce que je n'ai pas compris", "à demander à ton tuteur ou à travailler dans l'atelier", "Un mot, une décision, un sujet technique…"]],
+};
+const R_AI = { tech: [["point", "Préparer mon point du lundi"], ["prepa", "Préparer une question ou une idée"], ["cr", "Rédiger le compte rendu"]],
+  equipe: [["idee", "Préparer une idée pour la boîte à idées"], ["prepa", "Préparer ma prochaine intervention"], ["cr", "Rédiger le compte rendu"]],
+  consultant: [["memoire", "Ce que j'en retiens (pratique et mémoire)"], ["prepa", "Préparer ma prochaine intervention"], ["cr", "Rédiger le compte rendu"]],
+  _: [["prepa", "Préparer ma prochaine intervention"], ["cr", "Rédiger le compte rendu"]] };
+function lundiPrefill() {
+  const t = today(); const from = dPlus(t, -7); const e = ent();
+  const js = e.journal.filter((j) => (j.date || "") >= from && (j.date || "") < t).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const fait = js.map((j) => firstLine(j.fait)).filter(Boolean); const bloque = js.map((j) => firstLine(j.bloque)).filter(Boolean);
+  const ms = e.missions.filter((m) => (m.statut || "en_cours") === "en_cours").map((m) => m.titre);
+  return `**Semaine dernière** : ${fait.length ? fait.join(" ; ") : "…"}\n\n**Cette semaine** : ${ms.length ? ms.join(" ; ") : "…"}\n\n**Blocages** : ${bloque.length ? bloque.join(" ; ") : "rien de bloquant"}`;
+}
 const C_STATUTS = { idee: "Idée", proposee: "Proposée", acceptee: "Acceptée", faite: "Faite", abandonnee: "Abandonnée" };
 const C_TYPES = { doc: "Documentation", test: "Tests", correctif: "Petit correctif", outil: "Outil / automatisation", amelioration: "Amélioration", veille: "Partage de veille", question: "Question utile", autre: "Autre" };
 function reunions() { const e = ent(); if (!Array.isArray(e.reunions)) e.reunions = []; return e.reunions; }
@@ -4369,7 +4404,7 @@ function reunionsSorted() { return reunions().slice().sort((a, b) => String(b.da
 function aDire() { const r = reunionsSorted().find((x) => String(x.prepa || "").trim()); return r && (!r.dit) ? r : null; }
 function reunionRow(r) {
   const nAct = (String(r.actions || "").match(/^\s*[-*] \[ \]/gm) || []).length;
-  return `<a class="r-row ent-j" href="#re-${esc(r.id)}"><span class="ent-date"><b>${esc(frDate(r.date))}</b></span><span class="r-main"><b>${esc(r.titre || R_TYPES[r.type] || "Réunion")}</b><small>${r.type && r.titre ? `<span class="chip ghost">${esc(R_TYPES[r.type] || r.type)}</span> ` : ""}${esc(firstLine(r.decisions) || firstLine(r.notes) || "")}</small></span>${nAct ? `<span class="muted small">${nAct} action${nAct > 1 ? "s" : ""} ouverte${nAct > 1 ? "s" : ""}</span>` : ""}</a>`;
+  return `<a class="r-row ent-j" href="#re-${esc(r.id)}"><span class="ent-date"><b>${esc(frDate(r.date))}</b></span><span class="r-main"><b>${esc(r.titre || R_TYPES[r.type] || "Réunion")}</b><small>${r.type && r.titre ? `<span class="chip ghost">${esc(R_TYPES[r.type] || r.type)}</span> ` : ""}${esc(firstLine(r.decisions) || firstLine(r.retenu) || firstLine(r.problemes) || firstLine(r.notes) || "")}</small></span>${nAct ? `<span class="muted small">${nAct} action${nAct > 1 ? "s" : ""} ouverte${nAct > 1 ? "s" : ""}</span>` : ""}</a>`;
 }
 function contribCard(c) {
   const s = c.statut || "idee";
@@ -4381,10 +4416,11 @@ function entSectionsReunions() {
   const faites = cs.filter((c) => c.statut === "faite" || c.statut === "acceptee").length;
   const ideas = u.coIdeas || {};
   return `
+    ${new Date().getDay() === 1 && dayKind(today()) === "entreprise" && !rs.some((x) => x.date === today() && x.type === "tech") ? `<div class="card a-dire"><div class="row"><b>C'est lundi : réunion technique</b><span class="spacer"></span><button class="btn sm primary" data-act="reNew" data-type="tech">Préparer mon point</button></div><span class="small muted">L'atelier prépare ton « semaine dernière / cette semaine / blocages » à partir de ton journal et de tes missions en cours.</span></div>` : ""}
     ${ad ? `<div class="card a-dire"><div class="row"><b>À dire à la prochaine réunion</b><span class="muted small">noté le ${esc(frDate(ad.date))}</span><span class="spacer"></span><button class="btn sm ghost" data-act="reDit" data-id="${esc(ad.id)}">C'est dit</button></div><div class="prose">${md(ad.prepa)}</div></div>` : ""}
     <section class="home-sec">
       <div class="sec-head"><h2>Réunions</h2><span class="muted small">${rs.length}</span><span class="spacer"></span>
-        <select class="field" id="re-type" style="width:auto">${Object.entries(R_TYPES).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select>
+        <select class="field" id="re-type" style="width:auto">${Object.entries(R_TYPES).map(([k, v]) => `<option value="${k}" ${k === (new Date().getDay() === 1 ? "tech" : "equipe") ? "selected" : ""}>${esc(v)}</option>`).join("")}</select>
         <button class="btn sm primary" data-act="reNew">Nouvelle réunion</button></div>
       ${rs.length ? `<div class="stack" style="gap:6px">${shown.map(reunionRow).join("")}</div>${rs.length > 5 ? `<button class="btn sm ghost" data-act="entAllR">${u.entAllR ? "Voir moins" : `Voir les ${rs.length} réunions`}</button>` : ""}`
         : `<p class="muted">Une fiche par réunion : tes notes, les décisions, qui fait quoi, ce que tu n'as pas compris, et ce que tu veux dire la prochaine fois.</p>`}
@@ -4409,14 +4445,11 @@ function viewReunion(id) {
       <label class="row small"><span class="muted">Type</span><select class="field" data-ec="type" data-kind="reunion" data-id="${esc(id)}">${Object.entries(R_TYPES).map(([k, v]) => `<option value="${k}" ${k === r.type ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label></div>
     ${prev && !prev.dit ? `<div class="card a-dire"><div class="row"><b>Ce que tu voulais dire</b><span class="muted small">préparé après la réunion du ${esc(frDate(prev.date))}</span><span class="spacer"></span><button class="btn sm ghost" data-act="reDit" data-id="${esc(prev.id)}">C'est dit</button></div><div class="prose">${md(prev.prepa)}</div></div>` : ""}
     <div class="ent-fields">${f("participants", "Participants", "Léa (lead dev), Karim (PO), …")}${f("notions", "Notions ou mots que je ne connaissais pas (virgules)", "story points, feature flag, CI…")}</div>
-    <div class="card stack"><h3 style="margin:0">Mes notes</h3>${mdEditor("reunion", id, "notes", r.notes, "Ce qui s'est dit, au fil de l'eau. Pas besoin de faire joli.")}</div>
-    <div class="card stack"><h3 style="margin:0">Décisions prises</h3>${mdEditor("reunion", id, "decisions", r.decisions, "- On passe la page panier en React\n- La mise en prod est décalée à jeudi")}</div>
-    <div class="card stack"><h3 style="margin:0">Actions : qui fait quoi</h3>${mdEditor("reunion", id, "actions", r.actions, "- [ ] Moi : corriger le tri du catalogue\n- [ ] Léa : relire la PR #42")}</div>
-    <div class="card stack"><h3 style="margin:0">Ce que je n'ai pas compris</h3>${mdEditor("reunion", id, "questions", r.questions, "Un mot, une décision, un sujet technique… à demander à ton tuteur ou à travailler dans l'atelier.")}</div>
+    ${(R_FIELDS[r.type] || R_FIELDS._).map(([k, label, sub, ph]) => `<div class="card stack"><div class="row"><h3 style="margin:0">${esc(label)}</h3>${sub ? `<span class="muted small">${esc(sub)}</span>` : ""}${k === "monPoint" ? `<span class="spacer"></span><button class="btn sm ghost" data-act="rePrefill" data-id="${esc(id)}">Préremplir avec mon journal</button>` : ""}</div>${mdEditor("reunion", id, k, r[k], ph)}</div>`).join("")}
     <div class="card stack a-dire-edit"><h3 style="margin:0">Ce que je veux dire à la prochaine réunion</h3><span class="muted small">une question, une idée, un point d'avancement : il s'affichera en haut de l'espace Entreprise</span>${mdEditor("reunion", id, "prepa", r.prepa, "- Demander pourquoi on garde jQuery sur la page compte\n- Dire que j'ai fini les tests du panier")}</div>
     <div class="card stack ai-block ai-only"><h3 style="margin:0">Avec Claude</h3>
-      <div class="row"><button class="btn sm" data-act="reAi" data-id="${esc(id)}" data-what="prepa" ${ai.busy ? "disabled" : ""}>Préparer ma prochaine intervention</button><button class="btn sm" data-act="reAi" data-id="${esc(id)}" data-what="cr" ${ai.busy ? "disabled" : ""}>Rédiger le compte rendu</button>${ai.busy ? `<span class="muted small"><span class="spin"></span> Claude écrit…</span>` : ""}</div>
-      ${ai.texte ? `<div class="prose">${md(ai.texte)}</div><div class="row"><button class="btn sm" data-act="reAiCopy" data-id="${esc(id)}">Copier</button>${ai.what === "prepa" ? `<button class="btn sm primary" data-act="reAiKeep" data-id="${esc(id)}">Ajouter à « ce que je veux dire »</button>` : `<button class="btn sm" data-act="reAiKeepCr" data-id="${esc(id)}">Garder comme compte rendu</button>`}<button class="btn sm ghost" data-act="reAiClear" data-id="${esc(id)}">Effacer</button></div>` : ai.err ? `<p class="err small">${esc(ai.err)}</p>` : ""}
+      <div class="row">${(R_AI[r.type] || R_AI._).map(([w, label]) => `<button class="btn sm" data-act="reAi" data-id="${esc(id)}" data-what="${w}" ${ai.busy ? "disabled" : ""}>${esc(label)}</button>`).join("")}${ai.busy ? `<span class="muted small"><span class="spin"></span> Claude écrit…</span>` : ""}</div>
+      ${ai.texte ? `<div class="prose">${md(ai.texte)}</div><div class="row"><button class="btn sm" data-act="reAiCopy" data-id="${esc(id)}">Copier</button>${ai.what === "cr" ? `<button class="btn sm" data-act="reAiKeepCr" data-id="${esc(id)}">Garder comme compte rendu</button>` : ai.what === "point" ? `<button class="btn sm primary" data-act="reAiKeepField" data-id="${esc(id)}" data-f="monPoint">Mettre dans « Mon point »</button>` : ai.what === "memoire" ? `<button class="btn sm primary" data-act="reAiKeepField" data-id="${esc(id)}" data-f="retenu">Ajouter à « Ce que j'en retiens »</button>` : ai.what === "idee" ? `<button class="btn sm primary" data-act="reAiContrib" data-id="${esc(id)}">Garder dans « Ma valeur ajoutée »</button>` : `<button class="btn sm primary" data-act="reAiKeep" data-id="${esc(id)}">Ajouter à « ce que je veux dire »</button>`}<button class="btn sm ghost" data-act="reAiClear" data-id="${esc(id)}">Effacer</button></div>` : ai.err ? `<p class="err small">${esc(ai.err)}</p>` : ""}
       ${r.cr ? `<details class="small"><summary>Compte rendu gardé</summary><div class="prose">${md(r.cr)}</div><button class="btn sm" data-act="reCrCopy" data-id="${esc(id)}">Copier le compte rendu</button></details>` : ""}
     </div>
     ${filesCard("reunion", id, r).replace('<h3 style="margin:0">Fichiers</h3>', '<h3 style="margin:0">Supports et captures</h3>')}
@@ -4450,8 +4483,14 @@ function entContext(days) {
 }
 async function reAi(id, what) {
   const r = reunionItem(id); if (!r) return; const st = state.ui.reAi || (state.ui.reAi = {}); const u = st[id] = { busy: true, what }; render();
-  const notes = `Réunion du ${r.date} (${R_TYPES[r.type] || "réunion"}${r.participants ? ", participants : " + r.participants : ""}).\nNotes :\n${String(r.notes || "").slice(0, 4000)}\nDécisions :\n${String(r.decisions || "").slice(0, 1500)}\nActions :\n${String(r.actions || "").slice(0, 1500)}\nCe que je n'ai pas compris :\n${String(r.questions || "").slice(0, 1000)}`;
-  const prompt = what === "cr"
+  const notes = `Réunion du ${r.date} (${R_TYPES[r.type] || "réunion"}${r.participants ? ", participants : " + r.participants : ""}).\n` + (R_FIELDS[r.type] || R_FIELDS._).map(([k, label]) => `${label} :\n${String(r[k] || "").slice(0, 3000) || "(vide)"}`).join("\n");
+  const prompt = what === "point"
+    ? `Prépare en français le point qu'une alternante développeuse va dire à l'oral, à son tour, pendant la réunion technique du lundi (chacun dit ce qu'il a fait la semaine dernière, ce qu'il fera cette semaine, ses problèmes). Markdown, sans introduction : **Semaine dernière**, **Cette semaine**, **Blocages / besoin d'aide** (une ou deux phrases chacun, concrètes, à la première personne, ton simple et assuré, sans jargon inventé ; si elle n'a pas de blocage, une phrase pour le dire). Puis une ligne « À dire en ~30 secondes. » N'invente pas de tâches : utilise seulement son journal, ses missions et ses notes.\n\n${notes}\n\nBrouillon de son point :\n${String(r.monPoint || lundiPrefill())}\n\nContexte :\n${entContext(10)}`
+    : what === "memoire"
+    ? `Une alternante en MBA Développeur Full Stack a assisté à une séance avec un consultant qui aide l'équipe sur l'organisation, la communication et la circulation de l'information. À partir de ses notes, écris en français, en markdown, sans introduction : **Ce que j'en retiens** (3 à 5 points, reformulés clairement, en reliant si c'est pertinent à des notions de management/communication connues, nommées simplement), **Ce que je peux appliquer dès cette semaine** (2 actions concrètes à son niveau), **Piste pour mon mémoire** (1 ou 2 problématiques possibles tirées de ce qu'elle observe, formulées comme une question de mémoire). N'invente aucun fait sur l'entreprise.\n\n${notes}`
+    : what === "idee"
+    ? `Une alternante développeuse veut proposer une idée à la boîte à idées de son entreprise (présentée en réunion de toute l'équipe). Choisis la meilleure idée parmi ses contributions notées ou, à défaut, à partir de son contexte (blocages, missions), et rédige en français, en markdown, sans introduction, un pitch court : **Titre**, **Le problème** (1-2 phrases, concret), **Ma proposition** (1-2 phrases), **Ce que ça apporte** (1 phrase), **Ce que ça demande** (effort, qui), puis **À dire en réunion** (2 phrases à l'oral). Réaliste pour une alternante.\n\nSes idées notées :\n${contribs().filter((c) => (c.statut || "idee") === "idee").map((c) => "- " + c.titre + " : " + String(c.constat || "").slice(0, 200)).join("\n") || "(aucune)"}\n\n${notes}\n\nContexte :\n${entContext(30)}`
+    : what === "cr"
     ? `Rédige en français un compte rendu clair et court de cette réunion, prêt à envoyer à l'équipe par une alternante qui a pris les notes. Markdown, sans introduction, avec exactement : **Contexte** (1 phrase), **Décisions** (liste), **Actions** (liste « personne : action », avec l'échéance si elle est connue), **Points ouverts** (liste, seulement s'il y en a). N'invente rien qui ne soit pas dans les notes ; si une info manque, n'en parle pas. Termine par une ligne « Dites-moi si j'ai oublié ou mal compris quelque chose. »\n\n${notes}`
     : `Tu aides une alternante discrète à prendre la parole utilement à la prochaine réunion de son équipe, sans se forcer. À partir de ses notes et de son contexte, propose en français, en markdown, sans introduction :\n**Questions à poser** : 2 ou 3 questions courtes et pertinentes (qui montrent qu'elle a suivi, ou qui clarifient une décision), chacune formulée comme elle la dirait à l'oral.\n**Ce que je pourrais apporter** : 1 ou 2 contributions concrètes et petites, à sa portée (doc, test, correctif, vérification, partage), chacune avec une phrase pour la proposer.\n**Point d'avancement** : une phrase type pour dire où elle en est sur sa mission en cours, si le contexte le permet.\nReste réaliste pour une alternante ; pas de flatterie, pas de conseils généraux.\n\n${notes}\n\nContexte :\n${entContext(30)}`;
   try { const res = await sample(prompt, { cache: false }); u.texte = String(res.text || "").trim(); }
@@ -5112,7 +5151,10 @@ const ACTIONS = {
   entJour(el) { let d = el.dataset.date || (el.dataset.pick && ($("#ent-jdate") || {}).value) || today(); const e = ent(); let j = e.journal.find((x) => x.date === d); if (!j) { j = { id: "j" + rid(), date: d, ts: Date.now(), fait: "", appris: "", bloque: "", notions: [], mission: (e.missions.find((m) => (m.statut || "en_cours") === "en_cours") || {}).id || "" }; e.journal.push(j); saveEcole(); } location.hash = "#j-" + j.id; },
   entAllJ() { state.ui.entAllJ = !state.ui.entAllJ; render(); },
   entAllR() { state.ui.entAllR = !state.ui.entAllR; render(); },
-  reNew() { const type = ($("#re-type") || {}).value || "equipe"; const d = today(); let r = reunions().find((x) => x.date === d && x.type === type); if (!r) { r = { id: "re" + rid(), date: d, type, titre: "", participants: "", notes: "", decisions: "", actions: "", questions: "", prepa: "", notions: [], fichiers: [], ts: Date.now() }; reunions().push(r); saveEcole(); } location.hash = "#re-" + r.id; },
+  reNew(el) { const type = (el && el.dataset.type) || ($("#re-type") || {}).value || "equipe"; const d = today(); let r = reunions().find((x) => x.date === d && x.type === type); if (!r) { r = { id: "re" + rid(), date: d, type, titre: "", participants: "", notes: "", decisions: "", actions: "", questions: "", prepa: "", notions: [], fichiers: [], ts: Date.now() }; if (type === "tech") r.monPoint = lundiPrefill(); reunions().push(r); saveEcole(); } location.hash = "#re-" + r.id; },
+  rePrefill(el) { const r = reunionItem(el.dataset.id); if (!r) return; const txt = lundiPrefill(); r.monPoint = String(r.monPoint || "").trim() ? r.monPoint.trim() + "\n\n" + txt : txt; r.ts = Date.now(); saveEcole(); const modes = state.ui.mdMode || (state.ui.mdMode = {}); modes["reunion:" + r.id + ":monPoint"] = "write"; render(); },
+  reAiKeepField(el) { const r = reunionItem(el.dataset.id); const a = (state.ui.reAi || {})[el.dataset.id]; if (!r || !a) return; const f = el.dataset.f; r[f] = f === "monPoint" ? a.texte : (String(r[f] || "").trim() ? r[f].trim() + "\n\n" : "") + a.texte; r.ts = Date.now(); delete state.ui.reAi[el.dataset.id]; saveEcole(); render(); toast("Ajouté."); },
+  reAiContrib(el) { const a = (state.ui.reAi || {})[el.dataset.id]; if (!a) return; const titre = ((a.texte.match(/\*\*Titre\*\*\s*:?\s*(.+)/) || [])[1] || "Idée pour la boîte à idées").replace(/\*+/g, "").trim().slice(0, 160); const c = { id: "co" + rid(), titre, statut: "idee", type: "amelioration", aQui: "boîte à idées", constat: "", proposition: a.texte, suite: "", date: today(), fichiers: [], ts: Date.now() }; contribs().push(c); delete state.ui.reAi[el.dataset.id]; saveEcole(); location.hash = "#co-" + c.id; toast("Idée gardée dans « Ma valeur ajoutée »."); },
   reDit(el) { const r = reunionItem(el.dataset.id); if (!r) return; r.dit = true; r.ts = Date.now(); saveEcole(); render(); toast("Bien joué."); },
   reAi(el) { if (!sample) return; reAi(el.dataset.id, el.dataset.what); },
   reAiClear(el) { const st = state.ui.reAi || {}; delete st[el.dataset.id]; render(); },
