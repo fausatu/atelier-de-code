@@ -657,7 +657,13 @@ body.q-open .qfab { display: none; }
 .ent-j .ent-date { flex: none; width: 110px; font-size: 0.86rem; }
 .ent-j small .chip { font-size: 0.74rem; }
 .chip.ghost { background: transparent; border: 1px solid var(--line); }
-.ent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.ent-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: start; }
+@media (max-width: 760px) { .ent-grid { grid-template-columns: 1fr; } }
+.ent-mc { display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; text-decoration: none; color: inherit; }
+.ent-mc:hover { border-color: var(--accent); }
+.ent-mc .row { gap: 8px; flex-wrap: nowrap; }
+.ent-mc-t { font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ent-mc .r-st { flex: none; }
 .ent-m { display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: inherit; }
 .ent-m:hover { border-color: var(--accent); }
 .ent-m-t { font-size: 1.02rem; }
@@ -4326,10 +4332,10 @@ function jourRow(j) {
     ${m ? `<span class="ent-jm">${esc(m.titre)}</span>` : ""}${tags ? `<div class="ent-jt">${tags}</div>` : ""}${!m && !tags && !String(j.fait || "").trim() ? `<span class="muted small">Pas encore rempli</span>` : ""}</a>`;
 }
 function missionCard(m) {
-  const nj = ent().journal.filter((j) => j.mission === m.id).length; const imgs = nbImages(m);
-  return `<a class="card ent-m" href="#ms-${esc(m.id)}"><div class="row"><span class="r-st ms-${m.statut || "en_cours"}">${M_STATUTS[m.statut || "en_cours"]}</span><span class="spacer"></span><span class="muted small">${m.debut ? esc(frDate(m.debut)) : ""}${m.fin ? " → " + esc(frDate(m.fin)) : ""}</span></div>
-    <b class="ent-m-t">${esc(m.titre)}</b>${firstLine(m.contexte) ? `<span class="muted small">${esc(firstLine(m.contexte))}</span>` : ""}
-    <div class="row small">${(m.stack || []).slice(0, 5).map((s) => `<span class="chip ghost">${esc(s)}</span>`).join("")}<span class="spacer"></span><span class="muted">${nj ? `${nj} jour${nj > 1 ? "s" : ""}` : ""}${nj && imgs ? " · " : ""}${imgs ? `${imgs} capture${imgs > 1 ? "s" : ""}` : ""}</span></div></a>`;
+  const nj = ent().journal.filter((j) => j.mission === m.id).length; const st = m.statut || "en_cours";
+  const dates = m.debut ? jourJour(m.debut) + (m.fin ? " → " + jourJour(m.fin) : "") : "";
+  return `<a class="card ent-mc" href="#ms-${esc(m.id)}"><div class="row"><b class="ent-mc-t">${esc(m.titre)}</b><span class="spacer"></span><span class="r-st ms-${st}">${M_STATUTS[st]}</span></div>
+    <span class="muted small">${esc(dates)}${dates && nj ? " · " : ""}${nj ? `${nj} jour${nj > 1 ? "s" : ""} au journal` : ""}</span></a>`;
 }
 function entTab() { if (!state.ui.entTab) { try { state.ui.entTab = localStorage.getItem("atelier-ent-tab") || "journal"; } catch (e) { state.ui.entTab = "journal"; } } return state.ui.entTab; }
 function viewEntreprise() {
@@ -4431,7 +4437,8 @@ function reunionRow(r) {
 }
 function contribCard(c) {
   const s = c.statut || "idee";
-  return `<a class="card ent-m" href="#co-${esc(c.id)}"><div class="row"><span class="r-st co-${s}">${C_STATUTS[s]}</span><span class="chip ghost">${esc(C_TYPES[c.type] || "Autre")}</span><span class="spacer"></span><span class="muted small">${c.date ? esc(frDate(c.date)) : ""}</span></div><b class="ent-m-t">${esc(c.titre)}</b>${firstLine(c.constat) ? `<span class="muted small">${esc(firstLine(c.constat))}</span>` : ""}${c.aQui ? `<span class="small">À proposer à : ${esc(c.aQui)}</span>` : ""}</a>`;
+  return `<a class="card ent-mc" href="#co-${esc(c.id)}"><div class="row"><b class="ent-mc-t">${esc(c.titre)}</b><span class="spacer"></span><span class="r-st co-${s}">${C_STATUTS[s]}</span></div>
+    <span class="muted small">${esc(C_TYPES[c.type] || "Autre")}${c.aQui ? " · à proposer à " + esc(c.aQui) : ""}</span></a>`;
 }
 function entSectionsReunions() {
   const rs = reunionsSorted(); const u = state.ui; const shown = u.entAllR ? rs : rs.slice(0, 5);

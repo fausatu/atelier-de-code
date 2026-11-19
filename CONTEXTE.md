@@ -260,6 +260,7 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   Ma valeur ajoutée, Notions, Mon alternance ; les bandeaux (journée à noter, lundi, à dire) restent au-dessus.
 - Boutons Claude des réunions en une ligne (`.ai-bar`). Zones de texte markdown : 96 px min, grandissent avec le texte.
 - Appliqué aussi à Mes cours (fiche de cours : notes d'abord, Fichiers/Liens repliés ; rendu : Fichiers/Liens repliés).
+- Cartes de missions et de contributions compactes (`.ent-mc`, 2 colonnes) : titre sur une ligne + statut, puis dates / type.
 - Pour toute nouvelle page : même principe.
 
 ## Prochaines fonctionnalités validées par Ana (dans cet ordre)
