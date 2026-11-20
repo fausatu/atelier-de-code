@@ -620,6 +620,8 @@ body.q-open .qfab { display: none; }
 .ed-sig code span.on { font-weight: 700; color: var(--accent); text-decoration: underline; }
 .ed-sig p { margin: 0; }
 .err-aide { color: var(--warn, #b7791f); white-space: pre-wrap; }
+.err-loc { color: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.err-loc:hover { color: var(--accent); }
 .err-aide code { background: rgb(255 255 255 / 0.08); color: inherit; }
 .a-dire { background: color-mix(in srgb, var(--accent) 7%, var(--surface)); display: flex; flex-direction: column; gap: 6px; }
 .a-dire .prose { font-size: 0.93rem; }
@@ -2091,9 +2093,12 @@ async function getPhp(onStatus) {
   phpRuntime = php;
   return php;
 }
-function joinPhpFiles(files) {
+function joinPhpFiles(files, map) {
   // Plusieurs fichiers PHP sans namespace : on les concatène, un seul <?php au début.
+  // `map` (facultatif) reçoit, pour chaque ligne du script final, { path, line } : de quoi retrouver la vraie ligne d'une erreur.
   let body = "";
+  const tags = [];
+  const keepNl = (m) => "\n".repeat((m.match(/\n/g) || []).length);
   const seenUse = new Set();
   files.forEach((f, i) => {
     let c = f.code.replace(/^﻿/, "");
@@ -2101,10 +2106,14 @@ function joinPhpFiles(files) {
     // `use App\…;` (les classes du projet sont déjà là) en gardant les numéros de ligne.
     c = c.replace(/^[ \t]*namespace\s+[\w\\]+\s*;[ \t]*$/gm, (l) => "// " + l.trim() + " (ignoré dans l'atelier)").replace(/^[ \t]*use\s+App\\[^;\n]+;[ \t]*$/gm, (l) => "// " + l.trim() + " (ignoré dans l'atelier)");
     c = c.replace(/^use\s+[^;\n]+;[ \t]*$/gm, (line) => { const k = line.replace(/\s+/g, " ").trim(); if (seenUse.has(k)) return "// " + k + " (déjà importé)"; seenUse.add(k); return line; });
-    if (i > 0) { c = c.replace(/^\s*<\?php\s*/i, "").replace(/^\s*declare\s*\(\s*strict_types\s*=\s*1\s*\)\s*;\s*/i, ""); }
-    body += (i ? "\n\n// ---- " + f.path + " ----\n" : "") + c;
+    if (i > 0) { c = c.replace(/^\s*<\?php[ \t]*/i, "").replace(/^(\s*)declare\s*\(\s*strict_types\s*=\s*1\s*\)\s*;[ \t]*/i, (m, sp) => keepNl(sp)); }
+    if (i) { body += "\n\n// ---- " + f.path + " ----\n"; tags.push(null, null, null); }
+    body += c;
+    const n = c.split("\n").length;
+    for (let k = 1; k <= n; k++) { if (k === 1 && tags.length && i) tags[tags.length - 1] = { path: f.path, line: 1 }; else if (k === 1 && !i) tags.push({ path: f.path, line: 1 }); else tags.push({ path: f.path, line: k }); }
   });
-  if (!/^\s*<\?php/i.test(body)) body = "<?php\n" + body;
+  if (!/^\s*<\?php/i.test(body)) { body = "<?php\n" + body; tags.unshift(null); }
+  if (map) map.push(...tags);
   return body;
 }
 const PHP_POLYFILLS = `if (!function_exists('mb_strlen')) {
@@ -2122,6 +2131,75 @@ if (!function_exists('check')) {
   function throws(callable $fn, string $class = \\Throwable::class): bool { try { $fn(); return false; } catch (\\Throwable $e) { return $e instanceof $class; } }
 }
 `;
+/* Erreurs PHP : la vraie ligne dans TON fichier (le script exécuté colle plusieurs fichiers), + une explication en français. */
+const PHP_ERR_FR = [
+  [/unexpected end of file/, "Le fichier se termine alors qu'un bloc est encore ouvert : il manque une accolade `}` (ou une parenthèse `)`) quelque part au-dessus. Compte les `{` et les `}` de tes fonctions et de ta classe."],
+  [/unexpected token ";", expecting "\)"/, "Une parenthèse `(` n'est pas fermée avant le `;` : il manque un `)` sur cette ligne."],
+  [/unexpected token "\}"/, "Accolade `}` inattendue : il manque sans doute un `;` à la fin de la ligne d'avant, ou il y a une accolade en trop."],
+  [/unexpected token ","/, "Virgule inattendue : souvent un `;` remplacé par une virgule, une virgule en trop entre deux éléments, une parenthèse fermée trop tôt, ou une virgule dans un `echo`/`return` au lieu du point `.` de concaténation."],
+  [/unexpected token "\)"/, "Parenthèse `)` inattendue : une parenthèse en trop, ou une virgule/un argument manquant juste avant."],
+  [/unexpected token "(\w+)"/, "Le mot « $1 » arrive à un endroit où PHP ne l'attend pas : regarde la fin de la ligne précédente (un `;` ou une `}` oublié ?)."],
+  [/unexpected token "([^"]+)"/, "PHP ne s'attendait pas à « $1 » ici. Regarde cette ligne ET la fin de celle d'avant : `;`, parenthèse, accolade ou virgule oubliée ou en trop."],
+  [/unexpected variable "(\$\w+)"/, "La variable `$1` arrive sans être attendue : il manque probablement un `;` à la fin de la ligne d'avant, ou un opérateur (`.`, `=`, `,`) juste avant."],
+  [/unexpected identifier "(\w+)"/, "Le mot « $1 » est inattendu : il manque peut-être le `$` d'une variable, un `;` à la ligne d'avant, ou des guillemets autour d'un texte."],
+  [/unexpected (double|single)-quoted string/, "Un texte entre guillemets arrive sans être attendu : il manque sûrement un `.` (concaténation), une virgule, ou un `;` juste avant."],
+  [/Undefined variable (\$\w+)/, "La variable `$1` n'existe pas ici : faute de frappe, variable créée dans une autre fonction, ou dans une méthode il fallait `$this->…`."],
+  [/Undefined array key ("?[^"\s]+"?)/, "La clé $1 n'existe pas dans ce tableau. Vérifie son nom, ou utilise `$tableau[clé] ?? valeurParDéfaut`."],
+  [/Undefined property: (\w+)::(\$\w+)/, "La classe `$1` n'a pas de propriété `$2` : vérifie le nom, ou déclare-la dans la classe."],
+  [/Call to undefined method (\w+)::(\w+)\(\)/, "La classe `$1` n'a pas de méthode `$2()` : faute de frappe, méthode pas encore écrite, ou méthode d'une autre classe."],
+  [/Call to undefined function (\w+)\(\)/, "La fonction `$1()` n'existe pas : faute de frappe, ou c'est une méthode (à appeler avec `$objet->$1()` ou `$this->$1()`)."],
+  [/Class "([^"]+)" not found/, "La classe `$1` est introuvable : vérifie son nom exact (majuscules comprises) et que son fichier existe bien dans le TD."],
+  [/Interface "([^"]+)" not found/, "L'interface `$1` est introuvable : vérifie son nom, ou crée-la."],
+  [/Cannot access (private|protected) property (\w+)::(\$\w+)/, "La propriété `$3` est `$1` : on ne peut pas la lire depuis l'extérieur de la classe `$2`. Passe par une méthode (un getter) ou change sa visibilité si c'est voulu."],
+  [/Call to (private|protected) method (\w+)::(\w+)\(\)/, "La méthode `$3()` est `$1` dans `$2` : elle ne peut être appelée que depuis la classe elle-même."],
+  [/must not be accessed before initialization/, "Une propriété typée est lue avant d'avoir reçu une valeur : donne-lui une valeur dans le constructeur (ou une valeur par défaut)."],
+  [/Cannot modify readonly property (\w+)::(\$\w+)/, "`$2` est `readonly` : on ne peut la remplir qu'une fois, dans le constructeur. Pour « changer » la valeur, crée un nouvel objet."],
+  [/Argument #(\d+) \((\$\w+)\) must be of type ([^,]+), (\S+) given/, "Le paramètre n°$1 (`$2`) attend une valeur de type `$3`, mais il reçoit un(e) `$4`. Regarde l'appel de la fonction (ligne indiquée en « appelée dans »)."],
+  [/Too few arguments to function ([\w:]+)\(\), (\d+) passed .* exactly (\d+) expected/, "`$1()` attend $3 argument(s), mais n'en reçoit que $2."],
+  [/Return value must be of type ([^,]+), (\S+) returned/, "La fonction promet de renvoyer `$1` (type de retour), mais elle renvoie `$2`. Vérifie le `return` (ou un `return` oublié)."],
+  [/Cannot (?:re)?declare (?:class|function) (\w+)|name is already in use/, "Ce nom est déclaré deux fois (deux classes ou fonctions identiques, peut-être dans deux fichiers)."],
+  [/Class (\w+) contains (\d+) abstract method/, "`$1` doit écrire toutes les méthodes abstraites (ou de l'interface) qu'elle hérite : il en manque $2. Ou alors déclare la classe `abstract`."],
+  [/Non-abstract method ([\w:]+)\(\) must contain body/, "La méthode `$1()` n'a pas de corps `{ … }` : ajoute-le, ou rends la méthode `abstract`."],
+  [/Attempt to read property "(\w+)" on (null|bool|int|string|array)/, "Tu lis `->$1` sur une valeur `$2`, pas sur un objet : l'objet n'existe pas (souvent une recherche qui a renvoyé `null`)."],
+  [/Call to a member function (\w+)\(\) on (null|bool|int|string|array)/, "Tu appelles `->$1()` sur une valeur `$2` au lieu d'un objet : vérifie que la variable contient bien l'objet attendu."],
+  [/Division by zero|Modulo by zero/, "Division par zéro : vérifie la valeur du diviseur avant de diviser."],
+  [/Array to string conversion/, "Tu affiches (ou concatènes) un tableau comme si c'était du texte : utilise `print_r`, `var_dump`, `implode` ou affiche un élément précis."],
+  [/Uncaught (\w*Exception|\w*Error)[^:]*: (.+?) in /, "Une exception `$1` a été lancée et personne ne l'a attrapée. Son message : « $2 ». Si c'est ton code qui la lance exprès (un `throw`), c'est le comportement prévu ; sinon, regarde la ligne indiquée."],
+];
+function phpLoc(map, n) {
+  const t = map[n - 1];
+  if (!t) return { txt: "ligne " + n + " (code de l'atelier)" };
+  if (t.atelier) return { txt: "dans le code préparé par l'atelier (pas le tien)" };
+  if (t.tests) return { txt: `dans les tests du TD (ligne ${t.line} des tests)` };
+  return { txt: `${t.path}, ligne ${t.line}`, path: t.path, line: t.line };
+}
+function phpErrHtml(text, map) {
+  const link = (loc) => loc.path ? `<a href="#" class="err-loc" data-act="edGotoLine" data-path="${esc(loc.path)}" data-line="${loc.line}" title="Aller à cette ligne">${esc(loc.txt)}</a>` : esc(loc.txt);
+  const out = [];
+  let firstLoc = null;
+  for (const raw of String(text).split("\n")) {
+    let line = raw.replace(/^PHP (?=(Fatal error|Parse error|Warning|Notice|Deprecated))/, "");
+    const isHead = /^(Fatal error|Parse error|Warning|Notice|Deprecated)/.test(line);
+    // repérer les emplacements, échapper le reste
+    const parts = []; let last = 0;
+    const re = / in php-wasm run script(?: on line |:)(\d+)|php-wasm run script\((\d+)\)/g; let mm;
+    while ((mm = re.exec(line))) {
+      parts.push(esc(line.slice(last, mm.index)));
+      const loc = phpLoc(map, Number(mm[1] || mm[2]));
+      if (!firstLoc && loc.path) firstLoc = loc;
+      parts.push(mm[1] ? " → " + link(loc) : (loc.path ? link(loc) : esc(loc.txt)));
+      last = re.lastIndex;
+    }
+    parts.push(esc(line.slice(last)));
+    let html = parts.join("").replace(/^(Fatal error|Parse error|Warning|Notice|Deprecated)/, (k) => ({ "Fatal error": "Erreur fatale", "Parse error": "Erreur de syntaxe", Warning: "Avertissement", Notice: "Remarque", Deprecated: "Obsolète" })[k]);
+    if (/^#\d+ /.test(line)) html = html.replace(/^#(\d+) /, '<span class="dim">appelée dans</span> ');
+    if (/^Stack trace:/.test(line)) html = '<span class="dim">Chemin des appels (du plus récent au plus ancien) :</span>';
+    if (/^#\d+ \{main\}/.test(line) || /^\s*thrown in/.test(line)) continue;
+    out.push(isHead ? `<span class="err">${html}</span>` : html);
+    if (isHead) { for (const [re2, aide] of PHP_ERR_FR) { const m2 = line.match(re2); if (m2) { out.push(`<span class="err-aide">→ ${inl(aide.replace(/\$(\d)/g, (_, i) => m2[+i] || ""))}</span>`); break; } } }
+  }
+  return out.join("\n");
+}
 async function runPhp(m, td, key, withTests) {
   const rs = (state.ui.runs[key] = state.ui.runs[key] || {});
   rs.busy = true; rs.tests = null; render();
@@ -2129,11 +2207,23 @@ async function runPhp(m, td, key, withTests) {
   try {
     const php = await getPhp((s) => { const c = con(); if (c) c.innerHTML = `<span class="dim">${esc(s)}</span>`; });
     const files = currentFiles(m, td);
-    let code = joinPhpFiles(files);
-    { const mm = code.match(/^\s*<\?php\s*(declare\s*\([^)]*\)\s*;)?/i); code = mm[0] + "\n" + PHP_POLYFILLS + "\n" + code.slice(mm[0].length); }
+    const map = [];
+    let code = joinPhpFiles(files, map);
+    const insertHead = (text, tag) => {
+      const mm = code.match(/^\s*<\?php\s*(declare\s*\([^)]*\)\s*;)?/i);
+      const L = mm[0].split("\n").length - 1, ins = "\n" + text + "\n", n = ins.split("\n").length - 1;
+      map.splice(L + 1, 0, ...Array(n - 1).fill(tag), map[L]);
+      code = mm[0] + ins + code.slice(mm[0].length);
+    };
+    insertHead(PHP_POLYFILLS, { atelier: true });
     const setup = td.run.setup ? td.run.setup.replace(/@@SETUP:(\w+)@@/g, (_, k) => (DATA.setups || {})[k] || "") : "";
-    if (setup) { const mm = code.match(/^\s*<\?php\s*(declare\s*\([^)]*\)\s*;)?/i); code = mm[0] + "\n" + setup + "\n" + code.slice(mm[0].length); }
-    if (withTests && td.run.tests) code += "\n\n// ---- tests ----\n" + PHP_TEST_PRELUDE + "\n" + td.run.tests + "\n";
+    if (setup) insertHead(setup, { atelier: true });
+    if (withTests && td.run.tests) {
+      const before = code.split("\n").length;
+      code += "\n\n// ---- tests ----\n" + PHP_TEST_PRELUDE + "\n" + td.run.tests + "\n";
+      const testStart = code.split("\n").length - td.run.tests.split("\n").length;
+      for (let l = before; l < code.split("\n").length; l++) map[l] = l >= testStart - 1 ? { tests: true, line: l - testStart + 2 } : { atelier: true };
+    }
     phpOut = [];
     const t0 = performance.now();
     let rc;
@@ -2148,8 +2238,7 @@ async function runPhp(m, td, key, withTests) {
       return true;
     }).join("\n").replace(/\n{3,}/g, "\n\n").trim();
     const isErr = /^(PHP )?(Fatal error|Parse error|Warning|Notice|Deprecated)/m.test(text) || rc !== 0;
-    rs.console = (text ? (isErr ? text.replace(/^((PHP )?(Fatal error|Parse error|Warning|Notice|Deprecated)[^\n]*)/gm, '<span class="err">$1</span>') : esc(text)) : '<span class="dim">(aucune sortie)</span>') + `\n<span class="dim">[fin · ${ms} ms · code ${rc}]</span>`;
-    if (!text || isErr) rs.console = (text ? text.replace(/</g, "&lt;").replace(/^((PHP )?(Fatal error|Parse error|Warning|Notice|Deprecated)[^\n]*)/gm, '<span class="err">$1</span>') : '<span class="dim">(aucune sortie)</span>') + `\n<span class="dim">[fin · ${ms} ms · code ${rc}]</span>`;
+    rs.console = (text ? (isErr ? phpErrHtml(text, map) : esc(text)) : '<span class="dim">(aucune sortie)</span>') + `\n<span class="dim">[fin · ${ms} ms · code ${rc}]</span>`;
     if (withTests) rs.tests = cases.length ? { cases } : { cases: [], error: isErr ? "Corrige d'abord l'erreur PHP ci-dessus." : "Aucun test n'a renvoyé de résultat." };
     if (withTests && cases.length && cases.every((c) => c.ok)) logActivity();
   } catch (e) {
@@ -5514,6 +5603,14 @@ const ACTIONS = {
     const tabs = $(".steps"); if (tabs) tabs.scrollIntoView({ block: "nearest" });
   },
   level(el) { keepDrafts(); state.ui.level[el.dataset.id] = Number(el.dataset.level); saveUiPos(); render(); },
+  edGotoLine(el) {
+    const path = el.dataset.path, line = Number(el.dataset.line) || 1;
+    let box = el.closest(".runout") || el; let ta = null;
+    while (box && !(ta = [...box.querySelectorAll("textarea.editor")].find((t) => edPath(t) === path))) box = box.parentElement;
+    if (!ta) { toast(`Fichier ${path}, ligne ${line}`); return; }
+    const lines = ta.value.split("\n"); let from = 0; for (let i = 0; i < Math.min(line - 1, lines.length); i++) from += lines[i].length + 1;
+    edReveal(ta, from, from + (lines[line - 1] || "").length);
+  },
   ftab(el) {
     keepDrafts(); const i = Number(el.dataset.i); state.ui.ftab[el.dataset.key] = i; state.ui.sbConfirmDel = null;
     const box = el.closest(".files"); if (!box) return;
