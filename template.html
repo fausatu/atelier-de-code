@@ -1878,6 +1878,8 @@ function diagram(d) {
     const x = DG.padX + n.col * colW + (colW - DG.nodeW) / 2, y = top + n.row * DG.rowH + (DG.rowH - h) / 2;
     pos[n.id] = { x, y, w, h, cx: x + w / 2, cy: y + h / 2 };
   }
+  const byId = Object.fromEntries(d.nodes.map((n) => [n.id, n]));
+  const occ = (c, r) => d.nodes.some((n) => n.row === r && c >= n.col && c <= n.col + (n.span || 1) - 1);
   let labels = "";
   let out = `<defs><marker id="dg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
   if (d.lanes) for (const l of d.lanes) {
@@ -1887,10 +1889,27 @@ function diagram(d) {
     out += dgText(x + w / 2, DG.padY + 13, l.label.toUpperCase(), "", "middle", 11, 700, col);
   }
   for (const e of d.edges || []) {
-    const a = pos[e.from], b = pos[e.to]; if (!a || !b) continue;
+    let a = pos[e.from], b = pos[e.to]; if (!a || !b) continue;
     const col = dgColor(e.color || "muted");
     let path, lx, ly;
-    if (Math.abs(a.cy - b.cy) < 2) {
+    const A = byId[e.from], B = byId[e.to];
+    const rowY = (k) => top + k * DG.rowH; // limite entre la rangée k-1 et k (milieu de l'espace vide)
+    const colX = (k) => DG.padX + k * colW;
+    const between = (x, y) => { const lo = Math.min(x, y), hi = Math.max(x, y); const r = []; for (let k = lo + 1; k < hi; k++) r.push(k); return r; };
+    if (A.row === B.row && between(A.col, B.col).some((c) => occ(c, A.row))) {
+      // même rangée mais une case au milieu : on passe par l'espace sous la rangée
+      const yb = rowY(A.row + 1); const toActor = B.kind === "actor"; const ex = toActor ? b.cx + (a.cx > b.cx ? 1 : -1) * (lw(B.label) / 2 + 4) : b.cx;
+      path = `M${a.cx},${a.y + a.h} L${a.cx},${yb} L${ex},${yb}` + (toActor ? "" : ` L${b.cx},${b.y + b.h}`); lx = (a.cx + ex) / 2; ly = yb;
+    } else if (A.col === B.col && between(A.row, B.row).some((r) => occ(A.col, r))) {
+      const xg = colX(A.col + 1) - 4; path = `M${a.x + a.w},${a.cy} L${xg},${a.cy} L${xg},${b.cy} L${b.x + b.w},${b.cy}`; lx = xg; ly = (a.cy + b.cy) / 2;
+    } else if (A.row !== B.row && A.col !== B.col && ((() => { const dir = B.col > A.col ? 1 : -1; for (let c = A.col + dir; c !== B.col + dir; c += dir) if (occ(c, A.row)) return true; return between(A.row, B.row).some((r) => occ(B.col, r)); })())) {
+      // l'angle « horizontal puis vertical » traverserait une case : on descend d'abord dans l'espace entre deux rangées
+      const down = B.row > A.row; const cands = []; for (let k = A.row + (down ? 1 : 0); down ? k <= B.row : k >= B.row + 1; k += down ? 1 : -1) cands.push(k);
+      const clear = (k) => { for (let r = Math.min(A.row, B.row) + 1; r < Math.max(A.row, B.row); r++) { const nearA = down ? r < k : r >= k; if (occ(nearA ? A.col : B.col, r)) return false; } return true; };
+      const k = cands.find(clear) ?? cands[0]; const yb = rowY(k) + (down ? -4 : 4);
+      if (A.kind === "actor") { const dir = B.col > A.col ? 1 : -1; const xg = colX(A.col + (dir > 0 ? 1 : 0)) + (dir > 0 ? -6 : 6); path = `M${dir > 0 ? a.x + a.w : a.x},${a.cy} L${xg},${a.cy} L${xg},${b.cy} L${dir > 0 ? b.x : b.x + b.w},${b.cy}`; lx = xg; ly = (a.cy + b.cy) / 2; }
+      else { path = `M${a.cx},${down ? a.y + a.h : a.y} L${a.cx},${yb} L${b.cx},${yb} L${b.cx},${down ? b.y : b.y + b.h}`; lx = (a.cx + b.cx) / 2; ly = yb; }
+    } else if (Math.abs(a.cy - b.cy) < 2) {
       const dir = b.cx > a.cx ? 1 : -1; const x1 = dir > 0 ? a.x + a.w : a.x, x2 = dir > 0 ? b.x : b.x + b.w;
       const yy = a.cy + (e.back ? 14 : 0);
       path = `M${x1},${yy} L${x2},${yy}`; lx = (x1 + x2) / 2; ly = e.back ? yy + 12 : yy - 11;

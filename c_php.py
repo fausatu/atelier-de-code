@@ -374,7 +374,7 @@ encaps = V2(v1["php-encapsulation"],
     nodes=[
       N("ext", 0, 0, "Code extérieur", "contrôleur, service…", kind="actor"),
       N("set", 1, 0, "$u->email = 'x'", "accès direct", kind="pill", color="bad"),
-      N("meth", 1, 1, "$u->changerEmail(new Email('x'))", "", kind="pill", color="good"),
+      N("meth", 1, 1, "$u->changerEmail(…)", "new Email('x')", kind="pill", color="good"),
       N("obj", 3, 0, "Utilisateur", "private Email $email", span=1),
       N("rule", 3, 1, "Email valide ?", "vérifié dans le constructeur d'Email", kind="note", color="good"),
     ],

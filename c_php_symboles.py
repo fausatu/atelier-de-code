@@ -72,11 +72,11 @@ module = {
   ],
   "diagram": D(
     nodes=[
-      N("cls", 0, 0, "class Produit", "TVA, $compteur, combien()", kind="doc", color="accent"),
+      N("dc", 0, 0, "Produit::TVA", "Produit::combien()", kind="pill", color="accent"),
+      N("cls", 1, 0, "class Produit", "TVA, $compteur, combien()", kind="doc", color="accent"),
       N("o1", 1, 1, "$clavier", "nom, prixHT, prixTTC()", kind="box", color="good"),
       N("o2", 2, 1, "$souris", "nom, prixHT, prixTTC()", kind="box", color="good"),
-      N("dc", 1, 0, "Produit::TVA", "Produit::combien()", kind="pill", color="accent"),
-      N("dobj", 3, 1, "$clavier->nom", "$clavier->prixTTC()", kind="pill", color="good"),
+      N("dobj", 3, 1, "$souris->nom", "$souris->prixTTC()", kind="pill", color="good"),
     ],
     edges=[E("cls", "dc", "::"), E("cls", "o1", "new"), E("cls", "o2", "new"), E("o2", "dobj", "->")],
     caption="Ce qui est à la CLASSE (static, constantes) se lit avec `::` ; ce qui est à chaque OBJET se lit avec `->`."),

@@ -275,6 +275,12 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   `namespace App\Controller;` → erreur fatale « Namespace declaration … very first statement ». Maintenant les lignes
   `namespace X;` et `use App\…;` sont mises en commentaire (« ignoré dans l'atelier »), numéros de ligne inchangés.
 
+## Schémas : tracé des flèches (20/11)
+- `diagram()` : une flèche ne traverse plus les cases. Même rangée avec une case au milieu → passe sous la rangée ; même
+  colonne bloquée → passe dans l'espace entre colonnes ; diagonale bloquée → descend d'abord dans l'espace entre rangées
+  (décalé de ±4 px selon le sens) ; départ d'un acteur → par le côté. Refaits : php-symboles (`::` / `->`), orga-props
+  (échelle « sinon »), libellé de php-encapsulation raccourci.
+
 ## Pages allégées (19/11, Ana : « les pages sont surchargées »)
 - Règle : par défaut, on n'affiche que l'essentiel. Une rubrique vide est remplacée par un bouton « + Rubrique » (`optSec`,
   `optFiles`, `optLinks`, `optInput`, assemblés par `optAll` ; ouverture `secOpen`). La 1re rubrique d'une fiche est toujours là.

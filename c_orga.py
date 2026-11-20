@@ -398,15 +398,14 @@ props = OM("orga-props", "Passer des props, ou pas : éviter le prop drilling", 
   ],
   D(
     nodes=[
-      N("q", 0, 0, "Qui a besoin de la donnée ?", "", kind="pill", color="accent"),
-      N("p", 1, 0, "Un enfant direct", "→ prop", kind="pill", color="good"),
-      N("f", 1, 1, "Deux frères", "→ remonter le state", kind="pill", color="good"),
+      N("p", 0, 0, "Un enfant direct", "→ une prop", kind="pill", color="good"),
+      N("f", 1, 0, "Deux frères", "→ remonter le state", kind="pill", color="good"),
       N("s", 2, 0, "Donnée du serveur", "→ useQuery partout (cache)", kind="pill", color="warn"),
       N("c", 2, 1, "Traverse la mise en page", "→ children (composition)", kind="pill", color="warn"),
-      N("x", 2, 2, "Donnée client globale", "→ Context", kind="pill", color="bad"),
+      N("x", 1, 1, "Donnée client globale", "→ Context", kind="pill", color="bad"),
     ],
-    edges=[E("q", "p"), E("q", "f"), E("q", "s", dashed=True), E("q", "c", dashed=True), E("q", "x", dashed=True)],
-    caption="De la solution la plus simple (une prop) à la plus lourde (un Context) : on prend la première qui convient."),
+    edges=[E("p", "f", "sinon"), E("f", "s", "sinon"), E("s", "c", "sinon"), E("c", "x", "sinon")],
+    caption="Qui a besoin de la donnée ? On essaie dans l'ordre, de la solution la plus simple (une prop) à la plus lourde (un Context), et on prend la première qui convient."),
   [
     L("Ce qu'est une prop, et le cas normal", r"""
 Une **prop** est un argument d'un composant. Le parent l'écrit comme un attribut HTML, l'enfant la reçoit dans ses paramètres (par déstructuration : `function FilmCard({ film, onAjouter })`) :
