@@ -23,6 +23,16 @@
 17 parcours, 95 modules. Récemment : éditeur avec paires auto, complétion et aide aux paramètres, espace En entreprise (journal, missions, documents, captures Ctrl+V), règle « expliquer avant d'utiliser » (encadré auto), module axios, parcours Organiser un projet React, fil rouge complet (9 modules), mémo des méthodes (#methodes, méthodes cliquables dans le code), Mes cours (matières/cours/rendus), notes par module, bouton flottant notes + questions ; parcours Découper, TypeScript, Terminal ; numéros de ligne dans les éditeurs ;
 tableau de bord « En cours » + page « Tous les parcours » (#parcours) ; barre latérale allégée (outils en icônes, « Mes parcours »).
 
+## PHP : module « Lire le PHP : -> :: [] => et static » (20/11)
+`c_php_symboles.py` (id `php-symboles`), 1er module du parcours PHP : objet `->` vs classe `::`, static, `[]`, `=>`, `?->`, `??`,
+mémo des autres symboles ; 3 TD (choisir le symbole, static ou pas avec `Temperature`, tableaux/fn/nullsafe).
+Ligatures de police désactivées sur `body` (sinon `->` et `=>` s'affichent en flèches).
+Erreurs PHP : `joinPhpFiles(files, map)` garde la correspondance ligne → fichier ; `phpErrHtml` rend fichier + ligne cliquables
+(`edGotoLine`) et ajoute une explication (`PHP_ERR_FR`).
+Questions d'Ana : Claude peut répondre en écrivant dans le doc db `data/users/<uid>/progress` (champ `questions`, `source: "claude"`,
+`statut: "repondue"`), MAIS Ana utilise surtout la version GitHub Pages (localStorage + gist) : dans ce cas lui donner un code
+d'import `ATELIER1:` contenant `{progress: {modules: {}, questions: [{id, reponse, source, statut}]}}` (fusion par id).
+
 ## Calendrier (fait le 16/11)
 Page `#calendrier` : mois par mois avec les jours école / entreprise / examens / rattrapages / férié (données de
 `ecole/calendrier.json`, injectées par build.py dans `DATA.cal`), détail du jour, ajout d'événements perso

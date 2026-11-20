@@ -2,6 +2,7 @@ import os
 import json, sys
 sys.path.insert(0, "/home/claude/atelier")
 from c_php import MODULES as PHP
+from c_php_symboles import MODULES as PHPSYM
 from c_doctrine import MODULES as DOC
 from c_ddd import MODULES as DDD
 from c_react import MODULES as REACT
@@ -60,7 +61,7 @@ TRACKS = [
      "desc": "Créer une API (REST, erreurs, auth, cache, idempotence, limites) et la consommer en PHP et en JS."},
 ]
 
-modules = PHP + DOC + DTO + ARCH + DDD + TSM + REACT + DATA_ + ORGA + FORMS + NEXT + GIT + TERM + API + DECOUPE + DEBUG + FIL + FIL2 + FIL3
+modules = PHPSYM + PHP + DOC + DTO + ARCH + DDD + TSM + REACT + DATA_ + ORGA + FORMS + NEXT + GIT + TERM + API + DECOUPE + DEBUG + FIL + FIL2 + FIL3
 ids = set()
 for m in modules:
     assert m["id"] not in ids, m["id"]
