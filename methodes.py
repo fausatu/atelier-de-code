@@ -198,6 +198,243 @@ E("match", "php", "match", ["fn:match"], "match ($valeur) { cas => résultat, �
   "Comme un `switch`, mais qui renvoie une valeur et compare strictement (`===`). Sans `default`, une valeur imprévue lève une erreur.", [], "la valeur du cas trouvé",
   "return match ($this) {\n    Forfait::Essentiel => 2,\n    Forfait::Standard => 4,\n    Forfait::Premium => 5,\n};")
 
+# =========================================================================== PHP : expressions régulières
+E("preg_replace", "php", "preg_replace", ["fn:preg_replace"], "preg_replace(string|array $motif, string|array $remplace, string $texte, int $limite = -1): string",
+  "Comme `str_replace`, mais ce qu'on cherche est décrit par une **expression régulière** (un motif) : « tous les espaces », « tout ce qui n'est pas une lettre »… Chaque morceau qui correspond est remplacé.",
+  [("$motif", "l'expression régulière entre `/…/`, par exemple `'/\\s+/'` (un ou plusieurs espaces)"),
+   ("$remplace", "le texte de remplacement ; `$1`, `$2`… y insèrent les morceaux capturés par les parenthèses du motif"),
+   ("$texte", "la chaîne de départ (non modifiée)"),
+   ("$limite", "combien de remplacements au maximum (tous si absent)")],
+  "la nouvelle chaîne (ou `null` si le motif est mal écrit)",
+  "preg_replace('/\\s+/', ' ', \"la   nuit\\n des  films\");\n$slug = trim(preg_replace('/[^a-z0-9]+/', '-', mb_strtolower('Big Buck Bunny !')), '-');\npreg_replace('/(\\d{2})\\/(\\d{2})\\/(\\d{4})/', '$3-$2-$1', 'le 20/11/2026');",
+  "'la nuit des films'\n'big-buck-bunny'\n'le 2026-11-20'",
+  "Pour un texte fixe (sans motif), `str_replace` suffit et se lit mieux. Dans le motif, `/` doit s'écrire `\\/` puisqu'il sert de délimiteur.")
+E("preg_match_all", "php", "preg_match_all", ["fn:preg_match_all"], "preg_match_all(string $motif, string $texte, array &$trouves = null): int",
+  "Comme `preg_match`, mais trouve **toutes** les correspondances au lieu de s'arrêter à la première.",
+  [("$motif", "l'expression régulière"), ("$texte", "le texte où chercher"),
+   ("&$trouves", "rempli par PHP : `$trouves[0]` = les correspondances complètes, `$trouves[1]` = ce qu'a capturé la 1re parenthèse, etc.")],
+  "le nombre de correspondances (0 si aucune)",
+  "preg_match_all('/#(\\w+)/', 'Sintel #animation #fantasy', $t);\n$t[1];\npreg_match_all('/\\d/', 'a1b22');",
+  "['animation', 'fantasy']\n3",
+  "Le résultat utile n'est pas ce que renvoie la fonction (un nombre) mais le 3e paramètre, rempli au passage.")
+E("preg_split", "php", "preg_split", ["fn:preg_split"], "preg_split(string $motif, string $texte, int $limite = -1, int $options = 0): array",
+  "Comme `explode`, mais le séparateur est un motif : pratique quand on coupe sur « une virgule ou un point-virgule, avec ou sans espaces ».",
+  [("$motif", "l'expression régulière du séparateur"), ("$texte", "la chaîne à couper"), ("$limite", "nombre maximum de morceaux"),
+   ("$options", "`PREG_SPLIT_NO_EMPTY` pour ne pas garder les morceaux vides")],
+  "un tableau de chaînes",
+  "preg_split('/[\\s,;]+/', 'php, react;  git');", "['php', 'react', 'git']")
+E("preg_replace_callback", "php", "preg_replace_callback", ["fn:preg_replace_callback"], "preg_replace_callback(string $motif, callable $fonction, string $texte): string",
+  "Comme `preg_replace`, mais le remplacement est **calculé** par une fonction pour chaque morceau trouvé.",
+  [("$motif", "l'expression régulière"), ("$fonction", "reçoit `$m` (`$m[0]` = le morceau trouvé, `$m[1]` = 1re capture…) et renvoie le texte qui le remplace"), ("$texte", "la chaîne")],
+  "la nouvelle chaîne",
+  "preg_replace_callback('/\\d+/', fn($m) => $m[0] * 2, 'S1E12');", "'S2E24'")
+E("preg_quote", "php", "preg_quote", ["fn:preg_quote"], "preg_quote(string $texte, ?string $delimiteur = null): string",
+  "Protège les caractères spéciaux (`.` `(` `?` `*`…) d'un texte pour pouvoir le mettre tel quel dans un motif (par exemple une recherche tapée par l'utilisateur).",
+  [("$texte", "le texte à protéger"), ("$delimiteur", "le délimiteur du motif, souvent `'/'`, pour le protéger aussi")],
+  "le texte avec des `\\` devant les caractères spéciaux",
+  "preg_quote('1.5 (env)');\npreg_match('/' . preg_quote($recherche, '/') . '/i', $titre);", "'1\\.5 \\(env\\)'")
+
+# =========================================================================== PHP : tableaux (suite)
+E("array_key_exists", "php", "array_key_exists", ["fn:array_key_exists"], "array_key_exists(string|int $cle, array $tableau): bool",
+  "Dit si une clé existe dans un tableau, **même si sa valeur est `null`** (c'est la différence avec `isset`).",
+  [("$cle", "la clé cherchée"), ("$tableau", "le tableau")], "`true` ou `false`",
+  "array_key_exists('note', ['note' => null]);\nisset(['note' => null]['note']);", "true\nfalse",
+  "Pour un PATCH, c'est le bon test : « le champ a été envoyé (même vide) » ≠ « le champ est absent ».")
+E("array_reduce", "php", "array_reduce", ["fn:array_reduce"], "array_reduce(array $tableau, callable $fonction, mixed $depart = null): mixed",
+  "Réduit un tableau à **une seule valeur** (un total, un maximum, un texte…) en passant d'élément en élément avec un « accumulateur ».",
+  [("$tableau", "le tableau"), ("$fonction", "`fn($acc, $element) => …` : renvoie la nouvelle valeur de l'accumulateur"), ("$depart", "la valeur de départ de l'accumulateur (souvent `0` ou `[]`)")],
+  "la valeur finale de l'accumulateur",
+  "array_reduce([12, 8, 20], fn($total, $d) => $total + $d, 0);", "40",
+  "L'ordre est l'inverse d'`array_map` : le tableau d'abord, la fonction ensuite. Pour une simple somme, `array_sum` suffit.")
+E("array_column", "php", "array_column", ["fn:array_column"], "array_column(array $lignes, string|int|null $colonne, string|int|null $cle = null): array",
+  "Prend une « colonne » dans un tableau de lignes (tableaux associatifs ou objets) : tous les titres, tous les ids…",
+  [("$lignes", "un tableau de tableaux (ou d'objets avec propriétés publiques)"), ("$colonne", "le nom du champ à extraire"), ("$cle", "facultatif : le champ à utiliser comme clé du résultat")],
+  "un tableau des valeurs",
+  "$films = [['id' => 1, 'titre' => 'Sintel'], ['id' => 2, 'titre' => 'Spring']];\narray_column($films, 'titre');\narray_column($films, 'titre', 'id');",
+  "['Sintel', 'Spring']\n[1 => 'Sintel', 2 => 'Spring']")
+E("array_combine", "php", "array_combine / array_flip", ["fn:array_combine", "fn:array_flip"], "array_combine(array $cles, array $valeurs): array",
+  "`array_combine` fabrique un tableau associatif à partir d'une liste de clés et d'une liste de valeurs. `array_flip` échange clés et valeurs.",
+  [("$cles", "les futures clés"), ("$valeurs", "les valeurs, dans le même ordre (même nombre d'éléments)")], "un nouveau tableau",
+  "array_combine(['a', 'b'], [1, 2]);\narray_flip(['a' => 1, 'b' => 2]);", "['a' => 1, 'b' => 2]\n[1 => 'a', 2 => 'b']",
+  "Si les deux listes n'ont pas la même taille, `array_combine` lève une `ValueError`.")
+E("array_reverse", "php", "array_reverse", ["fn:array_reverse"], "array_reverse(array $tableau, bool $garderCles = false): array",
+  "Renvoie le tableau dans l'ordre inverse.", [("$tableau", "le tableau (non modifié)"), ("$garderCles", "`true` pour garder les clés numériques d'origine")],
+  "un nouveau tableau", "array_reverse([1, 2, 3]);", "[3, 2, 1]")
+E("array_diff", "php", "array_diff / array_intersect", ["fn:array_diff", "fn:array_intersect"], "array_diff(array $tableau, array ...$autres): array",
+  "`array_diff` : les valeurs du 1er tableau qui ne sont **pas** dans les autres. `array_intersect` : celles qui sont **aussi** dans les autres.",
+  [("$tableau", "le tableau de référence"), ("...$autres", "les tableaux à comparer")], "un tableau, **avec les clés d'origine**",
+  "array_diff(['php', 'react', 'git'], ['git']);\narray_intersect(['php', 'react', 'git'], ['git', 'php']);", "['php', 'react']\n[0 => 'php', 2 => 'git']",
+  "Comme `array_filter`, les clés gardent des trous : `array_values()` avant un `json_encode`.")
+E("array_push", "php", "array_push / array_pop / array_shift / array_unshift", ["fn:array_push", "fn:array_pop", "fn:array_shift", "fn:array_unshift"],
+  "array_push(array &$tableau, mixed ...$valeurs): int",
+  "Ajoutent ou retirent **dans** le tableau (il est modifié) : `push` ajoute à la fin, `pop` retire le dernier, `unshift` ajoute au début, `shift` retire le premier.",
+  [("&$tableau", "le tableau, modifié directement"), ("...$valeurs", "(push / unshift) ce qu'on ajoute")],
+  "`push`/`unshift` : la nouvelle taille ; `pop`/`shift` : l'élément retiré (`null` si le tableau est vide)",
+  "$p = ['a', 'b'];\narray_push($p, 'c');      // $p = ['a', 'b', 'c']\n$dernier = array_pop($p); // 'c'\n$premier = array_shift($p); // 'a', $p = ['b']",
+  piege="Pour ajouter un seul élément, `$p[] = 'c';` fait pareil et se lit mieux.")
+E("sort", "php", "sort / rsort / asort / ksort", ["fn:sort", "fn:rsort", "fn:asort", "fn:arsort", "fn:ksort", "fn:krsort"], "sort(array &$tableau): bool",
+  "Trient **le tableau lui-même**. `sort` croissant, `rsort` décroissant (clés renumérotées) ; `asort` / `arsort` trient par valeur en gardant les clés ; `ksort` / `krsort` trient par clé.",
+  [("&$tableau", "le tableau, modifié directement")], "`true` (pas le tableau trié !)",
+  "$s = [3, 1, 2];  sort($s);           // [1, 2, 3]\n$a = ['x' => 3, 'y' => 1];  asort($a); // ['y' => 1, 'x' => 3]\n$k = ['b' => 2, 'a' => 1];  ksort($k); // ['a' => 1, 'b' => 2]",
+  piege="Même piège qu'`usort` : `$tries = sort($s)` donne `true`. Pour trier des objets selon un champ, utilise `usort`.")
+E("array_key_first", "php", "array_key_first / array_key_last", ["fn:array_key_first", "fn:array_key_last"], "array_key_first(array $tableau): int|string|null",
+  "La première (ou la dernière) clé d'un tableau.", [("$tableau", "le tableau")], "la clé, ou `null` si le tableau est vide",
+  "array_key_first(['a' => 1, 'b' => 2]);\narray_key_last([5, 6, 7]);\n$dernier = $films[array_key_last($films)];", "'a'\n2")
+E("range", "php", "range", ["fn:range"], "range(int|string $debut, int|string $fin, int $pas = 1): array",
+  "Fabrique un tableau de nombres (ou de lettres) qui se suivent.", [("$debut", "la 1re valeur"), ("$fin", "la dernière (incluse)"), ("$pas", "l'écart entre deux valeurs")],
+  "un tableau", "range(1, 5);\nrange(0, 10, 5);\nrange('a', 'c');", "[1, 2, 3, 4, 5]\n[0, 5, 10]\n['a', 'b', 'c']")
+E("array_fill", "php", "array_fill / array_chunk", ["fn:array_fill", "fn:array_chunk"], "array_chunk(array $tableau, int $taille): array",
+  "`array_fill($debut, $nombre, $valeur)` crée un tableau rempli de la même valeur. `array_chunk` découpe un tableau en paquets de même taille (des rangées de cartes, des lots…).",
+  [("$tableau", "(chunk) le tableau à découper"), ("$taille", "(chunk) le nombre d'éléments par paquet")], "un nouveau tableau",
+  "array_fill(0, 3, 0);\narray_chunk([1, 2, 3, 4, 5], 2);", "[0, 0, 0]\n[[1, 2], [3, 4], [5]]")
+E("array_is_list", "php", "array_is_list", ["fn:array_is_list"], "array_is_list(array $tableau): bool",
+  "Dit si un tableau est une vraie liste (clés 0, 1, 2… dans l'ordre). C'est ce qui décide si `json_encode` produit `[...]` ou `{...}`.",
+  [("$tableau", "le tableau")], "`true` ou `false`", "array_is_list([1, 2]);\narray_is_list([1 => 2]);", "true\nfalse")
+E("compact", "php", "compact", ["fn:compact"], "compact(string ...$noms): array",
+  "Fabrique un tableau associatif à partir de variables : la clé est le nom de la variable, la valeur son contenu. Souvent vu dans `$this->render('page.html.twig', compact('film'))`.",
+  [("...$noms", "les **noms** des variables, entre guillemets, sans `$`")], "un tableau associatif",
+  "$titre = 'Sintel';\n$annee = 2010;\ncompact('titre', 'annee');", "['titre' => 'Sintel', 'annee' => 2010]")
+
+# =========================================================================== PHP : chaînes (suite)
+E("strpos", "php", "strpos / stripos", ["fn:strpos", "fn:stripos", "fn:mb_strpos"], "strpos(string $texte, string $morceau, int $debut = 0): int|false",
+  "La position (à partir de 0) où un morceau apparaît dans une chaîne. `stripos` ignore les majuscules.",
+  [("$texte", "où chercher"), ("$morceau", "ce qu'on cherche"), ("$debut", "à partir de quelle position chercher")],
+  "la position, ou `false` si le morceau n'y est pas",
+  "strpos('Big Buck Bunny', 'Buck');\nstrpos('Big', 'x');\nstripos('Sintel', 'SIN');", "4\nfalse\n0",
+  "Trouvé au tout début, la position vaut `0`, qui ressemble à `false` : compare avec `!== false`. Pour un simple « contient ? », `str_contains` est plus sûr.")
+E("str_ends_with", "php", "str_ends_with", ["fn:str_ends_with"], "str_ends_with(string $texte, string $fin): bool",
+  "Dit si une chaîne se termine par un morceau (le pendant de `str_starts_with`).", [("$texte", "la chaîne"), ("$fin", "la fin attendue")], "`true` ou `false`",
+  "str_ends_with('film.mp4', '.mp4');", "true")
+E("str_pad", "php", "str_pad", ["fn:str_pad", "fn:mb_str_pad"], "str_pad(string $texte, int $longueur, string $remplissage = ' ', int $cote = STR_PAD_RIGHT): string",
+  "Complète une chaîne jusqu'à une longueur donnée (des zéros devant un numéro, des espaces pour aligner une colonne).",
+  [("$texte", "la chaîne"), ("$longueur", "la longueur voulue au total"), ("$remplissage", "le caractère ajouté"), ("$cote", "`STR_PAD_LEFT` (devant), `STR_PAD_RIGHT` (derrière, par défaut) ou `STR_PAD_BOTH`")],
+  "la chaîne complétée", "str_pad('7', 3, '0', STR_PAD_LEFT);\nstr_pad('Nom', 8) . '|';", "'007'\n'Nom     |'",
+  "Pour des nombres, `sprintf('%03d', 7)` fait la même chose.")
+E("str_repeat", "php", "str_repeat", ["fn:str_repeat"], "str_repeat(string $texte, int $fois): string",
+  "Répète une chaîne plusieurs fois.", [("$texte", "le morceau à répéter"), ("$fois", "combien de fois")], "la chaîne répétée",
+  "str_repeat('★', 3);\nstr_repeat('-', 10);", "'★★★'\n'----------'")
+E("ucfirst", "php", "ucfirst / lcfirst / ucwords", ["fn:ucfirst", "fn:lcfirst", "fn:ucwords"], "ucfirst(string $texte): string",
+  "`ucfirst` met la 1re lettre en majuscule, `lcfirst` en minuscule, `ucwords` met une majuscule à chaque mot.",
+  [("$texte", "la chaîne")], "la nouvelle chaîne",
+  "ucfirst('sintel');\nlcfirst('FilmCard');\nucwords('big buck bunny');", "'Sintel'\n'filmCard'\n'Big Buck Bunny'",
+  "Elles ne gèrent pas les accents : `ucfirst('élan')` reste `'élan'`. Pour du français : `mb_strtoupper(mb_substr($t, 0, 1)) . mb_substr($t, 1)`.")
+E("strcmp", "php", "strcmp / strcasecmp", ["fn:strcmp", "fn:strcasecmp", "fn:strnatcmp", "fn:strnatcasecmp"], "strcmp(string $a, string $b): int",
+  "Compare deux chaînes dans l'ordre alphabétique (des codes de caractères). `strcasecmp` ignore les majuscules. C'est la fonction à donner à `usort` pour trier par titre.",
+  [("$a", "la 1re chaîne"), ("$b", "la 2e chaîne")], "un nombre négatif si `$a` vient avant, 0 si égales, positif si `$a` vient après",
+  "strcmp('a', 'b');\nstrcasecmp('Sintel', 'sintel');\nusort($films, fn($x, $y) => strcmp($x->getTitre(), $y->getTitre()));", "-1\n0",
+  "Teste le signe (`< 0`), pas une valeur exacte : selon la version de PHP, le résultat peut être -1 ou un autre nombre négatif.")
+E("htmlspecialchars", "php", "htmlspecialchars", ["fn:htmlspecialchars"], "htmlspecialchars(string $texte): string",
+  "Remplace `<`, `>`, `&` et les guillemets par leur code HTML, pour afficher un texte venu de l'utilisateur **sans qu'il soit interprété** comme du HTML (protection contre les failles XSS).",
+  [("$texte", "le texte à afficher dans une page")], "le texte sûr",
+  "htmlspecialchars('<b>\"Tom & Jerry\"</b>');", "'&lt;b&gt;&quot;Tom &amp; Jerry&quot;&lt;/b&gt;'",
+  "Avec Twig (`{{ variable }}`), c'est fait automatiquement : ne l'applique pas deux fois.")
+E("strip_tags", "php", "strip_tags / nl2br", ["fn:strip_tags", "fn:nl2br"], "strip_tags(string $texte): string",
+  "`strip_tags` retire les balises HTML d'un texte. `nl2br` ajoute un `<br />` devant chaque retour à la ligne (pour afficher un texte sur plusieurs lignes en HTML).",
+  [("$texte", "la chaîne")], "la nouvelle chaîne",
+  "strip_tags('<p>Un <b>court</b> film</p>');\nnl2br(\"ligne 1\\nligne 2\");", "'Un court film'\n\"ligne 1<br />\\nligne 2\"",
+  "`strip_tags` ne suffit pas comme protection : pour afficher du texte utilisateur, utilise `htmlspecialchars`.")
+E("substr_count", "php", "substr_count / str_split / strrev", ["fn:substr_count", "fn:str_split", "fn:mb_str_split", "fn:strrev"], "substr_count(string $texte, string $morceau): int",
+  "`substr_count` compte combien de fois un morceau apparaît. `str_split($t, $n)` coupe une chaîne en morceaux de `$n` caractères. `strrev` retourne une chaîne.",
+  [("$texte", "la chaîne"), ("$morceau", "(substr_count) ce qu'on compte")], "un nombre (substr_count), un tableau (str_split) ou une chaîne (strrev)",
+  "substr_count('banana', 'an');\nstr_split('abcdef', 2);\nstrrev('abc');", "2\n['ab', 'cd', 'ef']\n'cba'",
+  "Avec des accents, utilise `mb_str_split` (et évite `strrev`, qui casse les caractères accentués).")
+E("wordwrap", "php", "wordwrap", ["fn:wordwrap"], "wordwrap(string $texte, int $largeur = 75, string $coupure = \"\\n\", bool $couperMots = false): string",
+  "Coupe un long texte en lignes d'une largeur maximale, sans couper les mots.",
+  [("$texte", "le texte"), ("$largeur", "nombre de caractères maximum par ligne"), ("$coupure", "ce qu'on insère entre les lignes"), ("$couperMots", "`true` pour couper un mot trop long")],
+  "le texte avec les retours à la ligne", "wordwrap('Un court film libre de droits', 10, \"\\n\", true);", "\"Un court\\nfilm libre\\nde droits\"")
+
+# =========================================================================== PHP : nombres, types et conversions
+E("abs", "php", "abs", ["fn:abs"], "abs(int|float $n): int|float",
+  "La valeur absolue : le nombre sans son signe moins. Pratique pour un écart entre deux valeurs.", [("$n", "le nombre")], "le nombre positif",
+  "abs(-5);\nabs($positionA - $positionB);   // écart, dans un sens ou dans l'autre", "5")
+E("random_int", "php", "random_int", ["fn:random_int", "fn:rand", "fn:mt_rand"], "random_int(int $min, int $max): int",
+  "Un entier tiré au hasard entre `$min` et `$max` (inclus). `rand` / `mt_rand` existent aussi mais ne sont pas sûrs pour un code secret.",
+  [("$min", "la plus petite valeur possible"), ("$max", "la plus grande")], "un entier",
+  "random_int(1, 6);   // un dé", "par exemple 4",
+  "Dans un code testé, le hasard rend les tests imprévisibles : injecte-le (comme l'Horloge) pour pouvoir le fixer.")
+E("is_type", "php", "is_int / is_string / is_array / is_numeric…", ["fn:is_int", "fn:is_string", "fn:is_array", "fn:is_numeric", "fn:is_null", "fn:is_bool", "fn:is_float", "fn:is_object", "fn:is_callable"],
+  "is_int(mixed $valeur): bool",
+  "Testent le type d'une valeur : `is_int`, `is_float`, `is_string`, `is_bool`, `is_array`, `is_object`, `is_null`, `is_callable`. `is_numeric` est à part : il dit si une **chaîne** ressemble à un nombre.",
+  [("$valeur", "la valeur à tester")], "`true` ou `false`",
+  "is_int(5);\nis_int('5');\nis_numeric('5.2');\nis_numeric('5,2');", "true\nfalse\ntrue\nfalse",
+  "Les données d'un formulaire ou d'une URL arrivent **toujours en texte** : `is_int($_GET['page'])` est faux, teste `is_numeric` puis convertis avec `(int)`.")
+E("casts", "php", "(int) (string) (float) (bool) et intval", ["fn:intval", "fn:floatval", "fn:strval", "fn:boolval", "re:\\((int|string|float|bool|array)\\)\\s*[\\w$(]"],
+  "(int) $valeur  ·  (string) $valeur  ·  intval($valeur)",
+  "Convertissent une valeur dans un autre type. `(int)` garde le début numérique d'une chaîne et coupe les décimales (sans arrondir) ; `intval()` fait pareil sous forme de fonction.",
+  [], "la valeur convertie",
+  "(int) '12';\n(int) '42abc';\n(int) 'abc';\n(int) 3.9;\n(string) 12;\n(bool) '0';", "12\n42\n0\n3\n'12'\nfalse",
+  "`(int)` ne signale jamais d'erreur : `'abc'` devient `0` sans prévenir. Valide d'abord avec `is_numeric` ou `filter_var(..., FILTER_VALIDATE_INT)`.")
+E("get_debug_type", "php", "get_debug_type / gettype / get_class", ["fn:get_debug_type", "fn:gettype", "fn:get_class"], "get_debug_type(mixed $valeur): string",
+  "Donne le nom du type d'une valeur (ou de la classe d'un objet). Utile pour déboguer ou écrire un message d'erreur clair. `get_class($objet)` ne marche que sur un objet.",
+  [("$valeur", "n'importe quelle valeur")], "le nom du type",
+  "get_debug_type(5);\nget_debug_type(null);\nget_debug_type(new Film());\nget_class($film);", "'int'\n'null'\n'Film'\n'Film'",
+  "`gettype` (ancien) renvoie `'integer'` et `'double'` ; préfère `get_debug_type`. Pour le nom d'une classe connue, écris `Film::class`.")
+E("class_exists", "php", "method_exists / property_exists / class_exists", ["fn:method_exists", "fn:property_exists", "fn:class_exists"], "method_exists(object|string $objetOuClasse, string $methode): bool",
+  "Vérifient qu'une méthode, une propriété ou une classe existe. Utilisés surtout dans les tests (« as-tu bien créé la méthode `getTitre` ? ») et dans les bibliothèques.",
+  [("$objetOuClasse", "un objet, ou le nom de la classe (`Film::class`)"), ("$methode", "le nom de la méthode (ou de la propriété) entre guillemets")], "`true` ou `false`",
+  "method_exists(Film::class, 'getTitre');\nproperty_exists($film, 'titre');\nclass_exists('App\\\\Entity\\\\Film');", "true si elle existe")
+E("iterator_to_array", "php", "iterator_to_array", ["fn:iterator_to_array"], "iterator_to_array(iterable $iterable, bool $garderCles = true): array",
+  "Transforme quelque chose qu'on peut parcourir avec `foreach` (un générateur, une collection, un itérateur) en vrai tableau, pour pouvoir utiliser `count`, `array_map`…",
+  [("$iterable", "l'objet parcourable"), ("$garderCles", "`false` pour renuméroter 0, 1, 2…")], "un tableau",
+  "iterator_to_array(new ArrayIterator(['a' => 1]));", "['a' => 1]",
+  "Pour une collection Doctrine, `$collection->toArray()` fait la même chose.")
+
+# =========================================================================== PHP : afficher
+E("echo", "php", "echo / print", ["re:\\becho\\b"], "echo $valeur1, $valeur2;",
+  "Affiche du texte. Ce n'est pas une fonction : pas besoin de parenthèses, on peut séparer plusieurs valeurs par des virgules.",
+  [], "rien (affiche)", "echo 'Bonjour ', $prenom, \"\\n\";\necho \"Il reste {$minutes} min\";",
+  piege="Un tableau ne s'affiche pas avec `echo` (« Array to string conversion ») : utilise `print_r` ou `var_dump`.")
+E("printf", "php", "printf", ["fn:printf"], "printf(string $modele, mixed ...$valeurs): int",
+  "Comme `sprintf`, mais **affiche** directement le résultat au lieu de le renvoyer.",
+  [("$modele", "le texte avec ses trous (`%s`, `%d`, `%.2f`…)"), ("...$valeurs", "les valeurs à mettre dans les trous")], "le nombre de caractères affichés",
+  "printf(\"%s a %d ans\\n\", 'Ana', 21);", "Ana a 21 ans")
+E("print_r", "php", "print_r", ["fn:print_r"], "print_r(mixed $valeur, bool $renvoyer = false): string|true",
+  "Affiche un tableau ou un objet de façon lisible (plus court que `var_dump`, mais sans les types).",
+  [("$valeur", "ce qu'on veut voir"), ("$renvoyer", "`true` pour récupérer le texte au lieu de l'afficher")], "`true` (ou le texte si `$renvoyer`)",
+  "print_r(['titre' => 'Sintel', 'genres' => ['animation']]);",
+  "Array\n(\n    [titre] => Sintel\n    [genres] => Array\n        (\n            [0] => animation\n        )\n)",
+  "`print_r` affiche `false` et `null` comme du vide : pour voir la différence, utilise `var_dump`.")
+
+# =========================================================================== PHP : sécurité, hasard, dates
+E("password_hash", "php", "password_hash / password_verify", ["fn:password_hash", "fn:password_verify"], "password_hash(string $motDePasse, string|int|null $algo = PASSWORD_DEFAULT): string",
+  "`password_hash` transforme un mot de passe en une empreinte qu'on peut stocker en base (on ne stocke **jamais** le mot de passe en clair). `password_verify` vérifie un mot de passe tapé contre cette empreinte.",
+  [("$motDePasse", "le mot de passe en clair"), ("$algo", "laisse `PASSWORD_DEFAULT`")], "l'empreinte (une chaîne de 60 caractères qui commence par `$2y$`)",
+  "$hash = password_hash('secret', PASSWORD_DEFAULT);\npassword_verify('secret', $hash);\npassword_verify('autre', $hash);", "true\nfalse",
+  "Deux appels avec le même mot de passe donnent deux empreintes **différentes** (sel aléatoire) : ne compare pas avec `===`, utilise `password_verify`. Avec Symfony, c'est `UserPasswordHasherInterface` qui s'en charge.")
+E("hash", "php", "hash / md5", ["fn:hash", "fn:md5", "fn:sha1"], "hash(string $algo, string $texte): string",
+  "Calcule une empreinte (une suite de caractères qui résume un texte) : toujours la même pour le même texte. Sert à comparer des fichiers, faire une clé de cache, un ETag…",
+  [("$algo", "`'sha256'` (recommandé), `'md5'`…"), ("$texte", "le texte à résumer")], "l'empreinte en hexadécimal",
+  "hash('sha256', 'abc');\nmd5('abc');", "'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'\n'900150983cd24fb0d6963f7d28e17f72'",
+  "Jamais pour des mots de passe (trop rapide à casser) : utilise `password_hash`.")
+E("random_bytes", "php", "random_bytes / bin2hex", ["fn:random_bytes", "fn:bin2hex"], "bin2hex(random_bytes(int $nombre)): string",
+  "`random_bytes` tire des octets au hasard de façon sûre ; `bin2hex` les écrit en caractères lisibles (0-9, a-f). Ensemble, ils fabriquent un jeton secret (lien de confirmation, clé d'API…).",
+  [("$nombre", "combien d'octets ; le texte final fait le double de caractères")], "une chaîne hexadécimale",
+  "$jeton = bin2hex(random_bytes(16));   // 32 caractères", "par exemple 'f3a9…' (32 caractères)",
+  "N'utilise pas `uniqid()` ni `rand()` pour un secret : ils sont prévisibles.")
+E("time", "php", "time / strtotime", ["fn:time", "fn:strtotime", "fn:mktime"], "strtotime(string $texte, ?int $base = null): int|false",
+  "`time()` donne l'instant présent en **timestamp** (secondes depuis le 1er janvier 1970). `strtotime` transforme un texte (`'2026-11-20'`, `'+14 days'`) en timestamp.",
+  [("$texte", "une date ou un décalage en anglais"), ("$base", "le point de départ pour un décalage (maintenant si absent)")], "un entier (ou `false` si le texte n'est pas compris)",
+  "date('Y-m-d', strtotime('2026-11-20 +14 days'));\ntime() - $debut;   // secondes écoulées", "'2026-12-04'",
+  "Pour manipuler des dates dans une appli, `DateTimeImmutable` est plus clair et plus sûr.")
+
+# =========================================================================== PHP : URL et fichiers
+E("http_build_query", "php", "http_build_query / parse_str", ["fn:http_build_query", "fn:parse_str"], "http_build_query(array $parametres): string",
+  "`http_build_query` fabrique la partie « ?q=…&page=… » d'une URL à partir d'un tableau (en encodant espaces et accents). `parse_str` fait l'inverse.",
+  [("$parametres", "un tableau associatif nom => valeur")], "la chaîne de requête, sans le `?`",
+  "'/api/films?' . http_build_query(['q' => 'big buck', 'page' => 2]);\nparse_str('page=2&genre=animation', $p);   // $p = ['page' => '2', 'genre' => 'animation']",
+  "'/api/films?q=big+buck&page=2'",
+  "`parse_str` remplit son 2e paramètre et tout y est en texte : `'2'`, pas `2`.")
+E("parse_url", "php", "parse_url", ["fn:parse_url"], "parse_url(string $url, int $morceau = -1): array|string|null|false",
+  "Découpe une URL en morceaux : `scheme`, `host`, `path`, `query`…",
+  [("$url", "l'adresse"), ("$morceau", "pour n'en obtenir qu'un : `PHP_URL_HOST`, `PHP_URL_PATH`, `PHP_URL_QUERY`…")], "un tableau des morceaux (ou un seul morceau)",
+  "parse_url('https://bobine.fr/films?page=2');\nparse_url('https://bobine.fr/films', PHP_URL_PATH);",
+  "['scheme' => 'https', 'host' => 'bobine.fr', 'path' => '/films', 'query' => 'page=2']\n'/films'")
+E("file_get_contents", "php", "file_get_contents / file_put_contents", ["fn:file_get_contents", "fn:file_put_contents"], "file_get_contents(string $chemin): string|false",
+  "Lit tout un fichier dans une chaîne (`file_get_contents`) ou écrit une chaîne dans un fichier (`file_put_contents($chemin, $texte)`, qui le crée ou l'écrase).",
+  [("$chemin", "le chemin du fichier")], "le contenu (ou `false` si le fichier n'existe pas) ; `file_put_contents` renvoie le nombre d'octets écrits",
+  "$data = json_decode(file_get_contents('films.json'), true);\nfile_put_contents('log.txt', \"ok\\n\", FILE_APPEND);",
+  piege="Sans `FILE_APPEND`, `file_put_contents` remplace tout le contenu du fichier.")
+
 # =========================================================================== Doctrine
 E("persist", "doctrine", "->persist", ["->persist"], "$em->persist(object $entite): void",
   "Dit à Doctrine : « cet objet est nouveau, il faudra l'enregistrer ». Rien n'est envoyé à la base tout de suite.",

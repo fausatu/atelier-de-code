@@ -288,6 +288,19 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   « questions… » et tableaux « en attente » → **Questions**, « info… » ignoré), les plus récents d'abord.
 - Le bouton Claude « point » reçoit aussi le journal complet de la semaine et `weekPlan()`.
 
+## Mémo : fonctions PHP ajoutées (23/11)
+- Ana : « ajoute des méthodes PHP manquantes comme preg_replace ». 44 fiches ajoutées dans `methodes.py` (194 au total, 91 PHP),
+  après « PHP : langage » : regex (`preg_replace`, `preg_match_all`, `preg_split`, `preg_replace_callback`, `preg_quote`),
+  tableaux (`array_key_exists`, `array_reduce`, `array_column`, `array_combine/flip`, `array_reverse`, `array_diff/intersect`,
+  `array_push/pop/shift/unshift`, `sort/rsort/asort/ksort`, `array_key_first/last`, `range`, `array_fill/chunk`, `array_is_list`,
+  `compact`), chaînes (`strpos/stripos`, `str_ends_with`, `str_pad`, `str_repeat`, `ucfirst/lcfirst/ucwords`, `strcmp`,
+  `htmlspecialchars`, `strip_tags/nl2br`, `substr_count/str_split/strrev`, `wordwrap`), types (`abs`, `random_int`, `is_*`,
+  casts `(int)`, `get_debug_type/get_class`, `method_exists/…`, `iterator_to_array`), affichage (`echo`, `printf`, `print_r`),
+  sécurité/dates (`password_hash/verify`, `hash/md5`, `random_bytes/bin2hex`, `time/strtotime`), URL/fichiers
+  (`http_build_query/parse_str`, `parse_url`, `file_get_contents/put_contents`).
+- Tous les exemples/résultats vérifiés avec PHP 8.3 (CLI). `explique.py` : 8 cas « expliqué après » (+ printf dans un TD de php-heritage, couvert par l'encadré).
+- `build.py` lit `/home/claude/atelier` : si le dépôt est cloné ailleurs, faire `ln -sfn <clone> /home/claude/atelier`.
+
 ## Pages allégées (19/11, Ana : « les pages sont surchargées »)
 - Règle : par défaut, on n'affiche que l'essentiel. Une rubrique vide est remplacée par un bouton « + Rubrique » (`optSec`,
   `optFiles`, `optLinks`, `optInput`, assemblés par `optAll` ; ouverture `secOpen`). La 1re rubrique d'une fiche est toujours là.
