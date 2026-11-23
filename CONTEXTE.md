@@ -301,6 +301,13 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 - Tous les exemples/résultats vérifiés avec PHP 8.3 (CLI). `explique.py` : 8 cas « expliqué après » (+ printf dans un TD de php-heritage, couvert par l'encadré).
 - `build.py` lit `/home/claude/atelier` : si le dépôt est cloné ailleurs, faire `ln -sfn <clone> /home/claude/atelier`.
 
+## Tâches planifiées (23/11)
+- « Point du lundi » : chaque lundi 7 h 47 (Paris), s'arrête si le jour n'est pas "entreprise" dans calendrier.json ; lit
+  `data/users/<uid>/ecole` (db de l'artefact) et rend le point en lecture seule (rien écrit, rien publié). Premier passage le 30/11.
+- Rappel le 02/01/2027 à 9 h : réimporter l'emploi du temps Pronote.
+- « Après une semaine de cours » (mémos + cartes + plan de travail des rendus, avec questions) : création refusée par le système
+  le 23/11 (la version écrivait dans la base et lisait le dépôt privé atelier-fichiers) → à refaire en lecture seule si Ana valide.
+
 ## Pages allégées (19/11, Ana : « les pages sont surchargées »)
 - Règle : par défaut, on n'affiche que l'essentiel. Une rubrique vide est remplacée par un bouton « + Rubrique » (`optSec`,
   `optFiles`, `optLinks`, `optInput`, assemblés par `optAll` ; ouverture `secOpen`). La 1re rubrique d'une fiche est toujours là.
