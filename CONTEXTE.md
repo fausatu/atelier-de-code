@@ -305,8 +305,9 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
 - « Point du lundi » : chaque lundi 7 h 47 (Paris), s'arrête si le jour n'est pas "entreprise" dans calendrier.json ; lit
   `data/users/<uid>/ecole` (db de l'artefact) et rend le point en lecture seule (rien écrit, rien publié). Premier passage le 30/11.
 - Rappel le 02/01/2027 à 9 h : réimporter l'emploi du temps Pronote.
-- « Après une semaine de cours » (mémos + cartes + plan de travail des rendus, avec questions) : création refusée par le système
-  le 23/11 (la version écrivait dans la base et lisait le dépôt privé atelier-fichiers) → à refaire en lecture seule si Ana valide.
+- « Après une semaine de cours » : chaque samedi 10 h 17, s'arrête si la semaine n'avait aucun jour "formation"/"examens".
+  En lecture seule : lit cours/rendus/cartes dans la db + les fichiers du dépôt privé `fausatu/atelier-fichiers` (accord d'Ana
+  du 23/11) → mémos, cartes en code d'import `ATELIER1:`, plan de travail des rendus + questions. Premier passage le 28/11.
 
 ## Pages allégées (19/11, Ana : « les pages sont surchargées »)
 - Règle : par défaut, on n'affiche que l'essentiel. Une rubrique vide est remplacée par un bouton « + Rubrique » (`optSec`,
