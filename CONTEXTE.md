@@ -281,6 +281,13 @@ Demande d'Ana : **les questions ne doivent pas être les mêmes à chaque révis
   (décalé de ±4 px selon le sens) ; départ d'un acteur → par le côté. Refaits : php-symboles (`::` / `->`), orga-props
   (échelle « sinon »), libellé de php-encapsulation raccourci.
 
+## Point du lundi (23/11)
+- `lundiPrefill` lit vraiment le journal des 7 derniers jours : regroupé par mission (titres `##`, puces, tâches cochées ; statut
+  review/test signalé), « Cette semaine » = jours entreprise/école de la semaine (`weekPlan`, + soutenances/rendus taggés) +
+  tâches non faites + section « Pour plus tard » / « reste à … » du journal (`jLater`), blocages par sections (`jBlocages` :
+  « questions… » et tableaux « en attente » → **Questions**, « info… » ignoré), les plus récents d'abord.
+- Le bouton Claude « point » reçoit aussi le journal complet de la semaine et `weekPlan()`.
+
 ## Pages allégées (19/11, Ana : « les pages sont surchargées »)
 - Règle : par défaut, on n'affiche que l'essentiel. Une rubrique vide est remplacée par un bouton « + Rubrique » (`optSec`,
   `optFiles`, `optLinks`, `optInput`, assemblés par `optAll` ; ouverture `secOpen`). La 1re rubrique d'une fiche est toujours là.

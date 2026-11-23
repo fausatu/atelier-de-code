@@ -4613,12 +4613,72 @@ const R_AI = { tech: [["point", "Préparer mon point du lundi"], ["prepa", "Pré
   equipe: [["idee", "Préparer une idée pour la boîte à idées"], ["prepa", "Préparer ma prochaine intervention"], ["cr", "Rédiger le compte rendu"]],
   consultant: [["memoire", "Ce que j'en retiens (pratique et mémoire)"], ["prepa", "Préparer ma prochaine intervention"], ["cr", "Rédiger le compte rendu"]],
   _: [["prepa", "Préparer ma prochaine intervention"], ["cr", "Rédiger le compte rendu"]] };
+/* Point du lundi : on lit vraiment le journal (titres, puces, « pour plus tard », questions), pas seulement la 1re ligne. */
+function mdPlain(l) { return l.replace(/\*\*|__|`/g, "").replace(/^\s*(?:#+|>|[-*+]\s*\[[ xX]\]|[-*+]|\d+\.)\s*/, "").replace(/\s+/g, " ").trim().replace(/[\s,;]+$/, "").replace(/(\S)\.$/, "$1"); }
+const LABEL_RX = /^(le but|but|principe|objectif|contexte|questions?(?: pour .*)?|info.*|probl[eè]mes?|pour plus tard.*|reste à faire.*|à faire.*|todo|next|la cl[eé] api)\s*:?\s*$/i;
+function jPoints(txt, max) {
+  const out = []; const lines = String(txt || "").split("\n");
+  const heads = lines.filter((l) => /^\s*#{1,4}\s+\S/.test(l)).map(mdPlain).filter((l) => !LABEL_RX.test(l));
+  const src = heads.length >= 2 ? heads : lines.filter((l) => /^\s*([-*+]|\d+\.)\s+\S/.test(l) || (!/^\s*[|>]/.test(l) && l.trim() && !/^\s*\*\*[^*]+\*\*\s*:?\s*$/.test(l))).map(mdPlain);
+  let inLater = false;
+  for (const l of src) { if (!l || LABEL_RX.test(l)) continue; if (/plus tard|reste à|à faire/i.test(l) && l.length < 30) { inLater = true; continue; } if (inLater && !heads.length) continue; out.push(l.length > 110 ? l.slice(0, 108) + "…" : l); if (out.length >= max) break; }
+  return out;
+}
+function jLater(txt) {
+  const out = []; let on = false;
+  for (const raw of String(txt || "").split("\n")) {
+    const l = mdPlain(raw); if (!l) continue;
+    if (/^(pour plus tard|reste à faire|à faire|prochaines? étapes?|todo|next)\b/i.test(l)) { on = true; const rest = l.replace(/^[^:]*:\s*/, ""); if (rest && rest !== l && rest.length > 3) out.push(rest); continue; }
+    if (on && /^\s*#{1,4}\s/.test(raw)) on = false;
+    if (on && (/^\s*([-*+]|\d+\.)\s/.test(raw) || /^[A-ZÀ-Ü]/.test(l)) && !/^le front\s*:?$/i.test(l)) out.push(l);
+    else if (!on && /\b(reste à|à tester|pas encore)\b/i.test(l)) out.push(l);
+  }
+  return [...new Set(out)].slice(0, 6);
+}
+function jBlocages(txt) {
+  const out = [], qs = []; const lines = String(txt || "").split("\n"); let sec = "";
+  for (const raw of lines) {
+    if (/^\s*\|/.test(raw)) { const c = raw.split("|").map((x) => x.trim()).filter(Boolean); if (c.length >= 2 && /attente|plus tard|\?\?|^$/i.test(c[1]) && !/^-+$/.test(c[0])) qs.push(c[0].replace(/\s*\?*$/, " ?")); continue; }
+    const l = mdPlain(raw); if (!l || /^-+$/.test(l)) continue;
+    if (LABEL_RX.test(l)) { sec = /question/i.test(l) ? "q" : /^info/i.test(l) ? "info" : ""; continue; }
+    if (sec === "info") continue;
+    (sec === "q" || /\?\s*$/.test(l) ? qs : out).push(l.replace(/\?{2,}/g, "?"));
+  }
+  return { out, qs };
+}
+function weekPlan() {
+  const t = today(); const [y, m, d] = t.split("-").map(Number); const wd = (new Date(y, m - 1, d).getDay() + 6) % 7; const mon = dPlus(t, -wd);
+  const days = [0, 1, 2, 3, 4].map((i) => dPlus(mon, i)); const nom = (k) => new Date(k + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long" });
+  const ent_ = days.filter((k) => dayKind(k) === "entreprise").map(nom); const eco = days.filter((k) => dayKind(k) === "ecole").map(nom);
+  if (!eco.length) return "";
+  const evts = (ent().cours || []).filter((c) => c.date >= days[0] && c.date <= days[4] && (c.tags || []).some((x) => /soutenance|exam|rendu/i.test(x))).map((c) => `${(c.tags || [])[0].toLowerCase()} ${c.titre} ${nom(c.date)}`);
+  return `je suis en entreprise ${ent_.length ? ent_.join(", ") : "pas du tout"} et à l'école ${eco.join(", ")}${evts.length ? " (" + evts.join(", ") + ")" : ""}`;
+}
 function lundiPrefill() {
   const t = today(); const from = dPlus(t, -7); const e = ent();
   const js = e.journal.filter((j) => (j.date || "") >= from && (j.date || "") < t).sort((a, b) => String(a.date).localeCompare(String(b.date)));
-  const fait = js.map((j) => firstLine(j.fait)).filter(Boolean); const bloque = js.map((j) => firstLine(j.bloque)).filter(Boolean);
-  const ms = e.missions.filter(msActive).flatMap((m) => { const tk = taches(m).filter((x) => x.statut !== "faite"); return tk.length ? tk.slice(0, 3).map((x) => x.titre + " (" + m.titre + ")") : [m.titre]; });
-  return `**Semaine dernière** : ${fait.length ? fait.join(" ; ") : "…"}\n\n**Cette semaine** : ${ms.length ? ms.join(" ; ") : "…"}\n\n**Blocages** : ${bloque.length ? bloque.join(" ; ") : "rien de bloquant"}`;
+  const mTitre = (id) => (missionItem(id) || {}).titre || "";
+  // Semaine dernière : regroupé par mission
+  const groups = new Map();
+  for (const j of js) { const k = mTitre(j.mission) || "Autre"; const g = groups.get(k) || []; const tk = (j.taches || []).map((id) => { const x = tacheItem((j.mission || "") + ":" + id); return x && x.titre; }).filter(Boolean); g.push(...tk, ...jPoints(j.fait, 6)); groups.set(k, g); }
+  const dedupe = (a) => { const seen = new Set(); return a.filter((x) => { const k = x.toLowerCase().replace(/[^a-z0-9àâçéèêëîïôûùüÿ]+/g, " ").trim(); if (!k || seen.has(k)) return false; seen.add(k); return true; }); };
+  const stOf = (k) => { const m = e.missions.find((x) => x.titre === k); return m && ["en_review", "en_test"].includes(msStatut(m)) ? ` (${M_STATUTS[msStatut(m)].toLowerCase()})` : ""; };
+  const last = [...groups].map(([k, a]) => { const it = dedupe(a).slice(0, 9); return it.length ? `- **${k}**${stOf(k)} : ${it.join(" ; ")}` : ""; }).filter(Boolean);
+  const review = e.missions.filter((m) => ["en_review", "en_test"].includes(msStatut(m)) && !groups.has(m.titre)).map((m) => `- **${m.titre}** : ${M_STATUTS[msStatut(m)].toLowerCase()}`);
+  // Cette semaine
+  const wp = weekPlan(); const next = [];
+  if (wp) next.push(`- ⚠️ Cette semaine ${wp}.`);
+  for (const m of e.missions.filter((x) => msStatut(x) === "en_dev")) {
+    const tk = taches(m).filter((x) => x.statut !== "faite").map((x) => x.titre);
+    const lastJ = js.filter((j) => j.mission === m.id).slice(-3); const later = dedupe(lastJ.flatMap((j) => jLater(j.fait)));
+    const it = dedupe([...tk, ...later]).slice(0, 6); next.push(`- **${m.titre}** : ${it.length ? it.join(" ; ") : "…"}`);
+  }
+  const other = js.filter((j) => !j.mission).flatMap((j) => jLater(j.fait)); if (other.length) next.push(`- ${dedupe(other).slice(0, 3).join(" ; ")}`);
+  // Blocages et questions
+  const bl = [], qs = [];
+  for (const j of js.slice().reverse()) { const b = jBlocages(j.bloque); bl.push(...b.out); qs.push(...b.qs); }
+  const blocks = dedupe(bl).slice(0, 6), quest = dedupe(qs).slice(0, 6);
+  return `**Semaine dernière**\n${[...last, ...review].join("\n") || "…"}\n\n**Cette semaine**\n${next.join("\n") || "…"}\n\n**Blocages / besoin d'aide**\n${blocks.length ? blocks.map((x) => "- " + x).join("\n") : "Rien de bloquant."}${quest.length ? `\n\n**Questions**\n${quest.map((x) => "- " + x).join("\n")}` : ""}`;
 }
 const C_STATUTS = { idee: "Idée", proposee: "Proposée", acceptee: "Acceptée", faite: "Faite", abandonnee: "Abandonnée" };
 const C_TYPES = { doc: "Documentation", test: "Tests", correctif: "Petit correctif", outil: "Outil / automatisation", amelioration: "Amélioration", veille: "Partage de veille", question: "Question utile", autre: "Autre" };
@@ -4717,7 +4777,7 @@ async function reAi(id, what) {
   const r = reunionItem(id); if (!r) return; const st = state.ui.reAi || (state.ui.reAi = {}); const u = st[id] = { busy: true, what }; render();
   const notes = `Réunion du ${r.date} (${R_TYPES[r.type] || "réunion"}${r.participants ? ", participants : " + r.participants : ""}).\n` + (R_FIELDS[r.type] || R_FIELDS._).map(([k, label]) => `${label} :\n${String(r[k] || "").slice(0, 3000) || "(vide)"}`).join("\n");
   const prompt = what === "point"
-    ? `Prépare en français le point qu'une alternante développeuse va dire à l'oral, à son tour, pendant la réunion technique du lundi (chacun dit ce qu'il a fait la semaine dernière, ce qu'il fera cette semaine, ses problèmes). Markdown, sans introduction : **Semaine dernière**, **Cette semaine**, **Blocages / besoin d'aide** (une ou deux phrases chacun, concrètes, à la première personne, ton simple et assuré, sans jargon inventé ; si elle n'a pas de blocage, une phrase pour le dire). Puis une ligne « À dire en ~30 secondes. » N'invente pas de tâches : utilise seulement son journal, ses missions et ses notes.\n\n${notes}\n\nBrouillon de son point :\n${String(r.monPoint || lundiPrefill())}\n\nContexte :\n${entContext(10)}`
+    ? `Prépare en français le point qu'une alternante développeuse va dire à l'oral, à son tour, pendant la réunion technique du lundi (chacun dit ce qu'il a fait la semaine dernière, ce qu'il fera cette semaine, ses problèmes). Markdown, sans introduction : **Semaine dernière**, **Cette semaine**, **Blocages / besoin d'aide** (des puces courtes et concrètes, regroupées par mission ; signale si elle est à l'école une partie de la semaine ; mets les questions ouvertes à poser à la fin ; à la première personne, ton simple et assuré, sans jargon inventé ; si elle n'a pas de blocage, une phrase pour le dire). Puis une ligne « À dire en ~30 secondes. » N'invente pas de tâches : utilise seulement son journal, ses missions et ses notes.\n\n${notes}\n\nCette semaine : ${weekPlan() || "en entreprise toute la semaine"}.\n\nBrouillon de son point :\n${String(r.monPoint || lundiPrefill())}\n\nSon journal de la semaine dernière (complet) :\n${ent().journal.filter((x) => (x.date || "") >= dPlus(today(), -7) && (x.date || "") < today()).map((x) => `### ${x.date}\n${String(x.fait || "").slice(0, 2500)}\nBloquée : ${String(x.bloque || "").slice(0, 1200)}`).join("\n\n")}\n\nContexte :\n${entContext(10)}`
     : what === "memoire"
     ? `Une alternante en MBA Développeur Full Stack a assisté à une séance avec un consultant qui aide l'équipe sur l'organisation, la communication et la circulation de l'information. À partir de ses notes, écris en français, en markdown, sans introduction : **Ce que j'en retiens** (3 à 5 points, reformulés clairement, en reliant si c'est pertinent à des notions de management/communication connues, nommées simplement), **Ce que je peux appliquer dès cette semaine** (2 actions concrètes à son niveau), **Piste pour mon mémoire** (1 ou 2 problématiques possibles tirées de ce qu'elle observe, formulées comme une question de mémoire). N'invente aucun fait sur l'entreprise.\n\n${notes}`
     : what === "idee"
